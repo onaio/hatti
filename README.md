@@ -4,7 +4,7 @@ A cljs dataview from [Ona](http://beta.ona.io).
 
 ## Overview
 
-This library is a work-in-progress to package up much of the dataview used in Ona's new product (Zebra). It provides a set of Om components that can be used to visualize a dataset that has a schema attached to it.
+This library is a work-in-progress to package up much of the dataview used in Ona's new product. It provides a set of Om components that can be used to visualize a dataset that has a schema attached to it.
 
 ## Terminology used below:
 
@@ -119,3 +119,7 @@ There may be some components which also need some special treatment *within* oth
 ```
 
 [1] - It will actually be the namespace-qualified `::view-type`, but I need to do a bit more research to figure out how to use it properly.
+
+## License
+
+Hatti is released under the [Apache 2.0 License](http://opensource.org/licenses/Apache-2.0).
