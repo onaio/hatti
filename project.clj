@@ -1,4 +1,4 @@
-(defproject hatti "0.1.0-SNAPSHOT"
+(defproject onaio/hatti "0.1.0-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
 
   :dependencies [[org.clojure/clojure "1.6.0"]
