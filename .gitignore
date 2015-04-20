@@ -10,3 +10,4 @@ pom.xml
 *-init.clj
 
 examples/*/out/
+examples/*/main.js

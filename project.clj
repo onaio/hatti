@@ -1,15 +1,17 @@
 (defproject onaio/hatti "0.1.0-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2755"]
+  :dependencies [;; CORE HATTI REQUIREMENTS
+                 [org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-2843"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [com.cognitect/transit-cljs "0.8.188"]
                  [sablono "0.3.1"]
+                 [org.omcljs/om "0.8.8"]
+                 ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]
-                 [org.omcljs/om "0.8.8"]]
+                 [com.cognitect/transit-cljs "0.8.188"]]
 
-  :plugins [[lein-cljsbuild "1.0.4"]]
+  :plugins [[lein-cljsbuild "1.0.5"]]
 
   :source-paths ["src" "target/classes"]
 
