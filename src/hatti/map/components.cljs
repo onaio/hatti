@@ -7,7 +7,7 @@
             [hatti.map.viewby :as vb]
             [hatti.map.utils :as mu]
             [hatti.shared :as shared]
-;            [ona.dataview.single-submission :as ss]
+            [hatti.record.components :as record]
             [sablono.core :as html :refer-macros [html]]))
 
 ;;;;; EVENT HANDLERS
@@ -167,8 +167,7 @@
       (let [{:keys [marker prev-marker]} cursor]
         (mu/apply-click-style marker)
         (mu/apply-unclick-style prev-marker)
-;        (om/build (ss/submission-view :map) cursor {:opts opts})
-        ))))
+        (om/build (record/submission-view :map) cursor {:opts opts})))))
 
 (defn- load-geojson-helper
   "Helper for map-and-markers component (see below); loads geojson onto map.

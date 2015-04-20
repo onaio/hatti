@@ -36,3 +36,8 @@
 (defn click-fn [f]
   "Helper function to create a click function that prevents default"
   (fn [event] (.preventDefault event) (f)))
+
+(defn pluralize-number
+  "Create an appropriately pluralized string prefix by number."
+  [number kind]
+  (join " " [number (if (= 1 number) kind (plural kind))]))
