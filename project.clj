@@ -16,7 +16,15 @@
   :clean-targets ["out/hatti" "out/hatti.js"]
 
   :cljsbuild {
-    :builds [{:id "hatti"
+    :builds [{:id "examples"
+              :source-paths ["src" "examples/stolen/src"]
+              :compiler {
+                  :output-to "examples/stolen/main.js"
+                  :output-dir "examples/stolen/out"
+                  :cache-analysis true
+                  :optimizations :none
+                  :source-map true}}
+             {:id "hatti"
               :source-paths ["src"]
               :compiler {
                 :output-to "out/hatti.js"

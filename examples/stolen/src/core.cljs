@@ -1,4 +1,4 @@
-(ns hatti.core
+(ns examples.stolen.core
   (:require [om.core :as om]
             [om.dom :as dom]))
 
