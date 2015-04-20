@@ -2,6 +2,7 @@
   (:use [cljs.reader :only [read-string]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
+            [cljsjs.leaflet]
             [hatti.forms :as f]
             [hatti.utils :refer [indexed]]))
 

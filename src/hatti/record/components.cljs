@@ -4,6 +4,7 @@
             [cljs.core.async :refer [<! chan put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
+            [cljsjs.moment]
             [hatti.forms :as f]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn format last-url-param
@@ -156,7 +157,7 @@
               {:keys [data dataset-info]} cursor
               cur-rank (get data "_rank")
               instance-id (get data "_id")
-              ;sdatetime (js/moment (get data "_submission_time"))
+              sdatetime (js/moment (get data "_submission_time"))
               {:keys [top-level-wrap topbar-wrap header-wrap section-wrap
                       submission-info-wrap h4-cls]} (submission-elements view)
               mapview? (= view :map)
@@ -174,8 +175,8 @@
                [:h4 {:class h4-cls} (str "Submission " cur-rank)
                 (header-note view cursor)]
                [:p
-                ;(str "Submitted at " (.format sdatetime "LT")
-                ;        " on " (.format sdatetime "ll")) [:br]
+                (str "Submitted at " (.format sdatetime "LT")
+                        " on " (.format sdatetime "ll")) [:br]
                 [:span (str "Instance ID: " instance-id)]
                 (om/build edit-delete instance-id {:opts opts})
                 [:span {:class "expand-meta right"}

@@ -7,6 +7,9 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.8.8"]
+                 ;; JS REQUIREMENTS
+                 [cljsjs/moment "2.9.0-0"]
+                 [cljsjs/leaflet "0.7.3-0"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]
                  [com.cognitect/transit-cljs "0.8.188"]]
