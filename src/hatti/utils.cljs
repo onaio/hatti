@@ -32,3 +32,7 @@
 (defn indexed [coll]
   "Given a seq, produces a two-el seq. [a b c] => [[0 a] [1 b] [2 c]]."
   (map-indexed vector coll))
+
+(defn click-fn [f]
+  "Helper function to create a click function that prevents default"
+  (fn [event] (.preventDefault event) (f)))
