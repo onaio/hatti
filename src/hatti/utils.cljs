@@ -28,3 +28,7 @@
   "Formats a string using goog.string.format, so we can use format in cljx."
   [fmt & args]
   (apply goog.string/format fmt args))
+
+(defn indexed [coll]
+  "Given a seq, produces a two-el seq. [a b c] => [[0 a] [1 b] [2 c]]."
+  (map-indexed vector coll))
