@@ -2,7 +2,8 @@
   (:require [clojure.string :refer [split join]]
             [cognitect.transit :as t]
             [goog.string.format]
-            [goog.string]))
+            [goog.string]
+            [inflections.core :refer [plural]]))
 
 (defn last-url-param
   "Get last parameter form url"
