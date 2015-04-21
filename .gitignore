@@ -9,5 +9,5 @@ pom.xml
 .lein-plugins/
 *-init.clj
 
+examples/*/main.js*
 examples/*/out/
-examples/*/main.js
