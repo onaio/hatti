@@ -7,7 +7,8 @@
             [hatti.forms :refer [flatten-form]]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs]]
-            [hatti.map.components :refer [map-page]]))
+            [hatti.map.components :refer [map-page]]
+            [hatti.table.components :refer [table-page]]))
 
 (enable-console-print!)
 
@@ -56,6 +57,10 @@
    (shared/update-app-data! data :rerank? true)
    (om/root map-page
             shared/app-state
-            {:target (. js/document (getElementById "app"))
+            {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
-                      :map-config {:mapbox-tiles mapbox-tiles}}})))
+                      :map-config {:mapbox-tiles mapbox-tiles}}})
+   (om/root table-page
+            shared/app-state
+            {:target (. js/document (getElementById "table"))
+             :shared {:flat-form form}})))
