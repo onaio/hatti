@@ -1,6 +1,13 @@
+(def js-preamble
+  ["META-INF/resources/webjars/SlickGrid/2.1/lib/jquery-1.7.min.js"
+   "META-INF/resources/webjars/SlickGrid/2.1/lib/jquery.event.drag-2.2.js"
+   "META-INF/resources/webjars/SlickGrid/2.1/slick.core.js"
+   "META-INF/resources/webjars/SlickGrid/2.1/slick.grid.js"
+   "META-INF/resources/webjars/SlickGrid/2.1/controls/slick.pager.js"
+   "META-INF/resources/webjars/SlickGrid/2.1/slick.dataview.js"])
+
 (defproject onaio/hatti "0.1.0-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
-
   :dependencies [;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2843"]
@@ -11,6 +18,8 @@
                  ;; JS REQUIREMENTS
                  [cljsjs/moment "2.9.0-0"]
                  [cljsjs/leaflet "0.7.3-0"]
+                 ;; TODO: make into cljs packages
+                 [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]
                  [com.cognitect/transit-cljs "0.8.188"]]
@@ -27,9 +36,10 @@
               :compiler {
                   :output-to "examples/stolen/main.js"
                   :output-dir "examples/stolen/out"
+                  :preamble ~js-preamble
                   :cache-analysis true
-                  :optimizations :none
-                  :source-map true}}
+                  :optimizations :advanced
+                  :source-map "examples/stolen/main.js.map"}}
              {:id "hatti"
               :source-paths ["src"]
               :compiler {
