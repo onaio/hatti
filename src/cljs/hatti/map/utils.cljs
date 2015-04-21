@@ -3,7 +3,7 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.forms :as f]
+            [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
 ;; STYLES

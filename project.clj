@@ -32,7 +32,7 @@
 
   :cljsbuild {
     :builds [{:id "examples"
-              :source-paths ["src" "examples/stolen/src"]
+              :source-paths ["src/cljs" "examples/stolen/src"]
               :compiler {
                   :output-to "examples/stolen/main.js"
                   :output-dir "examples/stolen/out"
@@ -41,7 +41,7 @@
                   :optimizations :advanced
                   :source-map "examples/stolen/main.js.map"}}
              {:id "hatti"
-              :source-paths ["src"]
+              :source-paths ["src/cljs"]
               :compiler {
                 :output-to "out/hatti.js"
                 :output-dir "out"

@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [<! chan put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.forms :as f :refer [format-answer get-label get-icon]]
+            [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.map.viewby :as vb]
             [hatti.map.utils :as mu]

@@ -5,7 +5,7 @@
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [cljsjs.moment]
-            [hatti.forms :as f]
+            [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn format last-url-param
                                  pluralize-number]]))

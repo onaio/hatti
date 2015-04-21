@@ -6,13 +6,12 @@
             [cljs-http.core :as http-core]
             [hatti.forms :refer [flatten-form]]
             [hatti.shared :as shared]
-            [hatti.utils :refer [json->cljs]]
+            [hatti.utils :refer [json->cljs url]]
             [hatti.map.components :refer [map-page]]
             [hatti.table.components :refer [table-page]]))
 
 (enable-console-print!)
 
-(defn url [& args] (clojure.string/join "/" args))
 (def ona-api-base "http://ona.io/api/v1")
 (defn ona-data-url [endpoint dataset-id]
   (url ona-api-base endpoint (str dataset-id ".json")))

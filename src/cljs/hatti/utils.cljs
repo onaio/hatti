@@ -5,6 +5,8 @@
             [goog.string]
             [inflections.core :refer [plural]]))
 
+(defn url [& args] (clojure.string/join "/" args))
+
 (defn last-url-param
   "Get last parameter form url"
   [url]

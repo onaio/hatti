@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [<! chan mult tap put! timeout]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
-            [hatti.forms :as f]
+            [hatti.ona.forms :as f]
             [hatti.utils :refer [json->cljs format last-url-param]]))
 
 

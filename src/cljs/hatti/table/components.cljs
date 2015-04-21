@@ -4,7 +4,7 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.forms :as forms :refer [get-label format-answer]]
+            [hatti.ona.forms :as forms :refer [get-label format-answer]]
             [hatti.record.components :refer [submission-view]]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn safe-regex]]))

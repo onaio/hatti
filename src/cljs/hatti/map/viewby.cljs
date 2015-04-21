@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :as s]
 ;            [ona.utils.charts :refer [evenly-spaced-bins]]
-            [hatti.forms :as f]
+            [hatti.ona.forms :as f]
             [hatti.map.utils :as mu]))
 
 ;;;;; MAP
