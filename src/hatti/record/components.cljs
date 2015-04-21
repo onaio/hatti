@@ -36,7 +36,10 @@
                   #(put! shared/event-chan {:submission-unclicked true}))
        :class "btn-close right" :href "#"} "×"])
 
-(defn print-xls-report-btn
+(defmulti print-xls-report-btn
+  (fn [_ owner & args]
+    (om/get-shared owner :view-type)))
+(defmethod print-xls-report-btn :default
   [cursor owner]
   (om/component
    (html nil)))
@@ -89,7 +92,10 @@
            :show-instance-id true
            :h4-cls ""}})
 
-(defn repeat-view
+(defmulti repeat-view
+  (fn [_ owner & args]
+    (om/get-shared owner :view-type)))
+(defmethod repeat-view :default
   [{:keys [data repeat-field lang]} owner {:keys [view]}]
   "Renders data for a repeat field, which is complex; repeat fields are subforms.
    data is expected to be an vector of repeated data, in each element of which
@@ -139,12 +145,18 @@
              (not (get data (:full-name geofield))))
     [:span.no-geo.t-normal.right "No geodata"]))
 
-(defn edit-delete
+(defmulti edit-delete
+  (fn [_ owner & args]
+    (om/get-shared owner :view-type)))
+(defmethod edit-delete :default
   [instance-id owner {:keys [delete-record!]}]
   (om/component
    (html nil)))
 
-(defn submission-view
+(defmulti submission-view
+  (fn [_ owner & args]
+    (om/get-shared owner :view-type)))
+(defmethod submission-view :default
   [view]
   (fn [cursor owner opts]
     (reify
