@@ -15,6 +15,13 @@
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.8.8"]
                  [inflections "0.9.7"]
+                 ;; CLJX
+                 [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]
+                 ;; FOR CHARTS
+                 [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
+                 [org.clojure/math.numeric-tower "0.0.4"]
+                 [clj-time "0.7.0"]
+                 [com.andrewmcveigh/cljs-time "0.2.3"]
                  ;; JS REQUIREMENTS
                  [cljsjs/moment "2.9.0-0"]
                  [cljsjs/leaflet "0.7.3-0"]
@@ -24,24 +31,37 @@
                  [cljs-http "0.1.17"]
                  [com.cognitect/transit-cljs "0.8.188"]]
 
-  :plugins [[lein-cljsbuild "1.0.5"]]
+  :plugins [[lein-cljsbuild "1.0.5"]
+            [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
 
   :source-paths ["src" "target/classes"]
 
   :clean-targets ["out/hatti" "out/hatti.js"]
 
+  :cljx {:builds [{:source-paths ["src/cljx"]
+                   :output-path "target/generated/src/clj"
+                   :rules :clj}
+                  {:source-paths ["src/cljx"]
+                   :output-path "target/generated/src/cljs"
+                   :rules :cljs}]}
   :cljsbuild {
     :builds [{:id "examples"
-              :source-paths ["src/cljs" "examples/stolen/src"]
+              :source-paths ["src/cljs"
+                             "target/generated/src/cljs"
+                             "examples/stolen/src" ]
               :compiler {
                   :output-to "examples/stolen/main.js"
                   :output-dir "examples/stolen/out"
                   :preamble ~js-preamble
+                  :externs ["externs/leaflet-externs.js"
+                            "externs/jquery-externs.js"
+                            "externs/slickgrid-externs.js"]
                   :cache-analysis true
                   :optimizations :advanced
                   :source-map "examples/stolen/main.js.map"}}
              {:id "hatti"
-              :source-paths ["src/cljs"]
+              :source-paths ["src/cljs"
+                             "target/generated/src/cljs"]
               :compiler {
                 :output-to "out/hatti.js"
                 :output-dir "out"

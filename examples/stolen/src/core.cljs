@@ -4,7 +4,7 @@
             [cljs.core.async :refer [<! put!]]
             [cljs-http.client :as http]
             [cljs-http.core :as http-core]
-            [hatti.forms :refer [flatten-form]]
+            [hatti.ona.forms :refer [flatten-form]]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
             [hatti.map.components :refer [map-page]]
