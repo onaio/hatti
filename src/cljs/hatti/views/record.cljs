@@ -145,8 +145,7 @@
    (html nil)))
 
 (defmethod submission-view :default
-  [view]
-  (fn [cursor owner opts]
+  [cursor owner {:keys [view] :as opts}]
     (reify
       om/IInitState
       (init-state [_] {:expand-meta? false})
@@ -192,4 +191,4 @@
                     (format-as-question-answer view q data language))))
                (section-wrap
                 (for [q (f/non-meta-fields form)]
-                  (format-as-question-answer view q data language))))))))))))
+                  (format-as-question-answer view q data language)))))))))))

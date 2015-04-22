@@ -44,14 +44,17 @@
                   Humanitarian OpenStreetMap Team</a>."}])
 
 (defn chart-getter [field-name]
-  (ona-urls/chart-url dataset-id field-name))
+  (http/get (ona-urls/chart-url dataset-id field-name)))
 
 (go
  (let [data-chan (raw-get (ona-urls/data-url "data" dataset-id))
        form-chan (http/get (ona-urls/formjson-url dataset-id))
+       info-chan (http/get (ona-urls/data-url "forms" dataset-id))
        data (-> (<! data-chan) :body json->cljs)
-       form (-> (<! form-chan) :body flatten-form)]
+       form (-> (<! form-chan) :body flatten-form)
+       info (-> (<! info-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
+   (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
    (om/root views/tabbed-dataview
             shared/app-state
             {:target (. js/document (getElementById "map"))

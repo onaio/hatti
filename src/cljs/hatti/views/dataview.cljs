@@ -43,7 +43,7 @@
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
-            {:keys [auth-token role dataset-id]} (om/get-shared owner)]
+            {:keys [dataset-id]} (om/get-shared owner)]
         (html
          [:div.right.rec-summary.rec-margin
           [:div#language-selector
