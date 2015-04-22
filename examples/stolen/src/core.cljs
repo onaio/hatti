@@ -5,17 +5,13 @@
             [cljs-http.client :as http]
             [cljs-http.core :as http-core]
             [hatti.ona.forms :refer [flatten-form]]
+            [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
             [hatti.views :as views]))
 
 (enable-console-print!)
 
-(def ona-api-base "http://ona.io/api/v1")
-(defn ona-data-url [endpoint dataset-id]
-  (url ona-api-base endpoint (str dataset-id ".json")))
-(defn ona-formjson-url [dataset-id]
-  (url ona-api-base "forms" dataset-id "form.json"))
 (def raw-request
   "An almost 'batteries-included' request, similar to cljs-http.client/request.
    Contains everything except response decoding."
@@ -37,6 +33,7 @@
   (raw-request (merge req {:method :get :url url})))
 
 ;; CONFIG
+(def dataset-id "33597") ;; Stolen Sculptures
 (def mapbox-tiles
   [{:url "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
     :name "Humanitarian OpenStreetMap Team"
@@ -46,19 +43,18 @@
                   <a href=\"http://hot.openstreetmap.org/\">
                   Humanitarian OpenStreetMap Team</a>."}])
 
+(defn chart-getter [field-name]
+  (ona-urls/chart-url dataset-id field-name))
+
 (go
- (let [dataset-id "33597" ;; Stolen Sculptures
-       data-chan (raw-get (ona-data-url "data" dataset-id))
-       form-chan (http/get (ona-formjson-url dataset-id))
+ (let [data-chan (raw-get (ona-urls/data-url "data" dataset-id))
+       form-chan (http/get (ona-urls/formjson-url dataset-id))
        data (-> (<! data-chan) :body json->cljs)
        form (-> (<! form-chan) :body flatten-form)]
    (shared/update-app-data! shared/app-state data :rerank? true)
-   (om/root views/map-page
+   (om/root views/tabbed-dataview
             shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
-                      :map-config {:mapbox-tiles mapbox-tiles}}})
-   (om/root views/table-page
-            shared/app-state
-            {:target (. js/document (getElementById "table"))
-             :shared {:flat-form form}})))
+                      :map-config {:mapbox-tiles mapbox-tiles}}
+             :opts {:chart-get chart-getter}})))

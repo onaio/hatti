@@ -159,8 +159,8 @@
     om/IRenderState
     (render-state [_ state]
        (html (if (empty? view-by)
-               (om/build view-by-menu dataset-info {:opts opts :init-state state})
-               (om/build view-by-answer-legend view-by {:init-state state}))))))
+               (om/build map-viewby-menu dataset-info {:opts opts :init-state state})
+               (om/build map-viewby-answer-legend view-by {:init-state state}))))))
 
 (defmethod map-record-legend :default
   [cursor owner opts]
@@ -170,7 +170,8 @@
       (let [{:keys [marker prev-marker]} cursor]
         (mu/apply-click-style marker)
         (mu/apply-unclick-style prev-marker)
-        (om/build (submission-view :map) cursor {:opts opts})))))
+        (om/build submission-view cursor {:opts (merge opts
+                                                       {:view :map})})))))
 
 (defn- load-geojson-helper
   "Helper for map-and-markers component (see below); loads geojson onto map.

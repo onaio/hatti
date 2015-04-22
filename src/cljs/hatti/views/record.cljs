@@ -44,8 +44,6 @@
    (html nil)))
 
 ;; A single row of a question / answer pair
-(declare repeat-view)
-
 (def qa-elements
   {:map {:row-el :div.question-answer
          :question-el :span.question

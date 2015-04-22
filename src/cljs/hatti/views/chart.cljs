@@ -6,7 +6,8 @@
             [hatti.ona.forms :as forms]
             [hatti.charting :refer [make-chart]]
             [hatti.shared :as shared]
-            [hatti.views :refer [chart-page single-chart chart-chooser]]
+            [hatti.views :refer [chart-page chart-chooser
+                                 list-of-charts single-chart]]
             [hatti.utils :refer [click-fn]]))
 
 ;; EVENT HANDLERS

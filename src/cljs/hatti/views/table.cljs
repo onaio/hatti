@@ -242,9 +242,10 @@
             with-info #(merge % {:dataset-info (:dataset-info cursor)})]
         (html
          [:div.table-view
-          (om/build (submission-view :table)
+          (om/build submission-view
                     (with-info (get-in cursor [:table-page :submission-clicked]))
-                    {:opts (select-keys opts #{:delete-record! :role})})
+                    {:opts (merge (select-keys opts #{:delete-record! :role})
+                                  {:view :table})})
           (if no-data?
             [:h3 "No Data"]
             (om/build table-header nil))

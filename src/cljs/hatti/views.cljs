@@ -5,6 +5,11 @@
 (def view-type-dispatcher
   (fn [_ owner & args] (om/get-shared owner :view-type)))
 
+;; TABBED DATAVIEW
+(defmulti tabbed-dataview view-type-dispatcher)
+(defmulti dataview-infobar view-type-dispatcher)
+(defmulti dataview-actions view-type-dispatcher)
+
 ;; MAP
 (defmulti map-page view-type-dispatcher)
 (defmulti map-geofield-chooser view-type-dispatcher)
@@ -24,7 +29,7 @@
 (defmulti chart-page view-type-dispatcher)
 (defmulti chart-chooser view-type-dispatcher)
 (defmulti single-chart view-type-dispatcher)
-(defmulti list-ofcharts view-type-dispatcher)
+(defmulti list-of-charts view-type-dispatcher)
 
 ;; INDIVIDUAL RECORDS
 (defmulti submission-view view-type-dispatcher)
