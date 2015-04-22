@@ -7,8 +7,8 @@
             [hatti.ona.forms :refer [flatten-form]]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
-            [hatti.map.components :refer [map-page]]
-            [hatti.table.components :refer [table-page]]))
+            [hatti.views.map :refer [map-page]]
+            [hatti.views.table :refer [table-page]]))
 
 (enable-console-print!)
 
@@ -49,18 +49,17 @@
 
 (go
  (let [dataset-id "33597" ;; Stolen Sculptures
-       app-state (shared/empty-app-state)
        data-chan (raw-get (ona-data-url "data" dataset-id))
        form-chan (http/get (ona-formjson-url dataset-id))
        data (-> (<! data-chan) :body json->cljs)
        form (-> (<! form-chan) :body flatten-form)]
-   (shared/update-app-data! app-state data :rerank? true)
+   (shared/update-app-data! shared/app-state data :rerank? true)
    (om/root map-page
-            app-state
+            shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
                       :map-config {:mapbox-tiles mapbox-tiles}}})
    (om/root table-page
-            app-state
+            shared/app-state
             {:target (. js/document (getElementById "table"))
              :shared {:flat-form form}})))

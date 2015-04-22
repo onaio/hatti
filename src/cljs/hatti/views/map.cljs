@@ -1,4 +1,4 @@
-(ns hatti.map.components
+(ns hatti.views.map
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan put!]]
             [om.core :as om :include-macros true]
@@ -8,7 +8,7 @@
             [hatti.map.viewby :as vb]
             [hatti.map.utils :as mu]
             [hatti.shared :as shared]
-            [hatti.record.components :as record]))
+            [hatti.views.record :as record]))
 
 ;;;;; EVENT HANDLERS
 

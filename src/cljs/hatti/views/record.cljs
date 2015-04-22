@@ -1,4 +1,4 @@
-(ns hatti.record.components
+(ns hatti.views.record
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :as string]
             [cljs.core.async :refer [<! chan put!]]
