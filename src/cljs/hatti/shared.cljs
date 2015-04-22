@@ -6,7 +6,6 @@
             [hatti.ona.forms :as f]
             [hatti.utils :refer [json->cljs format last-url-param]]))
 
-
 ;; (SHARED) EVENT CHANNELS
 
 ;; The way to get a channel that takes a single event that can be consumed
@@ -30,8 +29,9 @@
   [{:full-name "_submission_time" :label "Submission Time"
     :name "_submission_time" :type "datetime"}])
 
-(def app-state
+(defn empty-app-state
   "An initial, empty, app-state, which can be modified to change dataviews."
+  []
   (atom
    {:map-page {:data []
                :submission-clicked {:data nil}
@@ -55,27 +55,27 @@
 
 (defn transact-app-data!
   "Given a function over data, run a transact on data inside app-state."
-  [transact-fn]
+  [app-state transact-fn]
   (transact-app-state! app-state [:map-page :data] transact-fn)
   (transact-app-state! app-state [:table-page :data] transact-fn))
 
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
    Sorts by submission time, and adds rank to the data, for table + map views."
-  [data & {:keys [rerank?]}]
+  [app-state data & {:keys [rerank?]}]
   (let [data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % "_submission_time"))
                     (map-indexed (fn [i v] (assoc v "_rank" (inc i))))
                     vec)
                data)]
-    (transact-app-data! (fn [_] data))
+    (transact-app-data! app-state (fn [_] data))
     (transact-app-state! app-state [:dataset-info :num_of_submissions] (fn [_] (count data)))))
 
 ;; LANGUAGE
 
 (defn language-cursor []
-  (om/ref-cursor (:languages (om/root-cursor app-state))))
+  (om/ref-cursor (:languages (om/root-cursor (empty-app-state)))))
 
 (defn language-selector
    "A language selector and a following divider."

@@ -49,17 +49,18 @@
 
 (go
  (let [dataset-id "33597" ;; Stolen Sculptures
+       app-state (shared/empty-app-state)
        data-chan (raw-get (ona-data-url "data" dataset-id))
        form-chan (http/get (ona-formjson-url dataset-id))
        data (-> (<! data-chan) :body json->cljs)
        form (-> (<! form-chan) :body flatten-form)]
-   (shared/update-app-data! data :rerank? true)
+   (shared/update-app-data! app-state data :rerank? true)
    (om/root map-page
-            shared/app-state
+            app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
                       :map-config {:mapbox-tiles mapbox-tiles}}})
    (om/root table-page
-            shared/app-state
+            app-state
             {:target (. js/document (getElementById "table"))
              :shared {:flat-form form}})))
