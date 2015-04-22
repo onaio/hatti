@@ -43,6 +43,8 @@
     :dataset-info {}
     :languages {:current nil :all []}}))
 
+(def app-state (empty-app-state))
+
 ;; DATA UPDATERS
 
 (defn transact!

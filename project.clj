@@ -34,7 +34,10 @@
   :plugins [[lein-cljsbuild "1.0.5"]
             [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
 
-  :source-paths ["src" "target/classes"]
+  :source-paths ["src/cljs"
+                 "target/generated/src/clj"
+                 "target/generated/src/cljs"
+                 "target/classes"]
 
   :clean-targets ["out/hatti" "out/hatti.js"]
 

@@ -45,13 +45,13 @@
                    :name (:name tags)
                    :tags tags}})))))
 
-(defn update-app-state-with-osm-data!
-  [form osm-xml]
+(defn integrate-osm-data!
+  [app-state form osm-xml]
   "Given some data post-processed from the ona server (ie, containing _id, _rank),
    and a string of osm-xml, produce a version with relevant osm data injected in."
   (let [osm-fields (filter forms/osm? form)]
     (when-not (empty? osm-fields)
-      (let [data (get-in shared/app-state [:map-page :data])
+      (let [data (get-in app-state [:map-page :data])
             osm-id->osm-data (osm-id->osm-data data form osm-xml)
             osm-val->osm-id #(re-find #"[0-9]+" %)
             osm-val->osm-data (fn [osm-val]
@@ -63,7 +63,7 @@
                         (for [datum data]
                           (update-in datum [osm-key] osm-val->osm-data))))]
         (doseq [osm-field osm-fields]
-          (shared/transact-app-data! (updater (:full-name osm-field))))))))
+          (shared/transact-app-data! app-state (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
 (def ona-base-uri "htts://ona.io/api/v1")
@@ -113,9 +113,10 @@
       (reduce integrate record repeat-fields))))
 
 (defn integrate-attachments!
-  [flat-form]
+  [app-state flat-form]
   "Inlines data from within _atatchments into each record within app-state."
   (shared/transact-app-data!
+   app-state
    #(->> %
          (integrate-attachments flat-form)
          (integrate-attachments-in-repeats flat-form))))

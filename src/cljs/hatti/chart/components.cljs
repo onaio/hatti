@@ -1,4 +1,4 @@
-(ns ona.dataview.chart
+(ns hatti.chart.components
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan put!]]
             [om.core :as om :include-macros true]
