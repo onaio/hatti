@@ -7,6 +7,7 @@
             [hatti.ona.forms :as forms :refer [get-label format-answer]]
             [hatti.views :refer [table-page table-header table-search
                                  label-changer submission-view]]
+            [hatti.views.record]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn safe-regex]]))
 

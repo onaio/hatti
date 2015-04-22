@@ -11,7 +11,8 @@
             [hatti.views :refer [map-page map-and-markers map-geofield-chooser
                                  map-record-legend submission-view
                                  map-viewby-legend map-viewby-menu
-                                 map-viewby-answer-legend]]))
+                                 map-viewby-answer-legend]]
+            [hatti.views.record]))
 
 ;;;;; EVENT HANDLERS
 

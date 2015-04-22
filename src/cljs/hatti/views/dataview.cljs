@@ -1,6 +1,6 @@
 (ns hatti.views.dataview
-   (:require-macros [cljs.core.async.macros :refer [go]])
-   (:require [cljs.core.async :refer [put!]]
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [cljs.core.async :refer [put!]]
              [om.core :as om :include-macros true]
              [sablono.core :as html :refer-macros [html]]
              [hatti.ona.forms :as f]
@@ -8,6 +8,10 @@
              [hatti.views :refer [tabbed-dataview
                                   dataview-infobar dataview-actions
                                   map-page table-page chart-page details-page]]
+             [hatti.views.map]
+             [hatti.views.table]
+             [hatti.views.chart]
+             [hatti.views.details]
              [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataviews
