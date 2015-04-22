@@ -1,0 +1,37 @@
+(ns hatti.views
+  (:require [om.core :as om]))
+
+;; GENERIC DISPATCHER
+(def view-type-dispatcher
+  (fn [_ owner & args] (om/get-shared owner :view-type)))
+
+;; MAP
+(defmulti map-page view-type-dispatcher)
+(defmulti map-geofield-chooser view-type-dispatcher)
+(defmulti map-and-markers view-type-dispatcher)
+(defmulti map-record-legend view-type-dispatcher)
+(defmulti map-viewby-legend view-type-dispatcher)
+(defmulti map-viewby-answer-legend view-type-dispatcher)
+(defmulti map-viewby-menu view-type-dispatcher)
+
+;; TABLE
+(defmulti table-page view-type-dispatcher)
+(defmulti table-header view-type-dispatcher)
+(defmulti table-search view-type-dispatcher)
+(defmulti label-changer view-type-dispatcher)
+
+;; CHART
+(defmulti chart-page view-type-dispatcher)
+(defmulti chart-chooser view-type-dispatcher)
+(defmulti single-chart view-type-dispatcher)
+(defmulti list-ofcharts view-type-dispatcher)
+
+;; INDIVIDUAL RECORDS
+(defmulti submission-view view-type-dispatcher)
+(defmulti print-xls-report-btn view-type-dispatcher)
+(defmulti repeat-view view-type-dispatcher)
+(defmulti edit-delete view-type-dispatcher)
+
+;; DETAILS PAGE
+(defmulti details-page view-type-dispatcher)
+(defmulti form-details view-type-dispatcher)

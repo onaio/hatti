@@ -5,7 +5,8 @@
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.ona.forms :as forms :refer [get-label format-answer]]
-            [hatti.views.record :refer [submission-view]]
+            [hatti.views :refer [table-page table-header table-search
+                                 label-changer submission-view]]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn safe-regex]]))
 
@@ -160,7 +161,7 @@
 
 ;; OM COMPONENTS
 
-(defn label-changer
+(defmethod label-changer :default
   [cursor owner]
   (reify
     om/IInitState
@@ -200,6 +201,26 @@
         (when (= query (.-value input))
           (put! shared/event-chan {query-event-key query})))))
 
+(defmethod table-search :default
+  [_ owner]
+  (om/component
+   (html
+    [:div.table-search
+     [:i.fa.fa-search]
+     [:input {:type "text"
+              :placeholder "Search"
+              :on-change #(delayed-search (.-target %) :filter-by)}]])))
+
+(defmethod table-header :default
+  [_ owner]
+  (om/component
+   (html
+    [:div {:class "topbar"}
+     [:div {:id pager-id}]
+     (om/build label-changer nil)
+     (om/build table-search nil)
+     [:div {:style {:clear "both"}}]])))
+
 (defn- init-grid!
   [data owner]
   "Initializes grid + dataview, and stores them in owner's state."
@@ -210,7 +231,7 @@
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
-(defn table-page
+(defmethod table-page :default
   [cursor owner opts]
   "Om component for the table grid.
    Renders empty divs via om, hooks up slickgrid to these divs on did-mount."
@@ -226,14 +247,7 @@
                     {:opts (select-keys opts #{:delete-record! :role})})
           (if no-data?
             [:h3 "No Data"]
-            [:div {:class "topbar"}
-             [:div {:id pager-id}]
-             (om/build label-changer nil)
-             [:div.table-search
-              [:i.fa.fa-search]
-              [:input {:type "text" :placeholder "Search"
-                       :on-change #(delayed-search (.-target %) :filter-by)}]]
-             [:div {:style {:clear "both"}}]])
+            (om/build table-header nil))
             [:div {:id table-id :class "slickgrid"}]])))
     om/IDidMount
     (did-mount [_]

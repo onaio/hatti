@@ -8,7 +8,10 @@
             [hatti.map.viewby :as vb]
             [hatti.map.utils :as mu]
             [hatti.shared :as shared]
-            [hatti.views.record :as record]))
+            [hatti.views :refer [map-page map-and-markers map-geofield-chooser
+                                 map-record-legend submission-view
+                                 map-viewby-legend map-viewby-menu
+                                 map-viewby-answer-legend]]))
 
 ;;;;; EVENT HANDLERS
 
@@ -83,7 +86,7 @@
 
 ;;;;; OM COMPONENTS
 
-(defn view-by-menu
+(defmethod map-viewby-menu :default
   [{:keys [num_of_submissions]} owner]
   (reify
     om/IRender
@@ -113,7 +116,7 @@
                        :href "#" :data-question-name name}
                        (get-icon field) (get-label field language)]])))]]])))))
 
-(defn view-by-answer-legend
+(defmethod map-viewby-answer-legend :default
   [cursor owner]
   (reify
     om/IRender
@@ -147,11 +150,11 @@
                    [:div (when-not selected? {:style {:color vb/grey}})
                     (str answer-s " (" acount ")")]]]]))]]])))))
 
-(defn view-by-legend
+(defmethod map-viewby-legend :default
+  [{:keys [view-by dataset-info]} owner opts]
   "The view by menu + legend.
    Menu renders each field. On-click triggers :view-by event, data = field.
    Legend renders the answers, which are put into the :view-by cursor."
-  [{:keys [view-by dataset-info]} owner opts]
   (reify
     om/IRenderState
     (render-state [_ state]
@@ -159,7 +162,7 @@
                (om/build view-by-menu dataset-info {:opts opts :init-state state})
                (om/build view-by-answer-legend view-by {:init-state state}))))))
 
-(defn submission-legend
+(defmethod map-record-legend :default
   [cursor owner opts]
   (reify
     om/IRender
@@ -167,7 +170,7 @@
       (let [{:keys [marker prev-marker]} cursor]
         (mu/apply-click-style marker)
         (mu/apply-unclick-style prev-marker)
-        (om/build (record/submission-view :map) cursor {:opts opts})))))
+        (om/build (submission-view :map) cursor {:opts opts})))))
 
 (defn- load-geojson-helper
   "Helper for map-and-markers component (see below); loads geojson onto map.
@@ -184,10 +187,9 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
-(defn map-and-markers
+(defmethod map-and-markers :default [cursor owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
-  [cursor owner]
   (reify
     om/IRenderState
     (render-state [_ _]
@@ -219,7 +221,7 @@
               (load-geojson-helper owner new-geojson)
               (put! shared/event-chan {:data-updated true}))))))))
 
-(defn geofield-chooser
+(defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
   (reify
     om/IInitState
@@ -248,11 +250,11 @@
                    :on-click (click-fn #(om/update! geofield field))}]
                  (get-label field) [:br]])]]]))))))
 
-(defn map-page
+(defmethod map-page :default
+  [cursor owner opts]
   "The overall map-page om component.
    Has map-and-markers, as well as the legend as child components.
    Contains channels in its state; these are passed onto all child components."
-  [cursor owner opts]
   (reify
     om/IRender
     (render [_]
@@ -262,14 +264,14 @@
           (om/build map-and-markers
                     (:map-page cursor)
                     {:opts opts})
-          (om/build geofield-chooser
+          (om/build map-geofield-chooser
                     (get-in cursor [:map-page :geofield])
                     {:opts {:geofields (filter f/geofield? form)}})
-          (om/build view-by-legend
+          (om/build map-viewby-legend
                     {:view-by (get-in cursor [:map-page :view-by])
                      :dataset-info (get-in cursor [:dataset-info])}
                     {:opts opts})
-          (om/build submission-legend
+          (om/build map-record-legend
                     (merge
                      {:geofield (get-in cursor [:map-page :geofield])}
                      (get-in cursor [:map-page :submission-clicked]))

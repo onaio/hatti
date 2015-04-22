@@ -5,6 +5,8 @@
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [cljsjs.moment]
+            [hatti.views :refer [submission-view repeat-view
+                                 edit-delete print-xls-report-btn]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn format last-url-param
@@ -36,9 +38,6 @@
                   #(put! shared/event-chan {:submission-unclicked true}))
        :class "btn-close right" :href "#"} "×"])
 
-(defmulti print-xls-report-btn
-  (fn [_ owner & args]
-    (om/get-shared owner :view-type)))
 (defmethod print-xls-report-btn :default
   [cursor owner]
   (om/component
@@ -92,9 +91,6 @@
            :show-instance-id true
            :h4-cls ""}})
 
-(defmulti repeat-view
-  (fn [_ owner & args]
-    (om/get-shared owner :view-type)))
 (defmethod repeat-view :default
   [{:keys [data repeat-field lang]} owner {:keys [view]}]
   "Renders data for a repeat field, which is complex; repeat fields are subforms.
@@ -145,17 +141,11 @@
              (not (get data (:full-name geofield))))
     [:span.no-geo.t-normal.right "No geodata"]))
 
-(defmulti edit-delete
-  (fn [_ owner & args]
-    (om/get-shared owner :view-type)))
 (defmethod edit-delete :default
   [instance-id owner {:keys [delete-record!]}]
   (om/component
    (html nil)))
 
-(defmulti submission-view
-  (fn [_ owner & args]
-    (om/get-shared owner :view-type)))
 (defmethod submission-view :default
   [view]
   (fn [cursor owner opts]

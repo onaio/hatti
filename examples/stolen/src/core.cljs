@@ -7,8 +7,7 @@
             [hatti.ona.forms :refer [flatten-form]]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
-            [hatti.views.map :refer [map-page]]
-            [hatti.views.table :refer [table-page]]))
+            [hatti.views :as views]))
 
 (enable-console-print!)
 
@@ -54,12 +53,12 @@
        data (-> (<! data-chan) :body json->cljs)
        form (-> (<! form-chan) :body flatten-form)]
    (shared/update-app-data! shared/app-state data :rerank? true)
-   (om/root map-page
+   (om/root views/map-page
             shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
                       :map-config {:mapbox-tiles mapbox-tiles}}})
-   (om/root table-page
+   (om/root views/table-page
             shared/app-state
             {:target (. js/document (getElementById "table"))
              :shared {:flat-form form}})))

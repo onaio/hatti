@@ -6,6 +6,7 @@
             [hatti.ona.forms :as forms]
             [hatti.charting :refer [make-chart]]
             [hatti.shared :as shared]
+            [hatti.views :refer [chart-page single-chart chart-chooser]]
             [hatti.utils :refer [click-fn]]))
 
 ;; EVENT HANDLERS
@@ -51,9 +52,9 @@
 
 ;; OM COMPONENTS
 
-(defn chart-chooser
+(defmethod chart-chooser :default
+  [cursor owner]
   "The chart chooser om component."
-  [_ owner]
   (reify
     om/IRender
     (render [_]
@@ -71,9 +72,9 @@
                  [:li [:span {:class "drop-header"} "Questions"]]
                  (to-links (forms/non-meta-fields form))]]])))))
 
-(defn single-chart
-  "A single chart component."
+(defmethod single-chart :default
   [cursor owner {:keys [chart-get field]}]
+  "A single chart component."
   (reify
     om/IInitState
     (init-state [_]
@@ -97,9 +98,9 @@
                 (-> data (make-chart language) :chart)
                 [:div [:i {:class "fa fa-cog fa-spin"}]])]]]))))))
 
-(defn list-of-charts
-  "The list of charts."
+(defmethod list-of-charts :default
   [cursor owner]
+  "The list of charts."
   (reify
     om/IRender
     (render [_]
@@ -114,9 +115,9 @@
       (doseq [field (:visible-charts cursor)]
         (put! shared/event-chan {:add-chart true :field (om/value field)})))))
 
-(defn chart-page
-  "The overall chart-page om component."
+(defmethod chart-page :default
   [cursor owner {:keys [chart-get]}]
+  "The overall chart-page om component."
   (reify
     om/IWillMount
     (will-mount [_]
