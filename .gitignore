@@ -1,0 +1,18 @@
+pom.xml
+*jar
+/lib/
+/classes/
+/out/
+/target/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+*-init.clj
+
+;; only for gh-pages
+src
+project.clj
+externs
+
+examples/*/main.js.map
+examples/*/out/
