@@ -1,5 +1,5 @@
 (ns hatti.ona.urls
-  (:require [hatti.utils :refer [url]]))
+  (:require [hatti.utils :refer [url format]]))
 
 (def base-uri "http://ona.io/api/v1")
 
