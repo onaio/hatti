@@ -12,5 +12,7 @@ pom.xml
 # master
 examples/*/main.js*
 examples/*/out/
-examples/*/css
+examples/css
 examples/*/index.html
+examples/*/data
+
