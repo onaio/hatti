@@ -48,7 +48,7 @@
                    :output-path "target/generated/src/cljs"
                    :rules :cljs}]}
   :cljsbuild {
-    :builds [{:id "examples"
+    :builds [{:id "stolen"
               :source-paths ["src/cljs"
                              "target/generated/src/cljs"
                              "examples/stolen/src" ]
@@ -62,6 +62,20 @@
                   :cache-analysis true
                   :optimizations :whitespace
                   :source-map "examples/stolen/main.js.map"}}
+             {:id "osm"
+              :source-paths ["src/cljs"
+                             "target/generated/src/cljs"
+                             "examples/osm/src" ]
+              :compiler {
+                  :output-to "examples/osm/main.js"
+                  :output-dir "examples/osm/out"
+                  :preamble ~js-preamble
+                  :externs ["externs/leaflet-externs.js"
+                            "externs/jquery-externs.js"
+                            "externs/slickgrid-externs.js"]
+                  :cache-analysis true
+                  :optimizations :whitespace
+                  :source-map "examples/osm/main.js.map"}}
              {:id "hatti"
               :source-paths ["src/cljs"
                              "target/generated/src/cljs"]
