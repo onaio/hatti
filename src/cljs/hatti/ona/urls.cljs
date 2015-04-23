@@ -3,8 +3,8 @@
 
 (def base-uri "http://ona.io/api/v1")
 
-(defn data-url [endpoint dataset-id]
-  (url base-uri endpoint (str dataset-id ".json")))
+(defn data-url [endpoint dataset-id & {:keys [:format] :or {:format "json"}}]
+  (url base-uri endpoint (str dataset-id "." format)))
 
 (defn formjson-url [dataset-id]
   (url base-uri "forms" dataset-id "form.json"))

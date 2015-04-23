@@ -60,8 +60,6 @@
                             "includes/externs/jquery-externs.js"
                             "includes/externs/slickgrid-externs.js"]
                   :cache-analysis true
-                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
-                                  :provides ["osmtogeojson"]}]
                   :optimizations :whitespace
                   :source-map "examples/stolen/main.js.map"}}
              {:id "osm"
@@ -75,6 +73,8 @@
                   :externs ["externs/leaflet-externs.js"
                             "externs/jquery-externs.js"
                             "externs/slickgrid-externs.js"]
+                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
+                                  :provides ["osmtogeojson"]}]
                   :cache-analysis true
                   :optimizations :whitespace
                   :source-map "examples/osm/main.js.map"}}

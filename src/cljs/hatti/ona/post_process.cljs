@@ -2,7 +2,8 @@
   (:require [hatti.utils :refer [url last-url-param format]]
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
-            [hatti.shared :as shared]))
+            [hatti.shared :as shared]
+            [osmtogeojson]))
 
 ;; OSM POST-PROCESSING
 

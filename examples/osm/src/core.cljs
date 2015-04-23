@@ -34,7 +34,7 @@
   (raw-request (merge req {:method :get :url url})))
 
 ;; CONFIG
-(def dataset-id "33597") ;; Stolen Sculptures
+(def dataset-id "31066") ;; OSM
 (def mapbox-tiles
   [{:url "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
     :name "Humanitarian OpenStreetMap Team"
@@ -49,7 +49,7 @@
 
 (go
  (let [data-chan (raw-get (ona-urls/data-url "data" dataset-id))
-       osm-chan (raw-get (ona=urls/data-url "data" dataset-id :format "osm"))
+       osm-chan (raw-get (ona-urls/data-url "data" dataset-id :format "osm"))
        form-chan (http/get (ona-urls/formjson-url dataset-id))
        info-chan (http/get (ona-urls/data-url "forms" dataset-id))
        data (-> (<! data-chan) :body json->cljs)
@@ -58,8 +58,8 @@
        osm-xml (-> (<! osm-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
    (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
-   (integrate-attachments! sharered/app-state form osm-xml)
-   (om/root views/tabbed-dataview
+   (integrate-osm-data! shared/app-state form osm-xml)
+   (om/root views/map-page
             shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
