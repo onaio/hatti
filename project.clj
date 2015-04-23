@@ -56,10 +56,12 @@
                   :output-to "examples/stolen/main.js"
                   :output-dir "examples/stolen/out"
                   :preamble ~js-preamble
-                  :externs ["externs/leaflet-externs.js"
-                            "externs/jquery-externs.js"
-                            "externs/slickgrid-externs.js"]
+                  :externs ["includes/externs/leaflet-externs.js"
+                            "includes/externs/jquery-externs.js"
+                            "includes/externs/slickgrid-externs.js"]
                   :cache-analysis true
+                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
+                                  :provides ["osmtogeojson"]}]
                   :optimizations :whitespace
                   :source-map "examples/stolen/main.js.map"}}
              {:id "osm"
