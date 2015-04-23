@@ -1,1 +1,0 @@
-/Users/prabhaspokharel/Code/ona/hatti/examples/stolen/main.js
