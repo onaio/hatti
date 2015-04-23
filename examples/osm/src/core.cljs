@@ -34,7 +34,6 @@
   (raw-request (merge req {:method :get :url url})))
 
 ;; CONFIG
-(def dataset-id "33597") ;; Stolen Sculptures
 (def mapbox-tiles
   [{:url "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
     :name "Humanitarian OpenStreetMap Team"
@@ -44,24 +43,17 @@
                   <a href=\"http://hot.openstreetmap.org/\">
                   Humanitarian OpenStreetMap Team</a>."}])
 
-(defn chart-getter [field-name]
-  (http/get (ona-urls/chart-url dataset-id field-name)))
-
 (go
- (let [data-chan (raw-get (ona-urls/data-url "data" dataset-id))
-       osm-chan (raw-get (ona=urls/data-url "data" dataset-id :format "osm"))
-       form-chan (http/get (ona-urls/formjson-url dataset-id))
-       info-chan (http/get (ona-urls/data-url "forms" dataset-id))
+ (let [data-chan (raw-get "data/31066_data.json")
+       osm-chan (raw-get "data/31066_data.osm")
+       form-chan (http/get "data/31066_form.json")
        data (-> (<! data-chan) :body json->cljs)
        form (-> (<! form-chan) :body flatten-form)
-       info (-> (<! info-chan) :body)
        osm-xml (-> (<! osm-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
-   (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
-   (integrate-attachments! sharered/app-state form osm-xml)
-   (om/root views/tabbed-dataview
+   (integrate-osm-data! shared/app-state form osm-xml)
+   (om/root views/map-page
             shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
-                      :map-config {:mapbox-tiles mapbox-tiles}}
-             :opts {:chart-get chart-getter}})))
+                      :map-config {:mapbox-tiles mapbox-tiles}}})))
