@@ -6,7 +6,7 @@
    "META-INF/resources/webjars/SlickGrid/2.1/controls/slick.pager.js"
    "META-INF/resources/webjars/SlickGrid/2.1/slick.dataview.js"])
 
-(defproject onaio/hatti "0.1.0-SNAPSHOT"
+(defproject org.clojars.onaio/hatti "0.1.0-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :dependencies [;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.6.0"]
