@@ -5,6 +5,7 @@
             [cljs-http.client :as http]
             [cljs-http.core :as http-core]
             [hatti.ona.forms :refer [flatten-form]]
+            [hatti.ona.post-process :refer [integrate-attachments!]]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
@@ -55,6 +56,7 @@
        info (-> (<! info-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
    (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
+   (integrate-attachments! shared/app-state form)
    (om/root views/tabbed-dataview
             shared/app-state
             {:target (. js/document (getElementById "map"))

@@ -12,3 +12,6 @@
 (defn chart-url [dataset-id field-name]
   (url base-uri "charts"
        (str dataset-id ".json?field_name=" field-name)))
+
+(defn media-url [id fname]
+  (url base-uri "files" (format "%s?filename=%s" id fname)))

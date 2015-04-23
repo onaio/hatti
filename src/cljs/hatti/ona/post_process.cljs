@@ -1,6 +1,7 @@
 (ns hatti.ona.post-process
   (:require [hatti.utils :refer [url last-url-param format]]
             [hatti.ona.forms :as forms]
+            [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]))
 
 ;; OSM POST-PROCESSING
@@ -66,15 +67,11 @@
           (shared/transact-app-data! app-state (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
-(def ona-base-uri "htts://ona.io/api/v1")
-(defn make-ona-media-url [id fname]
-  (url ona-base-uri "files" (format "%s?filename=%s" id fname)))
-
 (defn url-obj [media-obj]
   "Calculate full image and thumbnail urls given attachment information."
   (let [media-id (get media-obj "id")
         fname (get media-obj "filename")
-        file-url (make-ona-media-url media-id fname)]
+        file-url (ona-urls/media-url media-id fname)]
     {:filename fname
      :download_url file-url
      :small_download_url (str file-url "&suffix=small")}))
