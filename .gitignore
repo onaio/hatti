@@ -11,3 +11,8 @@ pom.xml
 
 examples/*/main.js.map
 examples/*/out/
+
+;; gh-pages only, symlink these
+src
+project.clj
+includes
