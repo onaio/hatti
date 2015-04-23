@@ -9,10 +9,5 @@ pom.xml
 .lein-plugins/
 *-init.clj
 
-;; only for gh-pages
-src
-project.clj
-externs
-
 examples/*/main.js.map
 examples/*/out/
