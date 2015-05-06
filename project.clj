@@ -30,62 +30,56 @@
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]
                  [com.cognitect/transit-cljs "0.8.188"]]
-
   :plugins [[lein-cljsbuild "1.0.5"]
             [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
-
   :source-paths ["src/cljs"
                  "target/generated/src/clj"
                  "target/generated/src/cljs"
                  "target/classes"]
-
   :clean-targets ["out/hatti" "out/hatti.js"]
-
+  :prep-tasks [["cljx" "once"] "javac" "compile"]
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/generated/src/clj"
                    :rules :clj}
                   {:source-paths ["src/cljx"]
                    :output-path "target/generated/src/cljs"
                    :rules :cljs}]}
-  :cljsbuild {
-    :builds [{:id "stolen"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"
-                             "examples/stolen/src" ]
-              :compiler {
-                  :output-to "examples/stolen/main.js"
-                  :output-dir "examples/stolen/out"
-                  :preamble ~js-preamble
-                  :externs ["includes/externs/leaflet-externs.js"
-                            "includes/externs/jquery-externs.js"
-                            "includes/externs/slickgrid-externs.js"]
-                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
-                                  :provides ["osmtogeojson"]}]
-                  :cache-analysis true
-                  :optimizations :whitespace
-                  :source-map "examples/stolen/main.js.map"}}
-             {:id "osm"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"
-                             "examples/osm/src" ]
-              :compiler {
-                  :output-to "examples/osm/main.js"
-                  :output-dir "examples/osm/out"
-                  :preamble ~js-preamble
-                  :externs ["externs/leaflet-externs.js"
-                            "externs/jquery-externs.js"
-                            "externs/slickgrid-externs.js"]
-                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
-                                  :provides ["osmtogeojson"]}]
-                  :cache-analysis true
-                  :optimizations :whitespace
-                  :source-map "examples/osm/main.js.map"}}
-             {:id "hatti"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"]
-              :compiler {
-                :output-to "out/hatti.js"
-                :output-dir "out"
-                :optimizations :none
-                :cache-analysis true
-                :source-map true}}]})
+  :cljsbuild {:builds
+              [{:id "stolen"
+                :source-paths ["src/cljs"
+                               "target/generated/src/cljs"
+                               "examples/stolen/src" ]
+                :compiler {:output-to "examples/stolen/main.js"
+                           :output-dir "examples/stolen/out"
+                           :preamble ~js-preamble
+                           :externs ["includes/externs/leaflet-externs.js"
+                                     "includes/externs/jquery-externs.js"
+                                     "includes/externs/slickgrid-externs.js"]
+                           :foreign-libs [{:file "includes/js/osmtogeojson.js"
+                                           :provides ["osmtogeojson"]}]
+                           :cache-analysis true
+                           :optimizations :whitespace
+                           :source-map "examples/stolen/main.js.map"}}
+               {:id "osm"
+                :source-paths ["src/cljs"
+                               "target/generated/src/cljs"
+                               "examples/osm/src"]
+                :compiler {:output-to "examples/osm/main.js"
+                           :output-dir "examples/osm/out"
+                           :preamble ~js-preamble
+                           :externs ["externs/leaflet-externs.js"
+                                     "externs/jquery-externs.js"
+                                     "externs/slickgrid-externs.js"]
+                           :foreign-libs [{:file "includes/js/osmtogeojson.js"
+                                           :provides ["osmtogeojson"]}]
+                           :cache-analysis true
+                           :optimizations :whitespace
+                           :source-map "examples/osm/main.js.map"}}
+               {:id "hatti"
+                :source-paths ["src/cljs"
+                               "target/generated/src/cljs"]
+                :compiler {:output-to "out/hatti.js"
+                           :output-dir "out"
+                           :optimizations :none
+                           :cache-analysis true
+                           :source-map true}}]})
