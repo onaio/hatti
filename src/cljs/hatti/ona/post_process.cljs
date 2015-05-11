@@ -3,6 +3,7 @@
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
+            [cljsjs.jquery]
             [osmtogeojson]))
 
 ;; OSM POST-PROCESSING

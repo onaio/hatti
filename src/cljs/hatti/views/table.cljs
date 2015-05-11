@@ -9,7 +9,8 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn safe-regex]]))
+            [hatti.utils :refer [click-fn safe-regex]]
+            [cljsjs.slickgrid-with-deps]))
 
 ;; DIVS
 

@@ -1,11 +1,3 @@
-(def js-preamble
-  ["META-INF/resources/webjars/SlickGrid/2.1/lib/jquery-1.7.min.js"
-   "META-INF/resources/webjars/SlickGrid/2.1/lib/jquery.event.drag-2.2.js"
-   "META-INF/resources/webjars/SlickGrid/2.1/slick.core.js"
-   "META-INF/resources/webjars/SlickGrid/2.1/slick.grid.js"
-   "META-INF/resources/webjars/SlickGrid/2.1/controls/slick.pager.js"
-   "META-INF/resources/webjars/SlickGrid/2.1/slick.dataview.js"])
-
 (defproject org.clojars.onaio/hatti "0.1.0-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :dependencies [;; CORE HATTI REQUIREMENTS
@@ -24,7 +16,10 @@
                  [com.andrewmcveigh/cljs-time "0.2.3"]
                  ;; JS REQUIREMENTS
                  [cljsjs/moment "2.9.0-0"]
-                 [cljsjs/leaflet "0.7.3-0"]
+                 [prabhasp/leaflet-cljs "0.7.3-SNAPSHOT"]
+                 [cljsjs/jquery "1.9.1-0"]
+                 [prabhasp/slickgrid-cljs "0.0.1-SNAPSHOT"]
+                 [prabhasp/osmtogeojson-cljs "2.2.5-SNAPSHOT"]
                  ;; TODO: make into cljs packages
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
@@ -55,7 +50,6 @@
               :compiler {
                   :output-to "examples/stolen/main.js"
                   :output-dir "examples/stolen/out"
-                  :preamble ~js-preamble
                   :externs ["includes/externs/leaflet-externs.js"
                             "includes/externs/jquery-externs.js"
                             "includes/externs/slickgrid-externs.js"]
@@ -71,14 +65,13 @@
               :compiler {
                   :output-to "examples/osm/main.js"
                   :output-dir "examples/osm/out"
-                  :preamble ~js-preamble
                   :externs ["externs/leaflet-externs.js"
                             "externs/jquery-externs.js"
                             "externs/slickgrid-externs.js"]
                   :foreign-libs [{:file "includes/js/osmtogeojson.js"
                                   :provides ["osmtogeojson"]}]
                   :cache-analysis true
-                  :optimizations :whitespace
+                  :optimizations :advanced
                   :source-map "examples/osm/main.js.map"}}
              {:id "hatti"
               :source-paths ["src/cljs"

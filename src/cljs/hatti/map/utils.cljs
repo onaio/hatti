@@ -190,9 +190,10 @@
                        (clj->js (assoc nlayers
                                   "Google Satellite" (js* "new L.Google")))
                        (clj->js nlayers))
-        m (.map js/L id #js {:layers (first layers) :zoomControl false})]
+        m (.map js/L id #js {:layers (first layers) :zoomControl false})
+        z ((.. js/L -control -zoom) #js {:position "bottomleft"})]
     ;; zoom control
-    (js* "L.control.zoom({ position: 'bottomleft' }).addTo(m)")
+    (.addTo z m)
     ;; layers control
     (-> ((js* "L.control.layers") named-layers nil #js {:position "bottomleft"})
         (.addTo m))
