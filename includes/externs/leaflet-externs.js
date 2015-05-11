@@ -85,5 +85,7 @@ L.control.Zoom = function(a, o) {};
 /** @return {L.control.Zoom} */
 L.control.zoom = function(a, o) {};
 
+L.control.Zoom.prototype.addTo = function() {};
+
 /** @constructor */
 L.Google = function(a, b) {};
