@@ -25,17 +25,14 @@
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]
                  [com.cognitect/transit-cljs "0.8.188"]]
-
   :plugins [[lein-cljsbuild "1.0.5"]
             [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
-
   :source-paths ["src/cljs"
                  "target/generated/src/clj"
                  "target/generated/src/cljs"
                  "target/classes"]
-
   :clean-targets ["out/hatti" "out/hatti.js"]
-
+  :prep-tasks [["cljx" "once"] "javac" "compile"]
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/generated/src/clj"
                    :rules :clj}
