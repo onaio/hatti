@@ -8,7 +8,7 @@
             [hatti.ona.post-process :refer [integrate-osm-data!]]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
-            [hatti.utils :refer [json->cljs url]]
+            [hatti.utils :refer [json->js url]]
             [hatti.views :as views]))
 
 (enable-console-print!)
@@ -47,7 +47,7 @@
  (let [data-chan (raw-get "data/31066_data.json")
        osm-chan (raw-get "data/31066_data.osm")
        form-chan (http/get "data/31066_form.json")
-       data (-> (<! data-chan) :body json->cljs)
+       data (-> (<! data-chan) :body json->js js->clj)
        form (-> (<! form-chan) :body flatten-form)
        osm-xml (-> (<! osm-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
