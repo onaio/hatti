@@ -23,8 +23,7 @@
                  ;; TODO: make into cljs packages
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
-                 [cljs-http "0.1.17"]
-                 [com.cognitect/transit-cljs "0.8.188"]]
+                 [cljs-http "0.1.17"]]
   :plugins [[lein-cljsbuild "1.0.5"]
             [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
   :source-paths ["src/cljs"
@@ -50,8 +49,6 @@
                   :externs ["includes/externs/leaflet-externs.js"
                             "includes/externs/jquery-externs.js"
                             "includes/externs/slickgrid-externs.js"]
-                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
-                                  :provides ["osmtogeojson"]}]
                   :cache-analysis true
                   :optimizations :whitespace
                   :source-map "examples/stolen/main.js.map"}}
@@ -65,8 +62,6 @@
                   :externs ["externs/leaflet-externs.js"
                             "externs/jquery-externs.js"
                             "externs/slickgrid-externs.js"]
-                  :foreign-libs [{:file "includes/js/osmtogeojson.js"
-                                  :provides ["osmtogeojson"]}]
                   :cache-analysis true
                   :optimizations :advanced
                   :source-map "examples/osm/main.js.map"}}
