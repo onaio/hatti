@@ -63,7 +63,7 @@
                             "externs/jquery-externs.js"
                             "externs/slickgrid-externs.js"]
                   :cache-analysis true
-                  :optimizations :advanced
+                  :optimizations :whitespace
                   :source-map "examples/osm/main.js.map"}}
              {:id "hatti"
               :source-paths ["src/cljs"

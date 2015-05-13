@@ -52,7 +52,7 @@
        osm-xml (-> (<! osm-chan) :body)]
    (shared/update-app-data! shared/app-state data :rerank? true)
    (integrate-osm-data! shared/app-state form osm-xml)
-   (om/root views/map-page
+   (om/root views/tabbed-dataview
             shared/app-state
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
