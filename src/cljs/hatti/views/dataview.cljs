@@ -14,19 +14,20 @@
              [hatti.views.details]
              [hatti.utils :refer [click-fn pluralize-number]]))
 
-(def dataviews
-  [{:view "map"
-    :label "Map"
-    :component map-page}
-   {:view "table"
-    :label "Table"
-    :component table-page}
-   {:view "chart"
-    :label "Summary Charts"
-    :component chart-page}
-   {:view "details"
-    :label "Details"
-    :component details-page}])
+(def dataview-map
+  {:map {:view "map"
+         :label "Map"
+         :component map-page}
+   :table {:view "table"
+           :label "Table"
+           :component table-page}
+   :chart {:view "chart"
+           :label "Summary Charts"
+           :component chart-page}
+   :details {:view "details"
+             :label "Details"
+             :component details-page}})
+(def dataviews (vals dataview-map))
 
 (defmethod dataview-actions :default
   [cursor owner]
@@ -72,12 +73,7 @@
          :no-geopoints? (not has-geodata?)}))
     om/IRenderState
     (render-state [_ {:keys [active-view no-geodata?]}]
-      (let [view->cmp #(case %
-                         "map" map-page
-                         "table" table-page
-                         "summary charts" chart-page
-                         "details" details-page)
-            view->display #(if (= active-view %) "block" "none")
+      (let [view->display #(if (= active-view %) "block" "none")
             view->cls #(when (= active-view %) "clicked")
             activate-view! (fn [view]
                              (om/set-state! owner :active-view view)
