@@ -27,7 +27,6 @@
    :details {:view "details"
              :label "Details"
              :component details-page}})
-(def dataviews (vals dataview-map))
 
 (defmethod dataview-actions :default
   [cursor owner]
@@ -78,6 +77,7 @@
             activate-view! (fn [view]
                              (om/set-state! owner :active-view view)
                              (put! shared/event-chan {:re-render view}))
+            dataviews (map dataview-map (-> app-state :views :all))
             dv->link (fn [{:keys [view label]}]
                        (if (and (= view "map") no-geodata?)
                          [:a {:class "inactive" :title "No geodata"} view]
