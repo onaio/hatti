@@ -117,7 +117,8 @@
    re-formatting depends on field type, eg. name->label substitution.
    Optional: compact? should be true if a short string needs to be returned."
   ([field answer] (format-answer field answer nil))
-  ([field answer language & {:keys [compact?]}]
+  ([field answer language] (format-answer field answer language false))
+  ([field answer language compact?]
    (let [which (cond
                 (image? field) :img
                 (osm? field) :osm

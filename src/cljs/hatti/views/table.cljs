@@ -56,7 +56,7 @@
     (let [indexed-form (zipmap (map :full-name form) form)
           query (aget args "query")
           fmt-subitem (fn [[fname answer]]
-                        (format-answer (get indexed-form fname) answer))
+                        (format-answer (get indexed-form fname) answer nil true))
           filtered (->> item
                         js->clj
                         (map fmt-subitem)
@@ -68,7 +68,7 @@
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field clj-value language :compact? true)))
+    (forms/format-answer field clj-value language true)))
 
 (defn- flat-form->sg-columns
    "Get a set of slick grid column objects when given a flat form."
