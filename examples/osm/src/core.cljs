@@ -9,7 +9,8 @@
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs url]]
-            [hatti.views :as views]))
+            [hatti.views :as views]
+            [hatti.views.map]))
 
 (enable-console-print!)
 

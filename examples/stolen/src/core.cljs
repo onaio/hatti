@@ -8,8 +8,9 @@
             [hatti.ona.forms :refer [flatten-form]]
             [hatti.ona.post-process :refer [integrate-attachments!]]
             [hatti.shared :as shared]
-            [hatti.utils :refer [json->cljs url]]
-            [hatti.views :as views]))
+            [hatti.utils :refer [json->cljs]]
+            [hatti.views :as views]
+            [hatti.views.dataview]))
 
 (enable-console-print!)
 
@@ -28,14 +29,13 @@
                   Tiles courtesy of
                   <a href=\"http://hot.openstreetmap.org/\">
                   Humanitarian OpenStreetMap Team</a>."}])
-(def auth-token "1")
-
+(def auth-token nil)
 
 ;; HELPER
 (defn chart-getter [field-name]
   (let [suffix (str dataset-id ".json?field_name=" field-name)
         chart-url (io/make-url "charts" suffix)]
-    (io/get-url (chart-url field-name) {} auth-token)))
+    (io/get-url chart-url {} auth-token)))
 
 ;; GET AND RENDER
 (go
