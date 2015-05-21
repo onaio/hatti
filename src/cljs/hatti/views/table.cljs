@@ -31,7 +31,7 @@
    and drops fields that have no data (eg. group/note)."
   (->> (concat extra-fields
                (forms/non-meta-fields form)
-               (forms/meta-fields form))
+               (forms/meta-fields form :with-submission-details? true))
        (filter forms/has-data?)))
 
 ;; SLICKGRID HELPER FUNCTIONS

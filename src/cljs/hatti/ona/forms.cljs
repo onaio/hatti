@@ -8,6 +8,12 @@
   {:name "_submission_time" :full-name "_submission_time"
    :label "Submission Time" :type "dateTime"})
 
+(def submitted-by-field
+  {:name "_submitted_by" :full-name "_submitted_by"
+   :label "Submitted by" :type "text"})
+
+(def extra-submission-details [submission-time-field submitted-by-field])
+
 ;; Functions on the FIELD object
 
 (defn field-type-in-set?
@@ -192,6 +198,7 @@
                   (:name field))
                 (case (:name field)
                   "_submission_time" "Submission time"
+                  "_submitted_by" "Submitted by"
                   ""))]
     (if (:label field) field (assoc field :label label))))
 
@@ -226,17 +233,17 @@
 
 (defn meta-fields
   "Get just the meta fields out of the form.
-   Options to re-label meta fileds, or include submission time in meta list."
-  [flat-form & {:keys [relabel? with-submission-time?]
+   Options to re-label meta fields, or include submission time in meta list."
+  [flat-form & {:keys [relabel? with-submission-details?]
                 :or   {relabel? true}}]
   (let [meta-fields (filter meta? flat-form)
-        include-stime (if with-submission-time?
-                        #(conj % submission-time-field)
-                        identity)
+        include-extra-sub-details (if with-submission-details?
+                                    #(into % extra-submission-details)
+                                    identity)
         relabel (if relabel? relabel-meta-field identity)]
     (->> meta-fields
          (map relabel)
-         include-stime)))
+         include-extra-sub-details)))
 
 (defn non-meta-fields
   "Get just the fields in this form that are not meta fields."

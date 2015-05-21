@@ -16,3 +16,4 @@ examples/css
 examples/*/index.html
 examples/*/data
 
+*.iml

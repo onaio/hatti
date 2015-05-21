@@ -69,7 +69,7 @@
                  "Select Field "]
                 [:ul {:id "chart-dropdown-menu" :class "submenu no-dot"}
                  [:li [:span {:class "drop-header"} "Metadata"]]
-                 (to-links (forms/meta-fields form :with-submission-time? true))
+                 (to-links (forms/meta-fields form :with-submission-details? true))
                  [:li [:span {:class "drop-header"} "Questions"]]
                  (to-links (forms/non-meta-fields form))]]])))))
 

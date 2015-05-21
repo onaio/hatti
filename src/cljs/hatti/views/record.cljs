@@ -187,7 +187,7 @@
               (submission-info-wrap
                (when expand-meta?
                  (section-wrap
-                  (for [q (f/meta-fields form :with-submission-time? true)]
+                  (for [q (f/meta-fields form :with-submission-details? true)]
                     (format-as-question-answer view q data language))))
                (section-wrap
                 (for [q (f/non-meta-fields form)]
