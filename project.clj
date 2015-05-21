@@ -22,6 +22,7 @@
                  ;; TODO: make into cljs packages
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
+                 [prismatic/dommy "0.1.2"]
                  [cljs-http "0.1.17"]]
   :source-paths ["src"]
   :plugins [[lein-cljsbuild "1.0.5"]]
@@ -32,4 +33,20 @@
                         :output-dir "out"
                         :optimizations :none
                         :cache-analysis true
-                        :source-map true}}]})
+                        :source-map true}}
+            {:id "test"
+             :source-paths ["src/cljs"
+                            "test/cljs"
+                            "target/generated/src/cljs"]
+             :notify-command ["phantomjs"
+                              "phantom/unit-test.js"
+                              "phantom/unit-test.html"
+                              "target/main-test.js"]
+             :compiler {:output-to "target/main-test.js"
+                        :optimizations :whitespace
+                        :pretty-print true}}]
+   :test-commands {"unit-test"
+                   ["phantomjs"
+                    "phantom/unit-test.js"
+                    "phantom/unit-test.html"
+                    "target/main-test.js"]}})
