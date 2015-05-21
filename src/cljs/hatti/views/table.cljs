@@ -23,7 +23,8 @@
   "Extra fields that will be displayed on the table."
   [{:full-name "_rank" :label "#"
     :name "_rank" :type "integer"}
-   forms/submission-time-field])
+   forms/submission-time-field
+   forms/submitted-by-field])
 
 (defn all-fields [form]
   "Given a (flat-)form, returns fields for table display.
