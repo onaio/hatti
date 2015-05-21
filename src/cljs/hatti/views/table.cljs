@@ -23,8 +23,7 @@
   "Extra fields that will be displayed on the table."
   [{:full-name "_rank" :label "#"
     :name "_rank" :type "integer"}
-   forms/submission-time-field
-   forms/submitted-by-field])
+   forms/submission-time-field])
 
 (defn all-fields [form]
   "Given a (flat-)form, returns fields for table display.
@@ -32,7 +31,7 @@
    and drops fields that have no data (eg. group/note)."
   (->> (concat extra-fields
                (forms/non-meta-fields form)
-               (forms/meta-fields form))
+               (forms/meta-fields form :with-submission-details? true))
        (filter forms/has-data?)))
 
 ;; SLICKGRID HELPER FUNCTIONS
