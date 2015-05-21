@@ -1,0 +1,1 @@
+../hatti/project.clj
