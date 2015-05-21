@@ -1,0 +1,61 @@
+/* Chart-related css, all scoped into chart-holder because we will use
+   it in external embeds using style-scoped, sadly not fully supported. */
+
+.chart-holder .bars rect {
+  fill: steelblue;
+}
+.chart-holder .bars.select-one {
+  background-color: steelblue;
+}
+.chart-holder .bars.select-mult {
+  background-color: #87907D;
+}
+.chart-holder .bars {
+  height: 20px;
+  margin: 2px;
+}
+
+.chart-holder .bars text.in-bar {
+  fill: #fff;
+  font: 12px sans-serif;
+}
+.chart-holder .bars text.out-of-bar {
+  fill: #555;
+  font: 12px sans-serif;
+}
+
+.chart-holder .bar-chart {
+  max-height: 390px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.chart-holder .bar-chart td {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 10px;
+}
+.chart-holder .bar-chart td:nth-child(1),
+.chart-holder .bar-chart th:nth-child(1) { max-width: 125px; min-width: 75px; }
+.chart-holder .bar-chart td:nth-child(2),
+.chart-holder .bar-chart th:nth-child(1) { min-width: 150px; }
+.chart-holder .bar-chart td:nth-child(3),
+.chart-holder .bar-chart th:nth-child(1) { width: 50px; }
+.chart-holder .bar-chart td:nth-child(4),
+.chart-holder .bar-chart th:nth-child(1) { width: 50px; }
+
+.chart-holder .axis text {
+  font: 10px sans-serif;
+}
+.chart-holder .axis text.date {
+  font: 8px sans-serif;
+}
+.chart-holder .axis tick {
+  opacity: 1;
+}
+
+.chart-holder .axis path, .chart-holder .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
