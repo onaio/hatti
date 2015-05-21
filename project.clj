@@ -8,7 +8,7 @@
                  [org.omcljs/om "0.8.8"]
                  ;; HATTI
                  [org.clojars.onaio/hatti "0.1.0-SNAPSHOT"]
-                 [onaio/milia "0.1.2"]
+                 [onaio/milia "0.1.3-SNAPSHOT"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]]
   :plugins [[lein-cljsbuild "1.0.5"]]
