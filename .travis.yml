@@ -1,0 +1,10 @@
+lein: lein2
+language: clojure
+script:
+    - lein2 midje
+    - lein2 cljx
+    - lein2 cljsbuild test
+notifications:
+  email:
+    - tech+travis@ona.io
+  slack: onaio:snkNXgprD498qQv4DgRREKJF
