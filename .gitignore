@@ -17,3 +17,4 @@ examples/*/index.html
 examples/*/data
 
 *.iml
+.idea
