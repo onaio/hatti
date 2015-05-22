@@ -93,7 +93,7 @@
         [:div {:class "language-selector-inner"}
          [:span {:class "dropdown drop-hover"}
           [:i {:class "fa fa-globe" :style {:margin-right ".2em"}}]
-          [:span {:class "t-underline"}
+          [:span
            (if (f/english? current) "EN" (stringify current))]
           [:i {:class "fa fa-angle-down" :style {:margin-left ".5em"}}]
           [:ul {:class "submenu"}
