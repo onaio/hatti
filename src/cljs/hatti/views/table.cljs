@@ -154,7 +154,7 @@
          (when filter-by
            (.setFilterArgs dataview (clj->js {:query filter-by}))
            (.refresh dataview))
-         (when (= re-render "table")
+         (when (= re-render :table)
            ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render table
            (go (<! (timeout 20))
                (.resizeCanvas grid)

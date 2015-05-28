@@ -1,30 +1,32 @@
 (ns hatti.views.dataview
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [put!]]
-             [om.core :as om :include-macros true]
-             [sablono.core :as html :refer-macros [html]]
-             [hatti.ona.forms :as f]
-             [hatti.shared :as shared]
-             [hatti.views :refer [tabbed-dataview
-                                  dataview-infobar dataview-actions
-                                  map-page table-page chart-page details-page]]
-             [hatti.views.map]
-             [hatti.views.table]
-             [hatti.views.chart]
-             [hatti.views.details]
-             [hatti.utils :refer [click-fn pluralize-number]]))
+            [om.core :as om :include-macros true]
+            [sablono.core :as html :refer-macros [html]]
+            [secretary.core :as secretary :refer-macros [defroute]]
+            ;; HATTI Reqs
+            [hatti.ona.forms :as f]
+            [hatti.shared :as shared]
+            [hatti.views :refer [tabbed-dataview
+                                 dataview-infobar dataview-actions
+                                 map-page table-page chart-page details-page]]
+            [hatti.views.map]
+            [hatti.views.table]
+            [hatti.views.chart]
+            [hatti.views.details]
+            [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataview-map
-  {:map {:view "map"
+  {:map {:view :map
          :label "Map"
          :component map-page}
-   :table {:view "table"
+   :table {:view :table
            :label "Table"
            :component table-page}
-   :chart {:view "chart"
+   :chart {:view :chart
            :label "Summary Charts"
            :component chart-page}
-   :details {:view "details"
+   :details {:view :details
              :label "Details"
              :component details-page}})
 
@@ -68,18 +70,21 @@
             has-geodata? (if (some f/geopoint? form)
                            geopoints?
                            (some f/geofield? form))]
-        {:active-view (if has-geodata? "map" "table")
-         :no-geopoints? (not has-geodata?)}))
+        (when-not has-geodata?
+          (om/update! app-state [:views :selected] :table))
+        {:no-geodata? (not has-geodata?)}))
     om/IRenderState
-    (render-state [_ {:keys [active-view no-geodata?]}]
-      (let [view->display #(if (= active-view %) "block" "none")
+    (render-state [_ {:keys [no-geodata?]}]
+      (let [active-view (-> app-state :views :selected)
+            view->display #(if (= active-view %) "block" "none")
             view->cls #(when (= active-view %) "clicked")
             activate-view! (fn [view]
-                             (om/set-state! owner :active-view view)
+                             (println view)
+                             (om/update! app-state [:views :selected] view)
                              (put! shared/event-chan {:re-render view}))
             dataviews (map dataview-map (-> app-state :views :all))
             dv->link (fn [{:keys [view label]}]
-                       (if (and (= view "map") no-geodata?)
+                       (if (and (= view :map) no-geodata?)
                          [:a {:class "inactive" :title "No geodata"} view]
                          [:a {:on-click (click-fn #(activate-view! view))
                               :href "#" :class (view->cls view)} label]))]
