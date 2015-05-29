@@ -40,3 +40,6 @@
 ;; DETAILS PAGE
 (defmulti details-page view-type-dispatcher)
 (defmulti form-details view-type-dispatcher)
+
+;; OVERVIEW PAGE
+(defmulti overview-page view-type-dispatcher)
