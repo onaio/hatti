@@ -201,12 +201,6 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
-(defn- re-render-map! [map-owner]
-  (let [leaflet-map (om/get-state map-owner :leaflet-map)
-        feature-layer (om/get-state map-owner :feature-layer)]
-    (.invalidateSize leaflet-map)
-    (.fitBounds leaflet-map (.getBounds feature-layer))))
-
 (defmethod map-and-markers :default [cursor owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
@@ -220,10 +214,12 @@
       "did-mount loads geojson on map, and starts the event handling loop."
       (let [data (get-in cursor [:data])
             form (om/get-shared owner :flat-form)
-            geojson (mu/as-geojson data form)]
+            geojson (mu/as-geojson data form)
+            rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
+                                          (om/get-state owner :feature-layer))]
         (load-geojson-helper owner geojson)
         (handle-map-events cursor
-                           {:re-render! #(re-render-map! owner)
+                           {:re-render! rerender!
                             :get-id-marker-map
                             #(om/get-state owner :id-marker-map)})))
     om/IWillReceiveProps
