@@ -7,6 +7,7 @@
             [milia.utils.remote :as milia-remote]
             [hatti.ona.forms :refer [flatten-form]]
             [hatti.ona.post-process :refer [integrate-attachments!]]
+            [hatti.routing :as routing]
             [hatti.shared :as shared]
             [hatti.utils :refer [json->cljs]]
             [hatti.views :as views]
@@ -54,3 +55,4 @@
              :shared {:flat-form form
                       :map-config {:mapbox-tiles mapbox-tiles}}
              :opts {:chart-get chart-getter}})))
+(routing/enable-dataview-routing!)
