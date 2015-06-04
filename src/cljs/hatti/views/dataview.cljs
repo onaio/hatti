@@ -60,6 +60,15 @@
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))
 
+(defn activate-view! [view]
+  (let [view (keyword view)
+        views (-> @shared/app-state :views :all)]
+    (when (contains? (set views) view)
+      (shared/transact-app-state! shared/app-state
+                                  [:views :selected]
+                                  (fn [_] view))
+      (put! shared/event-chan {:re-render view}))))
+
 (defmethod tabbed-dataview :default
   [app-state owner opts]
   (reify
@@ -78,16 +87,12 @@
       (let [active-view (-> app-state :views :selected)
             view->display #(if (= active-view %) "block" "none")
             view->cls #(when (= active-view %) "clicked")
-            activate-view! (fn [view]
-                             (println view)
-                             (om/update! app-state [:views :selected] view)
-                             (put! shared/event-chan {:re-render view}))
             dataviews (map dataview-map (-> app-state :views :all))
             dv->link (fn [{:keys [view label]}]
                        (if (and (= view :map) no-geodata?)
                          [:a {:class "inactive" :title "No geodata"} view]
-                         [:a {:on-click (click-fn #(activate-view! view))
-                              :href "#" :class (view->cls view)} label]))]
+                         [:a {:href (str "#/" (name view))
+                              :class (view->cls view)} label]))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar

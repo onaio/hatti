@@ -7,6 +7,7 @@
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.8.8"]
                  [inflections "0.9.7"]
+                 [secretary "1.2.3"]
                  ;; CLJX
                  [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]
                  ;; FOR CHARTS

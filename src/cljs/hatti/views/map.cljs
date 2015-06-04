@@ -1,6 +1,6 @@
 (ns hatti.views.map
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [<! chan put!]]
+  (:require [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
@@ -78,11 +78,23 @@
            (put! shared/event-chan
                  {:view-by (get-in @map-state [:view-by])})))))))
 
+(defn handle-re-render
+  "Handles the re-render event"
+  [map-state {:keys [re-render!]}]
+  (let [event-chan (shared/event-tap)]
+    (go
+     (while true
+       (let [{:keys [re-render] :as e} (<! event-chan)]
+         (when (= re-render :map)
+           (go (<! (timeout 16))
+               (re-render!))))))))
+
 (defn handle-map-events
   "Creates multiple channels and delegates events to them."
   [map-state opts]
   (handle-viewby-events map-state opts)
   (handle-submission-events map-state opts)
+  (handle-re-render map-state opts)
   (handle-data-updates map-state))
 
 ;;;;; OM COMPONENTS
@@ -189,6 +201,12 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
+(defn- re-render-map! [map-owner]
+  (let [leaflet-map (om/get-state map-owner :leaflet-map)
+        feature-layer (om/get-state map-owner :feature-layer)]
+    (.invalidateSize leaflet-map)
+    (.fitBounds leaflet-map (.getBounds feature-layer))))
+
 (defmethod map-and-markers :default [cursor owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
@@ -204,8 +222,10 @@
             form (om/get-shared owner :flat-form)
             geojson (mu/as-geojson data form)]
         (load-geojson-helper owner geojson)
-        (handle-map-events cursor {:get-id-marker-map
-                                 #(om/get-state owner :id-marker-map)})))
+        (handle-map-events cursor
+                           {:re-render! #(re-render-map! owner)
+                            :get-id-marker-map
+                            #(om/get-state owner :id-marker-map)})))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets leaflet geojson if the map data has changed."
