@@ -1,4 +1,4 @@
-(defproject org.clojars.onaio/hatti "0.1.0-SNAPSHOT"
+(defproject org.clojars.onaio/hatti "0.1.1-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :dependencies [;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.6.0"]
@@ -16,10 +16,10 @@
                  [com.andrewmcveigh/cljs-time "0.2.3"]
                  ;; JS REQUIREMENTS
                  [cljsjs/moment "2.9.0-0"]
-                 [prabhasp/leaflet-cljs "0.7.3-SNAPSHOT"]
+                 [prabhasp/leaflet-cljs "0.7.3"]
                  [cljsjs/jquery "1.9.1-0"]
-                 [prabhasp/slickgrid-cljs "0.0.1-SNAPSHOT"]
-                 [prabhasp/osmtogeojson-cljs "2.2.5-SNAPSHOT"]
+                 [prabhasp/slickgrid-cljs "0.0.1"]
+                 [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  ;; TODO: make into cljs packages
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
