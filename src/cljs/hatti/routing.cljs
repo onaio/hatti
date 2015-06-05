@@ -20,6 +20,3 @@
                         navigation
                         #(-> % .-token sec/dispatch!))
     (doto history (.setEnabled true))))
-
-
-
