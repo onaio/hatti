@@ -38,12 +38,15 @@
     om/IWillMount
     (will-mount [_]
       (let [form (om/get-shared owner :flat-form)
-            langs (f/get-languages form)]
+            langs (f/get-languages form)
+            default-lang (f/default-lang langs)]
         (when (f/multilingual? form)
           (shared/transact-app-state!
            shared/app-state
            [:languages]
-           (fn [_] {:all langs :default (f/default-lang langs)})))))
+           (fn [_] {:all langs
+                    :default default-lang
+                    :current default-lang})))))
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
