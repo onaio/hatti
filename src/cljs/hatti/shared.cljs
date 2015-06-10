@@ -78,7 +78,7 @@
 ;; LANGUAGE
 
 (defn language-cursor []
-  (om/ref-cursor (:languages (om/root-cursor (empty-app-state)))))
+  (om/ref-cursor (:languages (om/root-cursor app-state))))
 
 (defn language-selector
    "A language selector and a following divider."
