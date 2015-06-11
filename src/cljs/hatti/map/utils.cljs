@@ -216,6 +216,15 @@
        #(when-not (is-clicked? marker)
           (apply-unclick-style marker))))
 
+(defn- re-render-map! [leaflet-map feature-layer]
+  "Re-renders map by invalidating leaflet size.
+   If map is zoomed out beyond layer-bounds, re-zooms to layer."
+  (let [map-bounds (.getBounds leaflet-map)
+        layer-bounds (.getBounds feature-layer)]
+    (.invalidateSize leaflet-map false)
+    (when-not (.contains layer-bounds map-bounds)
+      (.fitBounds leaflet-map layer-bounds))))
+
 (defn- load-geo-json
   "Create a map with the given GeoJSON data.
    Adds mouse events and centers on the geojson features."
