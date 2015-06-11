@@ -91,6 +91,11 @@
   [field]
   (field-type-in-set? #{"osm"} field))
 
+(defn calculate?
+  "Checks whether a field is a calculate field"
+  [field]
+  (field-type-in-set? #{"calculate"} field))
+
 (defn has-data?
   "Returns false for fields such as note, group, etc. which don't have data"
   [field]
@@ -104,6 +109,7 @@
        (cond
          (time-based? field)  "fa fa-clock-o"
          (numeric? field)     "fa fa-bar-chart"
+         (calculate? field)  "fa fa-bar-chart"
          (categorical? field) "fa fa-bar-chart fa-flip-h-rotate-90"
          :else                "")}])
 

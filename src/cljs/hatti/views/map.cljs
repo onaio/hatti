@@ -97,7 +97,8 @@
             language (:current (om/observe owner (shared/language-cursor)))
             fields (filter #(or (f/categorical? %)
                                 (f/numeric? %)
-                                (f/time-based? %))
+                                (f/time-based? %)
+                                (f/calculate? %))
                                (f/non-meta-fields form))]
         (html
         [:div {:class "legend viewby top left"}

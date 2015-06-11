@@ -52,6 +52,7 @@
    is a list of list of strings. For other types, a list of strings."
   (cond
    (f/select-one? field) raw-answers
+   (f/calculate? field) raw-answers
 ;   (f/numeric? field)    (evenly-spaced-bins raw-answers 5 "int")
 ;   (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
    (f/select-all? field) (->> raw-answers
@@ -66,6 +67,7 @@
                            qualitative-palette
                            (repeat "#f30"))
    (f/numeric? field)    sequential-palette
+   (f/calculate? field)  sequential-palette
    (f/time-based? field) sequential-palette
    (f/select-all? field) (repeat "#f30")))
 
@@ -81,8 +83,9 @@
         ans-s (preprocess-answers field raw-answers)
         answer->count (frequencies (flatten ans-s))
         sorted (cond
-                (f/categorical? field) (map first
-                                            (sort-by second > answer->count))
+                 (or (f/categorical? field)
+                     (f/calculate? field)) (map first
+                                                (sort-by second > answer->count))
                 (or (f/time-based? field) (f/numeric? field)) (-> ans-s meta :bins))
         sorted-nil-at-end (move-nil-to-end sorted)
         colors (field->colors field)
