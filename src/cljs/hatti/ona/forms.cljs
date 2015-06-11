@@ -109,6 +109,7 @@
        (cond
          (time-based? field)  "fa fa-clock-o"
          (numeric? field)     "fa fa-bar-chart"
+         (calculate? field)  "fa fa-bar-chart"
          (categorical? field) "fa fa-bar-chart fa-flip-h-rotate-90"
          :else                "")}])
 
