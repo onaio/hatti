@@ -93,7 +93,8 @@
             dataviews (map dataview-map (-> app-state :views :all))
             dv->link (fn [{:keys [view label]}]
                        (if (and (= view :map) no-geodata?)
-                         [:a {:class "inactive" :title "No geodata"} view]
+                         [:a {:class "inactive" :title "No geodata"}
+                          (name view)]
                          [:a {:href (str "#/" (name view))
                               :class (view->cls view)} label]))]
         (html
