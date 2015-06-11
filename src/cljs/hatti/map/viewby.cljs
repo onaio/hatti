@@ -67,6 +67,7 @@
                            qualitative-palette
                            (repeat "#f30"))
    (f/numeric? field)    sequential-palette
+   (f/calculate? field)  sequential-palette
    (f/time-based? field) sequential-palette
    (f/select-all? field) (repeat "#f30")))
 
