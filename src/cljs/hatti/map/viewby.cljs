@@ -61,15 +61,15 @@
 (defn field->colors [field]
   "Returns the appropriate set of colors given the field."
   (cond
-   ;; if too many options w/in select-one field, fall back to select-all style
-   (f/select-one? field) (if (<= (count (:children field))
-                                 (count qualitative-palette))
-                           qualitative-palette
-                           (repeat "#f30"))
-   (f/numeric? field)    sequential-palette
-   (f/calculate? field)  sequential-palette
-   (f/time-based? field) sequential-palette
-   (f/select-all? field) (repeat "#f30")))
+    ;; if too many options w/in select-one field, fall back to select-all style
+    (f/select-one? field) (if (<= (count (:children field))
+                                  (count qualitative-palette))
+                            qualitative-palette
+                            (repeat "#f30"))
+    (f/numeric? field)    sequential-palette
+    (f/calculate? field)  sequential-palette
+    (f/time-based? field) sequential-palette
+    (f/select-all? field) (repeat "#f30")))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
