@@ -1,7 +1,7 @@
 (ns hatti.map.viewby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :as s]
-;            [ona.utils.charts :refer [evenly-spaced-bins]]
+            [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as f]
             [hatti.map.utils :as mu]))
 
@@ -51,12 +51,12 @@
   "Preproccesses answers depending on the field. For multi-selects, return type
    is a list of list of strings. For other types, a list of strings."
   (cond
-   (f/select-one? field) raw-answers
-   (f/calculate? field) raw-answers
-;   (f/numeric? field)    (evenly-spaced-bins raw-answers 5 "int")
-;   (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
-   (f/select-all? field) (->> raw-answers
-                              (map #(when % (s/split % #" "))))))
+    (f/select-one? field) raw-answers
+    (f/calculate? field) raw-answers
+    (f/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
+    (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
+    (f/select-all? field) (->> raw-answers
+                               (map #(when % (s/split % #" "))))))
 
 (defn field->colors [field]
   "Returns the appropriate set of colors given the field."
