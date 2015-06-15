@@ -103,7 +103,7 @@
            (map dv->link dataviews)
            (om/build dataview-infobar (-> app-state :dataset-info))]
           (for [{:keys [component view]} dataviews]
-            [:div {:class (str "tab-page " view "-page")
+            [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}
              [:div.tab-content {:id (str "tab-content" view)}
               (om/build component app-state {:opts opts})]])])))))
