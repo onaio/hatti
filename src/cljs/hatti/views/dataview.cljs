@@ -30,7 +30,7 @@
            :label "Summary Charts"
            :component chart-page}
    :details {:view :details
-             :label "Details"
+             :label "Settings"
              :component details-page}})
 
 (defmethod dataview-actions :default
@@ -72,7 +72,7 @@
     (when (contains? (set views) view)
       (shared/transact-app-state! shared/app-state
                                   [:views :selected]
-                                  (fn [_] view))
+                                    (fn [_] view))
       (put! shared/event-chan {:re-render view}))))
 
 (defmethod tabbed-dataview :default
@@ -98,8 +98,8 @@
                        (if (and (= view :map) no-geodata?)
                          [:a {:class "inactive" :title "No geodata"}
                           (name view)]
-                         [:a {:href (str "#/" (name view))
-                              :class (view->cls view)} label]))]
+                         [:a {:on-click (click-fn #(activate-view! view))
+                              :href "#" :class (view->cls view)} label]))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
