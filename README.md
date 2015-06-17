@@ -110,10 +110,10 @@ There may be some components which also need some special treatment *within* oth
 (defmulti single-submission-view
   (fn [cursor owner & _]
     [(om/get-shared owner :view-type) (-> cursor :selected-view)]))
-(defn single-submission-view [:ona-default :map]
+(defmethod single-submission-view [:ona-default :map]
   (fn [cursor owner opts]
     ...))
-(defn single-submission-view [:ona-default :table]
+(defmethod single-submission-view [:ona-default :table]
   (fn [cursor owner opts]
     ...))
 ```
