@@ -39,6 +39,19 @@
            (om/update! map-state [:view-by] {})
            (mu/clear-all-styles markers)))))))
 
+(defn select-record [record-key record-value map-state get-id-marker-map]
+  "Select the first record you find, where the corresponding
+   value for record-key is record-value."
+  (let [record (->> (:data @map-state)
+                    (filter #(= record-value (get % record-key)))
+                    first)
+        prev-marker (get-in @map-state [:submission-clicked :marker])
+        marker (get (get-id-marker-map) (get record "_id"))]
+    (om/update! map-state [:submission-clicked]
+                {:data record
+                 :marker marker
+                 :prev-marker prev-marker})))
+
 (defn handle-submission-events
   "Listens to sumission events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
@@ -53,16 +66,8 @@
            (om/update! map-state [:submission-clicked]
                        {:data nil :prev-marker prev-marker}))
          (when submission-to-rank
-           (let [rank submission-to-rank
-                 new-data (-> (filter
-                               #(= rank (get % "_rank"))
-                               (:data @map-state))
-                              first)]
-             (om/update! map-state [:submission-clicked]
-                         {:data new-data
-                          :marker (get (get-id-marker-map)
-                                       (get new-data "_id"))
-                          :prev-marker prev-marker}))))))))
+           (select-record "_rank" submission-to-rank
+                          map-state get-id-marker-map)))))))
 
 (defn handle-data-updates
   "Fires events that need to be re-fired when data updates."
