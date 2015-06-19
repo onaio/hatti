@@ -1,6 +1,7 @@
 (ns hatti.map.viewby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :as s]
+            [hatti.utils :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as f]
             [hatti.map.utils :as mu]))
@@ -52,6 +53,7 @@
    is a list of list of strings. For other types, a list of strings."
   (cond
     (f/select-one? field) raw-answers
+    (f/text? field) raw-answers
     (f/calculate? field) raw-answers
     (f/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
     (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
@@ -66,9 +68,10 @@
                                   (count qualitative-palette))
                             qualitative-palette
                             (repeat "#f30"))
+    (f/calculate? field)  qualitative-palette
     (f/numeric? field)    sequential-palette
-    (f/calculate? field)  sequential-palette
     (f/time-based? field) sequential-palette
+    (f/text? field) (repeat "#f30")
     (f/select-all? field) (repeat "#f30")))
 
 (defn viewby-info
@@ -84,6 +87,7 @@
         answer->count (frequencies (flatten ans-s))
         sorted (cond
                  (or (f/categorical? field)
+                     (f/text? field)
                      (f/calculate? field)) (map first
                                                 (sort-by second > answer->count))
                 (or (f/time-based? field) (f/numeric? field)) (-> ans-s meta :bins))
@@ -121,6 +125,13 @@
     (doseq [marker markers]
       (mu/re-style-marker m->s marker)
       (mu/bring-to-top-if-selected id-selected? marker))))
+
+(defn filtered-answer-selections
+  [answers query]
+  "Given a list of answers + query, returns map from answers to true/false.
+   True if query is in the answer, false if not."
+  (let [text-is-in-answer (map #(re-find (safe-regex query) %) answers)]
+    (zipmap answers text-is-in-answer)))
 
 (defn toggle-answer-selected
   "This function appropriately toggles answer->selected? when answer is clicked

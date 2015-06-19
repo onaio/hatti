@@ -15,9 +15,14 @@
 (defmulti map-geofield-chooser view-type-dispatcher)
 (defmulti map-and-markers view-type-dispatcher)
 (defmulti map-record-legend view-type-dispatcher)
+
 (defmulti map-viewby-legend view-type-dispatcher)
-(defmulti map-viewby-answer-legend view-type-dispatcher)
 (defmulti map-viewby-menu view-type-dispatcher)
+
+(defmulti map-viewby-answer-legend view-type-dispatcher)
+(defmulti map-viewby-answer-close view-type-dispatcher)
+(defmulti togglable-viewby-answer-list view-type-dispatcher)
+(defmulti searchable-viewby-answer-list view-type-dispatcher)
 
 ;; TABLE
 (defmulti table-page view-type-dispatcher)
