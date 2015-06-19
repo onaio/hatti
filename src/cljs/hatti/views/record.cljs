@@ -176,7 +176,7 @@
                [:p
                 (str "Submitted at " (.format sdatetime "LT")
                         " on " (.format sdatetime "ll")) [:br]
-                [:span (str "Instance ID: " instance-id)]
+                [:span (str "Record ID: " instance-id)]
                 (om/build edit-delete instance-id {:opts opts})
                 [:span {:class "expand-meta right"}
                  [:a {:href "#"
