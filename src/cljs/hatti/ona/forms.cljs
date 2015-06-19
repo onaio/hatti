@@ -107,9 +107,10 @@
   "Get the icon relevant to the given field (depending on its type)."
   [:i {:class
        (cond
+         (text? field)        "fa fa-font"
          (time-based? field)  "fa fa-clock-o"
          (numeric? field)     "fa fa-bar-chart"
-         (calculate? field)  "fa fa-bar-chart"
+         (calculate? field)   "fa fa-bar-chart"
          (categorical? field) "fa fa-bar-chart fa-flip-h-rotate-90"
          :else                "")}])
 
