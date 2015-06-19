@@ -105,5 +105,5 @@
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}
-             [:div.tab-content {:id (str "tab-content" view)}
+             [:div.tab-content {:id (str "tab-content" (name view))}
               (om/build component app-state {:opts opts})]])])))))
