@@ -60,11 +60,17 @@
     (go
      (while true
        (let [e (<! event-chan)
-             {:keys [submission-to-rank submission-unclicked]} e
+             {:keys [submission-to-rank submission-unclicked
+                     select-submission]} e
              prev-marker (get-in @map-state [:submission-clicked :marker])]
+         (.log js/console (clj->js e))
          (when submission-unclicked
            (om/update! map-state [:submission-clicked]
                        {:data nil :prev-marker prev-marker}))
+         (when select-submission
+           (let [[k v] select-submission]
+             (.log js/console (clj->js select-submission))
+             (select-record k v map-state get-id-marker-map)))
          (when submission-to-rank
            (select-record "_rank" submission-to-rank
                           map-state get-id-marker-map)))))))
