@@ -72,7 +72,7 @@
     (when (contains? (set views) view)
       (shared/transact-app-state! shared/app-state
                                   [:views :selected]
-                                    (fn [_] view))
+                                  (fn [_] view))
       (put! shared/event-chan {:re-render view}))))
 
 (defmethod tabbed-dataview :default
