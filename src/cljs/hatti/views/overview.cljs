@@ -1,7 +1,6 @@
 (ns hatti.views.overview
-  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
-            [sablono.core :as html :refer-macros [html]]
+            [sablono.core :refer-macros [html]]
             [hatti.views :refer [overview-page]]))
 
 
