@@ -38,7 +38,7 @@
 (defmulti edit-delete view-type-dispatcher)
 
 ;; DETAILS PAGE
-(defmulti details-page view-type-dispatcher)
+(defmulti settings-page view-type-dispatcher)
 (defmulti form-details view-type-dispatcher)
 
 ;; OVERVIEW PAGE

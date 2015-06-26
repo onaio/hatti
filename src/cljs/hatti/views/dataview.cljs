@@ -31,7 +31,7 @@
            :component chart-page}
    :details {:view :details
              :label "Settings"
-             :component details-page}})
+             :component settings-page}})
 
 (defmethod dataview-actions :default
   [cursor owner]

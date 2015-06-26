@@ -75,8 +75,8 @@ To render the dataview into your application, you'll need something like the fol
      * `chart-chooser` (cursor: nil)
      * `list-of-charts` (cursor: chart-page)
        * `single-chart` (cursor: chart-page chart-data >element)
-   * `details-page` (cursor: dataset-info)
-     * (details-page will be super basic; it will just display the name / description / active-inactive status, and not allow for any editing of data)
+   * `settings-page` (cursor: dataset-info)
+     * (settings-page will be super basic; it will just display the name / description / active-inactive status, and not allow for any editing of data)
 
 ## Hatti structure (proposal)
 
