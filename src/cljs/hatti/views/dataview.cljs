@@ -98,8 +98,8 @@
                        (if (and (= view :map) no-geodata?)
                          [:a {:class "inactive" :title "No geodata"}
                           (name view)]
-                         [:a {:on-click (click-fn #(activate-view! view))
-                              :href "#" :class (view->cls view)} label]))]
+                         [:a {:href (str "#/" (name view))
+                              :class (view->cls view)} label]))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
