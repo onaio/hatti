@@ -2,7 +2,7 @@
    (:require-macros [cljs.core.async.macros :refer [go]])
    (:require [om.core :as om :include-macros true]
              [sablono.core :as html :refer-macros [html]]
-             [hatti.views :refer [form-details details-page]]))
+             [hatti.views :refer [form-details settings-page]]))
 
 (defmethod form-details :default
   [form owner]

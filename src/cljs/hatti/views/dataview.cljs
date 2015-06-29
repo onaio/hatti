@@ -3,21 +3,24 @@
   (:require [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [secretary.core :as secretary :refer-macros [defroute]]
-            ;; HATTI Reqs
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
-                                 map-page table-page chart-page details-page]]
+                                 map-page table-page chart-page settings-page
+                                 overview-page]]
             [hatti.views.map]
             [hatti.views.table]
             [hatti.views.chart]
             [hatti.views.details]
+            [hatti.views.overview]
             [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataview-map
-  {:map {:view :map
+  {:overview {:view "overview"
+              :label "Overview"
+              :component overview-page}
+   :map {:view "map"
          :label "Map"
          :component map-page}
    :table {:view :table
@@ -27,8 +30,8 @@
            :label "Summary Charts"
            :component chart-page}
    :details {:view :details
-             :label "Details"
-             :component details-page}})
+             :label "Settings"
+             :component settings-page}})
 
 (defmethod dataview-actions :default
   [cursor owner]
