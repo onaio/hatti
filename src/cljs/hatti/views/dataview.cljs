@@ -12,7 +12,7 @@
             [hatti.views.map]
             [hatti.views.table]
             [hatti.views.chart]
-            [hatti.views.details]
+            [hatti.views.settings]
             [hatti.views.overview]
             [hatti.utils :refer [click-fn pluralize-number]]))
 
@@ -29,7 +29,7 @@
    :chart {:view :chart
            :label "Summary Charts"
            :component chart-page}
-   :details {:view :details
+   :settings {:view :settings
              :label "Settings"
              :component settings-page}})
 

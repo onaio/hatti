@@ -33,8 +33,8 @@
   "An initial, empty, app-state, which can be modified to change dataviews."
   []
   (atom
-   {:views {:all [:map :table :chart :details]
-            :selected :map}
+   {:views {:all [:overview :map :table :chart :settings]
+            :selected :overview}
     :map-page {:data []
                :submission-clicked {:data nil}
                :geofield {}}

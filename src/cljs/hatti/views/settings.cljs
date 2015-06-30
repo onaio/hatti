@@ -1,4 +1,4 @@
-(ns hatti.views.details
+(ns hatti.views.settings
    (:require-macros [cljs.core.async.macros :refer [go]])
    (:require [om.core :as om :include-macros true]
              [sablono.core :as html :refer-macros [html]]
@@ -6,7 +6,7 @@
 
 (defmethod form-details :default
   [form owner]
-  "Form section of the Details page, very basic."
+  "Form section of the Settings page, very basic."
   (om/component
    (let [{:keys [title description downloadable id_string editing?]} form]
      (html
@@ -26,9 +26,9 @@
          [:span {:class "detail-form-active"}
           (if downloadable "Active" "Inactive")]]]]))))
 
-(defmethod details-page :default
+(defmethod settings-page :default
   [{:keys [dataset-info]} owner]
-  "Om component for the whole details page."
+  "Om component for the whole Settings page."
   (om/component
    (html
     [:div.container
