@@ -82,12 +82,12 @@
     (init-state [_]
       (let [form (om/get-shared owner :flat-form)
             geopoints? (-> app-state :dataset-info :instances_with_geopoints)
-            has-geodata? (if (some f/geopoint? form)
-                           geopoints?
-                           (some f/geofield? form))]
-        (when-not has-geodata?
+            no-geodata? (not (if (some f/geopoint? form)
+                               geopoints?
+                               (some f/geofield? form)))]
+        (when (and no-geodata? (= :map (-> app-state :views :selected)))
           (om/update! app-state [:views :selected] :table))
-        {:no-geodata? (not has-geodata?)}))
+        {:no-geodata? no-geodata?}))
     om/IRenderState
     (render-state [_ {:keys [no-geodata?]}]
       (let [active-view (-> app-state :views :selected)
