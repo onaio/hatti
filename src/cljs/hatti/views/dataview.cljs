@@ -17,10 +17,10 @@
             [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataview-map
-  {:overview {:view "overview"
+  {:overview {:view :overview
               :label "Overview"
               :component overview-page}
-   :map {:view "map"
+   :map {:view :map
          :label "Map"
          :component map-page}
    :table {:view :table
