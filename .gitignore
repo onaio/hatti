@@ -16,6 +16,7 @@ examples/css
 examples/*/index.html
 examples/*/data
 
+*.asc
 *.iml
 .lein-failures
 .idea
