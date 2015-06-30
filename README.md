@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/onaio/hatti.svg?branch=master)](https://travis-ci.org/onaio/hatti)
+
 # hatti
 
 A cljs dataview from [Ona](http://beta.ona.io).
