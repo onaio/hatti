@@ -21,8 +21,8 @@
 
 (defmulti map-viewby-answer-legend view-type-dispatcher)
 (defmulti map-viewby-answer-close view-type-dispatcher)
-(defmulti togglable-viewby-answer-list view-type-dispatcher)
-(defmulti searchable-viewby-answer-list view-type-dispatcher)
+(defmulti viewby-answer-list view-type-dispatcher)
+(defmulti viewby-answer-list-filter view-type-dispatcher)
 
 ;; TABLE
 (defmulti table-page view-type-dispatcher)

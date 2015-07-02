@@ -98,6 +98,7 @@
                   :answer->count answer->count
                   :answer->selected? (all-but-nil-selected sorted)
                   :answer->color (zipmap sorted colors)
+                  :visible-answers sorted-nil-at-end
                   :field field}]
     (cond
       (f/select-all? field) (merge defaults {:id-color #(first colors)})
@@ -126,23 +127,40 @@
       (mu/re-style-marker m->s marker)
       (mu/bring-to-top-if-selected id-selected? marker))))
 
-(defn filtered-answer-selections
-  [answers query]
+(defn filter-answer-data-structures
+  [answers query field language]
   "Given a list of answers + query, returns map from answers to true/false.
    True if query is in the answer, false if not."
-  (let [text-is-in-answer (map #(re-find (safe-regex query) %) answers)]
-    (zipmap answers text-is-in-answer)))
+  (let [query-present? (fn [ans]
+                         (re-find (safe-regex query)
+                                  (f/format-answer field ans language)))]
+    {:visible-answers (filter query-present? answers)
+     :answer->selected? (zipmap answers (map query-present? answers))}))
 
 (defn toggle-answer-selected
   "This function appropriately toggles answer->selected? when answer is clicked
    answer->selected? is a map from answers to true/false. Special rules:
    First click = select the answer. If nothing clicked, make everything clicked."
-  [answer->selected? answer]
-  (let [answers (keys answer->selected?)
-        all-false (zipmap answers (repeat false))]
-    (if (nil? answer) ; nil cannot be selected or deselected
+  [answer->selected? visible-answers answer]
+  (let [all-answers (vals answer->selected?)
+        all-visible-selected? (fn [a->s visible]
+                                (println (clj->js {:a->s a->s :visible visible
+                                                   :filtered (->> a->s (filter second) keys set)
+                                                   :svis (set visible)}))
+                                (= (set visible)
+                                   (->> a->s (filter second) keys set)))]
+    (if (nil? answer)
+      ; nil cannot be selected or deselected: no-change
       answer->selected?
-      (if (= (all-but-nil-selected answers) answer->selected?)
-        (merge all-false {answer true})
-        (let [new (update-in answer->selected? [answer] not)]
-          (if (= new all-false) (all-but-nil-selected answers) new))))))
+      ; else -> the logic begins
+      (if (all-visible-selected? answer->selected? visible-answers)
+        ; first click -> *just* select this answer
+        (merge (zipmap all-answers (repeat false)) {answer true})
+        ; not first click ->  toggle this answer, leave the rest
+        (let [toggled (update-in answer->selected? [answer] not)]
+          (if (every? false? (vals toggled))
+            ; special rule: nothing is clicked -> make everything clicked
+            (merge (zipmap all-answers (repeat false))
+                   (all-but-nil-selected visible-answers))
+            ; else: some things are clicked -> leave alone
+            toggled))))))
