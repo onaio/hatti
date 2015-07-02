@@ -144,9 +144,6 @@
   [answer->selected? visible-answers answer]
   (let [all-answers (vals answer->selected?)
         all-visible-selected? (fn [a->s visible]
-                                (println (clj->js {:a->s a->s :visible visible
-                                                   :filtered (->> a->s (filter second) keys set)
-                                                   :svis (set visible)}))
                                 (= (set visible)
                                    (->> a->s (filter second) keys set)))]
     (if (nil? answer)
