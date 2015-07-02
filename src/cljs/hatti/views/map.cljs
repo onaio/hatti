@@ -8,10 +8,12 @@
             [hatti.map.viewby :as vb]
             [hatti.map.utils :as mu]
             [hatti.shared :as shared]
-            [hatti.views :refer [map-page map-and-markers map-geofield-chooser
-                                 map-record-legend submission-view
-                                 map-viewby-legend map-viewby-menu
-                                 map-viewby-answer-legend]]
+            [hatti.views :as views
+             :refer [map-page map-and-markers map-geofield-chooser
+                     map-record-legend submission-view
+                     map-viewby-legend map-viewby-menu
+                     viewby-answer-list viewby-answer-list-filter
+                     map-viewby-answer-legend map-viewby-answer-close]]
             [hatti.views.record]))
 
 ;;;;; EVENT HANDLERS
@@ -109,6 +111,7 @@
             language (:current (om/observe owner (shared/language-cursor)))
             fields (filter #(or (f/categorical? %)
                                 (f/numeric? %)
+                                (f/text? %)
                                 (f/time-based? %)
                                 (f/calculate? %))
                                (f/non-meta-fields form))]
@@ -130,39 +133,74 @@
                        :href "#" :data-question-name name}
                        (get-icon field) (get-label field language)]])))]]])))))
 
+(defmethod map-viewby-answer-close :default
+  [_ owner]
+  (om/component
+   (html [:a {:class "btn-close right" :href "#"
+              :on-click
+              (click-fn
+               #(put! shared/event-chan {:view-by-closed true}))} "×"])))
+
+(defmethod viewby-answer-list-filter :default
+  [cursor owner]
+  (om/component
+   (let [{:keys [answers field]} cursor
+         language (:current (om/observe owner (shared/language-cursor)))
+         filter! (fn [query]
+                   (let [{:keys [visible-answers answer->selected?]}
+                           (vb/filter-answer-data-structures answers query field language)]
+                     (om/update! cursor :visible-answers visible-answers)
+                     (om/update! cursor :answer->selected? answer->selected?))
+                   (put! shared/event-chan {:view-by-filtered true}))]
+     (html
+      (when (or (f/text? field) (f/categorical? field) (f/calculate? field))
+        [:input {:type "text"
+                 :placeholder "Type or click to filter:"
+                 :on-key-up (fn [e] (filter! (.-value (.-target e))))}])))))
+
+(defmethod viewby-answer-list :default
+  [cursor owner]
+  (om/component
+   (let [{:keys [answer->color answer->count answer->selected?
+                 answers field visible-answers]} cursor
+         language (:current (om/observe owner (shared/language-cursor)))
+         toggle! (fn [ans]
+                   (om/transact! cursor :answer->selected?
+                                 #(vb/toggle-answer-selected %
+                                                             visible-answers
+                                                             ans))
+                   (put! shared/event-chan {:view-by-filtered true}))]
+     (html
+      [:ul
+       (om/build viewby-answer-list-filter cursor)
+       (for [answer visible-answers]
+         (let [selected? (answer->selected? answer)
+               col (answer->color answer)
+               acount (or (answer->count answer) 0)
+               answer-s (format-answer field answer language)]
+           [:li
+            [:a (when answer {:href "#"
+                              :on-click (click-fn #(toggle! answer))})
+             [:div
+              [:div {:class "small-circle"
+                     :style {:background-color (if selected? col vb/grey)}}]
+              [:div (when-not selected? {:style {:color vb/grey}})
+               (str answer-s " (" acount ")")]]]]))]))))
+
+
 (defmethod map-viewby-answer-legend :default
   [cursor owner]
   (reify
     om/IRender
     (render [_]
-      (let [{:keys [answer->color answer->count answer->selected?
-                    answers field]} cursor
-            language (:current (om/observe owner (shared/language-cursor)))
-            toggle! (fn [ans]
-                      (om/transact! cursor :answer->selected?
-                                    #(vb/toggle-answer-selected % ans))
-                      (put! shared/event-chan {:view-by-filtered true}))]
+      (let [language (:current (om/observe owner (shared/language-cursor)))
+            {:keys [field]} cursor]
         (html
          [:div {:class "legend viewby top left"}
-          [:a {:on-click (click-fn
-                          #(put! shared/event-chan {:view-by-closed true}))
-               :class "btn-close right" :href "#"} "×" ]
+          (om/build map-viewby-answer-close nil)
           [:div {:class "pure-menu pure-menu-open"}
            [:h4 (get-label field language)]
-           [:ul
-            [:li.instruction "Click to filter:"]
-            (for [answer answers]
-              (let [selected? (answer->selected? answer)
-                    col (answer->color answer)
-                    acount (or (answer->count answer) 0)
-                    answer-s (format-answer field answer language)]
-                [:li
-                 [:a (when answer {:href "#" :on-click (click-fn #(toggle! answer))})
-                  [:div
-                   [:div {:class "small-circle"
-                          :style {:background-color (if selected? col vb/grey)}}]
-                   [:div (when-not selected? {:style {:color vb/grey}})
-                    (str answer-s " (" acount ")")]]]]))]]])))))
+           (om/build viewby-answer-list cursor)]])))))
 
 (defmethod map-viewby-legend :default
   [{:keys [view-by dataset-info]} owner opts]

@@ -1,6 +1,7 @@
 (ns hatti.map.viewby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :as s]
+            [hatti.utils :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as f]
             [hatti.map.utils :as mu]))
@@ -52,6 +53,7 @@
    is a list of list of strings. For other types, a list of strings."
   (cond
     (f/select-one? field) raw-answers
+    (f/text? field) raw-answers
     (f/calculate? field) raw-answers
     (f/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
     (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
@@ -66,9 +68,10 @@
                                   (count qualitative-palette))
                             qualitative-palette
                             (repeat "#f30"))
+    (f/calculate? field)  qualitative-palette
     (f/numeric? field)    sequential-palette
-    (f/calculate? field)  sequential-palette
     (f/time-based? field) sequential-palette
+    (f/text? field) (repeat "#f30")
     (f/select-all? field) (repeat "#f30")))
 
 (defn viewby-info
@@ -84,6 +87,7 @@
         answer->count (frequencies (flatten ans-s))
         sorted (cond
                  (or (f/categorical? field)
+                     (f/text? field)
                      (f/calculate? field)) (map first
                                                 (sort-by second > answer->count))
                 (or (f/time-based? field) (f/numeric? field)) (-> ans-s meta :bins))
@@ -94,6 +98,7 @@
                   :answer->count answer->count
                   :answer->selected? (all-but-nil-selected sorted)
                   :answer->color (zipmap sorted colors)
+                  :visible-answers sorted-nil-at-end
                   :field field}]
     (cond
       (f/select-all? field) (merge defaults {:id-color #(first colors)})
@@ -122,16 +127,37 @@
       (mu/re-style-marker m->s marker)
       (mu/bring-to-top-if-selected id-selected? marker))))
 
+(defn filter-answer-data-structures
+  [answers query field language]
+  "Given a list of answers + query, returns map from answers to true/false.
+   True if query is in the answer, false if not."
+  (let [query-present? (fn [ans]
+                         (re-find (safe-regex query)
+                                  (f/format-answer field ans language)))]
+    {:visible-answers (filter query-present? answers)
+     :answer->selected? (zipmap answers (map query-present? answers))}))
+
 (defn toggle-answer-selected
   "This function appropriately toggles answer->selected? when answer is clicked
    answer->selected? is a map from answers to true/false. Special rules:
    First click = select the answer. If nothing clicked, make everything clicked."
-  [answer->selected? answer]
-  (let [answers (keys answer->selected?)
-        all-false (zipmap answers (repeat false))]
-    (if (nil? answer) ; nil cannot be selected or deselected
+  [answer->selected? visible-answers answer]
+  (let [all-answers (vals answer->selected?)
+        all-visible-selected? (fn [a->s visible]
+                                (= (set visible)
+                                   (->> a->s (filter second) keys set)))]
+    (if (nil? answer)
+      ; nil cannot be selected or deselected: no-change
       answer->selected?
-      (if (= (all-but-nil-selected answers) answer->selected?)
-        (merge all-false {answer true})
-        (let [new (update-in answer->selected? [answer] not)]
-          (if (= new all-false) (all-but-nil-selected answers) new))))))
+      ; else -> the logic begins
+      (if (all-visible-selected? answer->selected? visible-answers)
+        ; first click -> *just* select this answer
+        (merge (zipmap all-answers (repeat false)) {answer true})
+        ; not first click ->  toggle this answer, leave the rest
+        (let [toggled (update-in answer->selected? [answer] not)]
+          (if (every? false? (vals toggled))
+            ; special rule: nothing is clicked -> make everything clicked
+            (merge (zipmap all-answers (repeat false))
+                   (all-but-nil-selected visible-answers))
+            ; else: some things are clicked -> leave alone
+            toggled))))))
