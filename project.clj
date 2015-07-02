@@ -7,7 +7,7 @@
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.8.8"]
                  ;; HATTI
-                 [org.clojars.onaio/hatti "0.1.1-SNAPSHOT"]
+                 [org.clojars.onaio/hatti "0.1.3-SNAPSHOT"]
                  [onaio/milia "0.1.3-SNAPSHOT"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]]
