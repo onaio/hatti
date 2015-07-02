@@ -79,12 +79,14 @@
      :small_download_url (str file-url "&suffix=small")}))
 
 (defn get-attach-map
-  "Helper function for integrate attachments; returns a map from
+  "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
   [record attachments]
   (let [attachments (or attachments (get record "_attachments"))
-        fnames (map #(-> (get % "filename") last-url-param) attachments)]
-    (zipmap fnames (map url-obj attachments))))
+        fnames (map #(-> (get % "filename") last-url-param) attachments)
+        fname->urlobj (zipmap fnames (map url-obj attachments))]
+    ;; If urlobj isn't found, we'll just return filename
+    (fn [fname] (get fname->urlobj fname fname))))
 
 (defn integrate-attachments
   "Inlines media data from within _attachments into each record."
