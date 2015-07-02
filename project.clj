@@ -1,4 +1,4 @@
-(defproject org.clojars.onaio/hatti "0.1.3-SNAPSHOT"
+(defproject org.clojars.onaio/hatti "0.1.4-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :dependencies [;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.7.0"]
