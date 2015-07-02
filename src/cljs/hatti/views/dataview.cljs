@@ -93,7 +93,8 @@
       (let [active-view (-> app-state :views :selected)
             view->display #(if (= active-view %) "block" "none")
             view->cls #(when (= active-view %) "clicked")
-            dataviews (map dataview-map (-> app-state :views :all))
+            dataviews (->> (-> app-state :views :all)
+                           (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
                        (if (and (= view :map) no-geodata?)
                          [:a {:class "inactive" :title "No geodata"}
