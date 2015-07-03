@@ -28,8 +28,7 @@
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild {
     :builds [{:id "stolen"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"
+              :source-paths ["src"
                              "examples/stolen/src" ]
               :compiler {
                   :output-to "examples/stolen/main.js"
@@ -41,8 +40,7 @@
                   :optimizations :whitespace
                   :source-map "examples/stolen/main.js.map"}}
              {:id "osm"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"
+              :source-paths ["src"
                              "examples/osm/src" ]
               :compiler {
                   :output-to "examples/osm/main.js"
@@ -54,8 +52,6 @@
                   :optimizations :whitespace
                   :source-map "examples/osm/main.js.map"}}
              {:id "hatti"
-              :source-paths ["src/cljs"
-                             "target/generated/src/cljs"]
               :compiler {
                 :output-to "out/hatti.js"
                 :output-dir "out"
