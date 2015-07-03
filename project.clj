@@ -23,10 +23,7 @@
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]]
-  :source-paths ["src/cljs"
-                 "target/generated/src/clj"
-                 "target/generated/src/cljs"
-                 "target/classes"]
+  :source-paths ["src"]
   :plugins [[lein-cljsbuild "1.0.5"]]
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild {
