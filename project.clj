@@ -8,8 +8,6 @@
                  [org.omcljs/om "0.8.8"]
                  [inflections "0.9.7"]
                  [secretary "1.2.3"]
-                 ;; CLJX
-                 [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]
                  ;; FOR CHARTS
                  [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
                  [org.clojure/math.numeric-tower "0.0.4"]
@@ -25,20 +23,12 @@
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
                  [cljs-http "0.1.17"]]
-  :plugins [[lein-cljsbuild "1.0.5"]
-            [com.keminglabs/cljx "0.6.0" :exclusions [org.clojure/clojure]]]
   :source-paths ["src/cljs"
                  "target/generated/src/clj"
                  "target/generated/src/cljs"
                  "target/classes"]
+  :plugins [[lein-cljsbuild "1.0.5"]]
   :clean-targets ["out/hatti" "out/hatti.js"]
-  :prep-tasks [["cljx" "once"] "javac" "compile"]
-  :cljx {:builds [{:source-paths ["src/cljx"]
-                   :output-path "target/generated/src/clj"
-                   :rules :clj}
-                  {:source-paths ["src/cljx"]
-                   :output-path "target/generated/src/cljs"
-                   :rules :cljs}]}
   :cljsbuild {
     :builds [{:id "stolen"
               :source-paths ["src/cljs"
