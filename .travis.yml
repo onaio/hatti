@@ -1,7 +1,6 @@
 lein: lein2
 language: clojure
 script:
-    - lein2 cljx
     - lein2 cljsbuild test
 notifications:
   email:

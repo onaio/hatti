@@ -2,13 +2,13 @@
   (:require [c2.layout.histogram :refer [histogram]]
             [c2.scale :as scale]
             [c2.svg :as svg]
-            #+clj [clj-time.format :as tf]
-            #+clj [clj-time.coerce :as tc]
-            #+cljs [cljs-time.format :as tf]
-            #+cljs [cljs-time.coerce :as tc]
-            #+clj [clojure.math.numeric-tower :refer [gcd lcm floor ceil abs]]
-            #+cljs [hatti.maths :refer [gcd lcm floor ceil abs]]
-            #+cljs [hatti.utils :refer [format]]
+            [#?(:clj  clj-time.format
+                :cljs cljs-time.format) :as tf]
+            [#?(:clj  clj-time.coerce
+                :cljs cljs-time.coerce) :as tc]
+            [#? (:clj clojure.math.numeric-tower
+                :cljs hatti.maths) :refer [gcd lcm floor ceil abs]]
+            #?(:cljs [hatti.utils :refer [format]])
             [hatti.ona.forms :as f]
             [clojure.string :refer [join blank?]]))
 
@@ -17,26 +17,27 @@
 (defn- safe-floor
   "Like floor but returns nil if passed nil."
   [n]
-  #+clj (try
-          (floor n)
-          (catch IllegalArgumentException e nil))
-  #+cljs (floor n))
+  #?(:clj (try
+             (floor n)
+             (catch IllegalArgumentException e nil))
+     :cljs (floor n)))
 
 (defn- style
   "Helper function to create the style argument in hiccup vectors.
   (style :width '200px' :height '100px') => {:style 'width:200px;height:100px'}"
   [style-map]
-  {:style #+cljs style-map
-          #+clj  (join ";" (for [[k v] style-map]
-                               (str (name k) ": " v)))})
+  {:style #?(:cljs style-map
+             :clj  (->> (for [[k v] style-map]
+                          (str (name k) ": " v))
+                     (join ";" )))})
 
 (defn parse-int
   "Parse an integer from a string."
   [st]
-  #+clj (when st (if (instance? String st)
-                   (when-not (blank? st) (read-string st))
-                   st))
-  #+cljs (let [ans (js/parseInt st)] (if (js/isNaN ans) nil ans)))
+  #?(:clj (when st (if (instance? String st)
+                       (when-not (blank? st) (read-string st))
+                       st))
+     :cljs (let [ans (js/parseInt st)] (if (js/isNaN ans) nil ans))))
 
 (defn str->int [typ]
   "Converts string to integer, for typ (int|date)."
@@ -50,11 +51,11 @@
    Optional digits parameter = number of digits after decimal, default is 1."
   (let [int-fmt-s (str "%." digits "f")
         d->millis #(* millis-in-day %)
-        date->str #+clj #(tf/unparse (tf/formatters :year-month-day)
-                                     (tc/from-long  %))
-                  #+cljs #(.format (js/moment %) "ll")]
+        date->str #? (:clj  #(tf/unparse (tf/formatters :year-month-day)
+                                         (tc/from-long  %))
+                      :cljs #(.format (js/moment %) "ll"))]
     (case typ
-      "int" #(format int-fmt-s (float %))
+      "int"  #(format int-fmt-s (float %))
       "date" #(date->str (d->millis %)))))
 
 (defn range->str [[mn mx] typ]
@@ -64,30 +65,30 @@
     (if (<= mx mn) (fmt mn)
       (join " to " [(fmt mn) (fmt mx)]))))
 
-#+cljs
-(defn evenly-spaced-bins
-  "Given a list of answers, returns each one as a bin, in string form.
+#?(:cljs
+   (defn evenly-spaced-bins
+     "Given a list of answers, returns each one as a bin, in string form.
    nil is mapped to nil. The bins, in order, are returned as metadata.
    eg. (evenly-spaced-bins [1 2 10] 5 'int') => ['1 to 2' '1 to 2' '9 to 10']
    metadata of this above value would be:
    {:bins ['1 to 2', '3 to 4', '5 to 6', '7 to 8', '9 to 10']}"
-  [answers bins typ]
-  (let [numbers (map (str->int typ) answers)
-        mx (reduce max (remove nil? numbers))
-        mn (reduce min (remove nil? numbers))
-        s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
-        is (map safe-floor (map #(when % (s %)) numbers))
-        t (scale/linear :domain [0 bins] :range [mn mx])
-        lbounds (->> (range bins) (map t) (map float) distinct)
-        ubounds (conj (mapv #(if (= % (safe-floor %))
-                               (dec %) %) (drop 1 lbounds)) mx)
-        fmt (int->str typ :digits 0)
-        strings (mapv #(range->str [%1 %2] typ) lbounds ubounds)
-        results (map (fn [i] (when i (get strings (int i)))) is)
-        strings (-> strings distinct vec)] ; remove repeats before output
-    (with-meta results
-      {:bins (if (contains? (set answers) nil)
-               (conj strings nil) strings)})))
+     [answers bins typ]
+     (let [numbers (map (str->int typ) answers)
+           mx (reduce max (remove nil? numbers))
+           mn (reduce min (remove nil? numbers))
+           s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
+           is (map safe-floor (map #(when % (s %)) numbers))
+           t (scale/linear :domain [0 bins] :range [mn mx])
+           lbounds (->> (range bins) (map t) (map float) distinct)
+           ubounds (conj (mapv #(if (= % (safe-floor %))
+                                  (dec %) %) (drop 1 lbounds)) mx)
+           fmt (int->str typ :digits 0)
+           strings (mapv #(range->str [%1 %2] typ) lbounds ubounds)
+           results (map (fn [i] (when i (get strings (int i)))) is)
+           strings (-> strings distinct vec)] ; remove repeats before output
+       (with-meta results
+         {:bins (if (contains? (set answers) nil)
+                  (conj strings nil) strings)}))))
 
 (defn label-count-pairs
   "Take chart-data from the ona API, returns label->count map.
@@ -226,7 +227,8 @@
                       (str (format "%.1f" (float (s n))) "%")))
         select-mult? (= field_type "select all that apply")
         bar-div (if select-mult? :div.bars.select-mult :div.bars.select-one)
-        colspan #+clj :colspan #+cljs :col-span ; sablono/react.js use col-span
+        ;; sablono/react.js use col-span
+        colspan #? (:clj :colspan :cljs :col-span)
         tdr :td.t-right]
     [:table#bar-chart.table
      [:thead
