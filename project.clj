@@ -1,6 +1,6 @@
 (defproject org.clojars.onaio/hatti "0.1.4-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
-  :dependencies [;; CORE HATTI REQUIREMENTS
+  :dependencies [ ;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "0.0-3308"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
@@ -26,35 +26,10 @@
   :source-paths ["src"]
   :plugins [[lein-cljsbuild "1.0.5"]]
   :clean-targets ["out/hatti" "out/hatti.js"]
-  :cljsbuild {
-    :builds [{:id "stolen"
-              :source-paths ["src"
-                             "examples/stolen/src" ]
-              :compiler {
-                  :output-to "examples/stolen/main.js"
-                  :output-dir "examples/stolen/out"
-                  :externs ["includes/externs/leaflet-externs.js"
-                            "includes/externs/jquery-externs.js"
-                            "includes/externs/slickgrid-externs.js"]
-                  :cache-analysis true
-                  :optimizations :whitespace
-                  :source-map "examples/stolen/main.js.map"}}
-             {:id "osm"
-              :source-paths ["src"
-                             "examples/osm/src" ]
-              :compiler {
-                  :output-to "examples/osm/main.js"
-                  :output-dir "examples/osm/out"
-                  :externs ["externs/leaflet-externs.js"
-                            "externs/jquery-externs.js"
-                            "externs/slickgrid-externs.js"]
-                  :cache-analysis true
-                  :optimizations :whitespace
-                  :source-map "examples/osm/main.js.map"}}
-             {:id "hatti"
-              :compiler {
-                :output-to "out/hatti.js"
-                :output-dir "out"
-                :optimizations :none
-                :cache-analysis true
-                :source-map true}}]})
+  :cljsbuild
+  {:builds [{:id "hatti"
+             :compiler {:output-to "out/hatti.js"
+                        :output-dir "out"
+                        :optimizations :none
+                        :cache-analysis true
+                        :source-map true}}]})
