@@ -20,6 +20,9 @@
   {:overview {:view :overview
               :label "Overview"
               :component overview-page}
+   :photos {:view :photos
+            :label "Photos"
+            :component photos-page}
    :map {:view :map
          :label "Map"
          :component map-page}
