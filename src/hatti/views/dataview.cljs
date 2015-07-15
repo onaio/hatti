@@ -8,7 +8,8 @@
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
-                                 overview-page]]
+                                 photos-page overview-page]]
+            [hatti.views.photos]
             [hatti.views.map]
             [hatti.views.table]
             [hatti.views.chart]
