@@ -48,3 +48,6 @@
 
 ;; OVERVIEW PAGE
 (defmulti overview-page view-type-dispatcher)
+
+;; PHOTOS PAGE
+(defmulti photos-page view-type-dispatcher)
