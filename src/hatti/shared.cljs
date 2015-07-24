@@ -34,7 +34,7 @@
   []
   (atom
    {:views {:all [:overview :map :table :chart :settings]
-            :selected :map}
+            :selected :overview}
     :map-page {:data []
                :submission-clicked {:data nil}
                :geofield {}}
