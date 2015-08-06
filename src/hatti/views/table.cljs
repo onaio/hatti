@@ -18,20 +18,23 @@
 (def pager-id "pager")
 
 ;; FIELDS
+(defn get-extra-fields
+   "Extra fields that will be displayed on the table."
+  [is-filtered-dataview?]
+  (let [extra-field  [{:full-name "_rank" :label "#" :name "_rank" :type "integer"}]
+        extra-fields (if is-filtered-dataview?
+                        extra-field
+                      (conj extra-field forms/submission-time-field))] 
+        extra-fields))
 
-(def extra-fields
-  "Extra fields that will be displayed on the table."
-  [{:full-name "_rank" :label "#"
-    :name "_rank" :type "integer"}
-   forms/submission-time-field])
-
-(defn all-fields [form]
+(defn all-fields [form is-filtered-dataview?]
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
-  (->> (concat extra-fields
+  ;(.log js/console (apply str extra-fields))
+  (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
-               (forms/meta-fields form :with-submission-details? true))
+               (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
        (filter forms/has-data?)))
 
 ;; SLICKGRID HELPER FUNCTIONS
@@ -74,9 +77,10 @@
    "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language]
+  ([form get-label? language] (flat-form->sg-columns form get-label? language nil))
+  ([form get-label? language is-filtered-dataview?]
    (clj->js
-    (for [field (all-fields form)]
+    (for [field (all-fields form is-filtered-dataview?)]
       (let [{:keys [name type full-name]} field
             label (if get-label? (get-label field language) name)]
         {:id name :field full-name :type type
@@ -90,11 +94,11 @@
        :rowHeight 24
        :enableTextSelectionOnCells true})
 
-(defn sg-init [data form]
+(defn sg-init [data form is-filtered-dataview?]
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  (let [columns (flat-form->sg-columns form)
+  (let [columns (flat-form->sg-columns form true nil is-filtered-dataview?) 
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         Pager (.. js/Slick -Controls -Pager)
@@ -174,6 +178,7 @@
                      :name [:span "Show: " [:strong "Name"]]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
+            _ (.log js/console new-language)
             colset! #(put! shared/event-chan
                            {:new-columns
                             (flat-form->sg-columns flat-form
@@ -227,8 +232,8 @@
   [data owner]
   "Initializes grid + dataview, and stores them in owner's state."
   (when (seq data)
-    (let [{:keys [flat-form]} (om/get-shared owner)
-          [grid dataview] (sg-init data flat-form)]
+    (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
+          [grid dataview] (sg-init data flat-form is-filtered-dataview?)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
