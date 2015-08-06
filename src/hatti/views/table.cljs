@@ -31,7 +31,6 @@
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
-  ;(.log js/console (apply str extra-fields))
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
                (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
@@ -178,7 +177,6 @@
                      :name [:span "Show: " [:strong "Name"]]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
-            _ (.log js/console new-language)
             colset! #(put! shared/event-chan
                            {:new-columns
                             (flat-form->sg-columns flat-form
