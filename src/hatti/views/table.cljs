@@ -21,11 +21,10 @@
 (defn get-extra-fields
    "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name "_rank" :label "#" :name "_rank" :type "integer"}]
-        extra-fields (if is-filtered-dataview?
-                        extra-field
-                      (conj extra-field forms/submission-time-field))] 
-        extra-fields))
+  (let [extra-field  [{:full-name "_rank" :label "#" :name "_rank" :type "integer"}]]
+    (if is-filtered-dataview?
+      extra-field
+      (conj extra-field forms/submission-time-field))))
 
 (defn all-fields [form is-filtered-dataview?]
   "Given a (flat-)form, returns fields for table display.
