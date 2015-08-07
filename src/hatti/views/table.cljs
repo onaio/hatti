@@ -76,8 +76,7 @@
    "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language] (flat-form->sg-columns form get-label? language nil))
-  ([form get-label? language is-filtered-dataview?]
+  ([form get-label? language & {:keys [is-filtered-dataview?]}]
    (clj->js
     (for [field (all-fields form is-filtered-dataview?)]
       (let [{:keys [name type full-name]} field
@@ -97,7 +96,7 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  (let [columns (flat-form->sg-columns form true nil is-filtered-dataview?) 
+  (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? true) 
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         Pager (.. js/Slick -Controls -Pager)
