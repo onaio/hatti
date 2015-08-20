@@ -222,7 +222,7 @@
   (let [map-bounds (.getBounds leaflet-map)
         layer-bounds (.getBounds feature-layer)]
     (.invalidateSize leaflet-map false)
-    (when-not (.contains layer-bounds map-bounds)
+    (when-not (.contains map-bounds layer-bounds)
       (.fitBounds leaflet-map layer-bounds))))
 
 (defn- load-geo-json
