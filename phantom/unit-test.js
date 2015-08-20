@@ -1,5 +1,5 @@
 
-var page = require('webpage').create();
+var page = require("webpage").create();
 var url = phantom.args[0];
 
 page.onConsoleMessage = function (message) {
@@ -15,7 +15,7 @@ console.log("Loading URL: " + url);
 
 page.open(url, function (status) {
     if (status != "success") {
-        console.log('Failed to open ' + url);
+        console.log("Failed to open " + url);
         phantom.exit(1);
     }
 
@@ -26,7 +26,7 @@ page.open(url, function (status) {
         return window["test-failures"];
     });
 
-    if (failures == 0) {
+    if (failures === 0) {
         console.log("Tests succeeded.")
     }
     else {
