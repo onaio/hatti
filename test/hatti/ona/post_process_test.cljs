@@ -1,12 +1,8 @@
-(ns ona.dataview.osm-utils-test
+(ns hatti.ona.post-process-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.macros :refer [sel1 sel]])
-  (:require [cljs.test :as t]
-            [cljs.core.async :refer [chan]]
-            [clojure.string :as s]
-            [dommy.core :as dommy]
-            [ona.utils.dom :as domutils]
-            [ona.dataview.osm-utils :as osm]))
+  (:require [cljs.core.async :refer [chan]]
+            [hatti.ona.post-process :as post-process]))
 
 ;; TEST DATA
 (def osm-xml
@@ -42,9 +38,9 @@
   [osm-road-field osm-building-field])
 
 ;; TESTS
-(def osm-ona-link (osm/ona-osm-link osm-data osm-form))
-(def osmgeo (osm/osm-xml->geojson osm-xml))
-(def id->tags (osm/osm-id->osm-data osm-data osm-form osm-xml))
+(def osm-ona-link (post-process/ona-osm-link osm-data osm-form))
+(def osmgeo (post-process/osm-xml->geojson osm-xml))
+(def id->tags (post-process/osm-id->osm-data osm-data osm-form osm-xml))
 
 (deftest osm-ona-link-data-structure-is-calculated-properly
   (testing "keys are all the osm-ids present in data"

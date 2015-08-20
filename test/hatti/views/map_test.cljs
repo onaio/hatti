@@ -1,21 +1,18 @@
-(ns ona.dataview.map-test
+(ns hatti.views.map-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.macros :refer [node sel sel1]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [<! chan put!]]
             [dommy.core :as dommy]
-            [ona.dataview.shared :refer [app-state]]
-            [ona.dataview.base :as dv]
-            [ona.dataview.map :as mv]
-            [ona.dataview.map-utils :as mu]
-            [ona.dataview.map-viewby :as vb]
-            [ona.dataview.dommy-helpers :as dh]
-            [ona.utils.dom :refer [new-container!]]
-            [ona.utils.forms :as f]
-            [ona.helpers.permissions :refer [owner readonly]]
+            [hatti.shared :refer [app-state]]
+            [hatti.views :refer [map-viewby-legend map-geofield-chooser]]
+            [hatti.views.map]
+            [hatti.map.utils :as mu]
+            [hatti.map.viewby :as vb]
+            [hatti.test-utils :refer [new-container! texts owner readonly]]
+            [hatti.ona.forms :as f]
             [om.core :as om :include-macros true]
-            [ona.utils.seq :refer [diff]]
-            [ona.dataview.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
+            [hatti.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
 
 ;; MAP COMPONENT HELPERS
 
@@ -42,14 +39,14 @@
   (let [sel1s (filter f/select-one? map-form)
         nodata {:view-by [] :dataset-info {:num_of_submissions 0}}
         somedata {:view-by [] :dataset-info {:num_of_submissions 100}}
-        viewby-nodata (map-container mv/view-by-legend nodata map-form owner)
-        viewby (map-container mv/view-by-legend somedata map-form owner)
+        viewby-nodata (map-container map-viewby-legend nodata map-form owner)
+        viewby (map-container map-viewby-legend somedata map-form owner)
         menu (sel1 viewby :ul.submenu)
         lis (sel menu :li)]
     (testing "viewby menu renders 'No data' when there is no data"
       (is (re-find #"No data" (dommy/html viewby-nodata))))
     (testing "viewby menu renders labels from all select one fields"
-      (is (= (map :label sel1s) (dh/texts lis))))))
+      (is (= (map :label sel1s) (texts lis))))))
 
 (deftest viewby-answer-renders-properly
   (let [sel1-field {:type "select one" :name "name"
@@ -58,13 +55,13 @@
                                {:name "2" :label "Two"}]}
         vbdata {:view-by (vb/viewby-info sel1-field ["1" "2" "2" nil nil nil] (range 7))
                 :dataset-info {:num_of_submissions 100}}
-        viewby (map-container mv/view-by-legend vbdata map-form owner)
+        viewby (map-container map-viewby-legend vbdata map-form owner)
         option-list (sel viewby :li)]
     (testing "viewby-answer renders properly without selections"
       (is (re-find #"This is the label" (dommy/text viewby)))
-      (is (re-find (js/RegExp. f/no-answer) (apply str (dh/texts option-list))))
-      (is (re-find #"One" (apply str (dh/texts option-list))))
-      (is (re-find #"Two" (apply str (dh/texts option-list)))))
+      (is (re-find (js/RegExp. f/no-answer) (apply str (texts option-list))))
+      (is (re-find #"One" (apply str (texts option-list))))
+      (is (re-find #"Two" (apply str (texts option-list)))))
     (testing "viewby-answers render with No Answer at bottom and grey"
       (is (re-find (js/RegExp. f/no-answer) (dommy/text (last option-list))))
       (is (= (str vb/grey ";") (-> (last option-list)
@@ -78,7 +75,7 @@
                     :full-name "geoshape" :label "Geo Shape"}
                    {:type "geopoint" :name "geopoint"
                     :full-name "geopoint" :label "Geo Point"}]
-        geo-c (map-container mv/geofield-chooser
+        geo-c (map-container map-geofield-chooser
                              (last geofields)
                              map-form owner
                              {:opts {:geofields geofields}})]

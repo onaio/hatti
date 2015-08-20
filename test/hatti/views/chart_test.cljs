@@ -1,19 +1,16 @@
-(ns ona.dataview.chart-test
+(ns hatti.views.chart-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.macros :refer [node sel sel1]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [<! chan put!]]
             [dommy.core :as dommy]
-            [ona.dataview.shared :as shared]
-            [ona.dataview.base :as dv]
-            [ona.dataview.chart :as cv]
-            [ona.utils.dom :refer [new-container!]]
-            [ona.dataview.dommy-helpers :as dh]
-            [ona.utils.forms :as f]
-            [ona.helpers.permissions :refer [owner readonly]]
+            [hatti.shared :as shared]
+            [hatti.views :refer [chart-page]]
+            [hatti.views.chart]
+            [hatti.test-utils :refer [new-container! texts]]
+            [hatti.ona.forms :as f]
             [om.core :as om :include-macros true]
-            [ona.utils.seq :refer [diff]]
-            [ona.dataview.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
+            [hatti.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
 
 ;; CHART COMPONENT HELPERS
 
@@ -28,7 +25,7 @@
                       :event-chan (chan)}
              :opts {:chart-get chart-get-mock}
              :target cont}
-        _ (om/root cv/chart-page shared/app-state arg)]
+        _ (om/root chart-page shared/app-state arg)]
     cont))
 
 ;; COMPONENT TESTS
@@ -38,7 +35,7 @@
         sel1qs (filter f/categorical? chart-form)
         stringqs (filter f/text? chart-form)]
     (testing "chart-chooser menu renders properly"
-      (is (every? (-> container (sel :li.submenu-list) dh/texts set)
+      (is (every? (-> container (sel :li.submenu-list) texts set)
                   (map :label chart-form)))
       ;; First icon is a clock, for submission time
       (is (= "fa fa-clock-o"
@@ -65,4 +62,4 @@
                  {:all [:English :French] :current :French})
         container (chart-container chart-form)]
     (testing "chart menu renders in current language when set"
-      (is (contains? (-> container (sel :li.submenu-list) dh/texts set) "Oui?")))))
+      (is (contains? (-> container (sel :li.submenu-list) texts set) "Oui?")))))

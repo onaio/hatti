@@ -1,18 +1,15 @@
-(ns ona.dataview.single-submission-test
+(ns hatti.views.record-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.macros :refer [node sel sel1]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [<! chan put!]]
             [dommy.core :as dommy]
-            [ona.dataview.base :as dv]
-            [ona.dataview.map :as mv]
-            [ona.dataview.single-submission :as ss]
-            [ona.utils.dom :refer [new-container!]]
-            [ona.utils.forms :as f]
-            [ona.helpers.permissions :refer [owner readonly]]
+            [hatti.test-utils :refer [new-container! texts owner readonly]]
+            [hatti.views :refer [submission-view repeat-view]]
+            [hatti.views.record]
+            [hatti.ona.forms :as f]
             [om.core :as om :include-macros true]
-            [ona.utils.seq :refer [diff]]
-            [ona.dataview.shared-test :refer [fat-form small-fat-data]]))
+            [hatti.shared-test :refer [fat-form small-fat-data]]))
 
 ;; MAP COMPONENT HELPERS
 
@@ -20,6 +17,7 @@
 (def data small-fat-data)
 (def gps-field {:full-name "gps" :name "gps" :type "gps" :label "GPS"})
 (def gps-form (conj fat-form gps-field))
+
 
 (defn- submission-container
   [map-or-table data form role & [more-args]]
@@ -30,7 +28,7 @@
                        :event-chan event-chan}
               :opts {:role role}
               :target c}
-        _ (om/root (ss/submission-view map-or-table)
+        _ (om/root (submission-view map-or-table)
                    {:data data
                     :geofield gps-field
                     :dataset-info {:metadata [{:xform 1
@@ -77,14 +75,14 @@
         c1 (new-container!)
         c2 (new-container!)]
     (testing "repeats render as collapses in the beginning by default"
-      (om/root ss/repeat-view
+      (om/root repeat-view
                {:data repeat-data :repeat-field form}
                {:target c1 :opts {:view :map}})
       (is (not (sel1 :ol c1)))
       (is (= (str (count repeat-data)) (re-find #"[0-9]+" (dommy/text c1))))
       (is (re-find #"Show Repeats" (dommy/text c1))))
     (testing "when uncollapsed, repeat render internal data"
-      (om/root ss/repeat-view
+      (om/root repeat-view
                {:data repeat-data :repeat-field form}
                {:target c2 :opts {:view :map} :init-state {:collapsed? false}})
       (is (sel1 c2 :ol.repeat))

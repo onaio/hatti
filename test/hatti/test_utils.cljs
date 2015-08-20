@@ -1,5 +1,27 @@
-(ns hatti.test-utils)
+(ns hatti.test-utils
+  (:require [dommy.core :as dommy])
+  (:require-macros [dommy.macros :refer [sel sel1]]))
 
+
+;;====================
+;; PERMISSION DEFINITIONS
+;;====================
+(def owner "owner")
+(def readonly "readonly")
+
+;;=====================
+;; UTIL FUNCTIONS
+;;=====================
+(defn format
+  "Formats a string using goog.string.format, so we can use format in cljx."
+  [fmt & args]
+  (apply goog.string/format fmt args))
+
+(defn texts [els]
+  (map dommy/text els))
+
+(defn attrs [attr els]
+  (map #(dommy/attr attr %) els))
 
 ;;======================
 ;; SAMPLE DATA AND FORMS
@@ -33,7 +55,7 @@
 ;; CONTAINER GEN HELPER
 ;;======================
 
-#_(defn new-container!
+(defn new-container!
   "Returns a new div in the DOM, mostly used for rendering om components into.
    id is passed in or randomly generated, parent-selector is passed in or :body.
    Returns: HTMLDivElement."

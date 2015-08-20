@@ -14,7 +14,7 @@
                  [clj-time "0.7.0"]
                  [com.andrewmcveigh/cljs-time "0.2.3"]
                  ;; JS REQUIREMENTS
-                 [cljsjs/moment "2.9.0-0"]
+                 [cljsjs/moment "2.9.0-1"]
                  [prabhasp/leaflet-cljs "0.7.3"]
                  [cljsjs/jquery "1.9.1-0"]
                  [prabhasp/slickgrid-cljs "0.0.1"]

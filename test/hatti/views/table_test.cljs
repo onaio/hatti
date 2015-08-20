@@ -1,18 +1,15 @@
-(ns ona.dataview.table-test
+(ns hatti.views.table-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.macros :refer [node sel sel1]])
   (:require [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]
-            [ona.dataview.shared :as shared]
-            [ona.dataview.base :as dv]
-            [ona.dataview.table :as tv]
-            [ona.utils.forms :as f]
-            [ona.helpers.permissions :refer [owner readonly]]
+            [hatti.shared :as shared]
+            [hatti.views :refer [table-page]]
+            [hatti.views.table :as tv]
+            [hatti.test-utils :refer [new-container! texts owner readonly]]
             [om.core :as om :include-macros true]
-            [ona.utils.dom :refer [new-container!]]
-            [ona.utils.seq :refer [diff]]
-            [ona.dataview.shared-test :refer [thin-form small-thin-data no-data
+            [hatti.shared-test :refer [thin-form small-thin-data no-data
                                               fat-form small-fat-data]]))
 
 ;; SLICKGRID HELPER TESTS
@@ -71,12 +68,12 @@
   [data form role]
   "Returns a container in which a table has been rendered."
   (let [c (new-container!)
-        _ (shared/update-app-data! data)
+        _ (shared/update-app-data! shared/app-state data)
         args {:shared {:flat-form form
                        :external-events (chan)
                        :event-chan (chan (sliding-buffer 1))}
               :opts {:role role}}
-        table (om/root tv/table-page shared/app-state (merge args {:target c}))]
+        table (om/root table-page shared/app-state (merge args {:target c}))]
     c))
 
 (deftest table-renders-properly
