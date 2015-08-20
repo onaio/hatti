@@ -35,9 +35,8 @@
                         :cache-analysis true
                         :source-map true}}
             {:id "test"
-             :source-paths ["src/cljs"
-                            "test/cljs"
-                            "target/generated/src/cljs"]
+             :source-paths ["src/hatti"
+                            "test"]
              :notify-command ["phantomjs"
                               "phantom/unit-test.js"
                               "phantom/unit-test.html"
