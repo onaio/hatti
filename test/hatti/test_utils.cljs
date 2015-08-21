@@ -23,6 +23,16 @@
 (defn attrs [attr els]
   (map #(dommy/attr attr %) els))
 
+(defn remove-nil
+  "Remove nil values from a sequence."
+  [l]
+  (remove nil? l))
+
+(defn ordered-diff
+  "Return difference between 2 sequences. Preserves ordering in first seq."
+  [a b]
+  (filter #(not (contains? (set b) %)) a))
+
 ;;======================
 ;; SAMPLE DATA AND FORMS
 ;;======================

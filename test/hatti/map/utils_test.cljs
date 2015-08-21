@@ -92,7 +92,7 @@
         (is (equivalent-styles (repeat N normal-style)
                                (map mu/get-style markers)))))))
 
-;; TODO Add fixturest reader functoin and FIX tests below
+;; TODO: Add fixtures reader function and fix tests below
 ;; READ fixtures into data structures using the read-file macro
 ;; FORMS are keywordized
 ;(def geopoint-form (json->js->cljs
