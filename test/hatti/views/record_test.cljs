@@ -26,9 +26,10 @@
   (let [c (new-container!)
         args {:shared {:flat-form form
                        :event-chan event-chan}
-              :opts {:role role}
+              :opts {:role role
+                     :view map-or-table}
               :target c}
-        _ (om/root (submission-view map-or-table)
+        _ (om/root submission-view
                    {:data data
                     :geofield gps-field
                     :dataset-info {:metadata [{:xform 1
