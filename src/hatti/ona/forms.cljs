@@ -245,7 +245,7 @@
                 :or   {relabel? true}}]
   (let [meta-fields (filter meta? flat-form)
         include-extra-sub-details (if with-submission-details?
-                                    #(into % extra-submission-details)
+                                    #(into (vec %) extra-submission-details)
                                     identity)
         relabel (if relabel? relabel-meta-field identity)]
     (->> meta-fields
