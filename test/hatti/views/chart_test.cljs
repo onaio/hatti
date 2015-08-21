@@ -32,7 +32,7 @@
 
 (deftest charts-render-properly
   (let [container (chart-container chart-form)
-        sel1qs (filter f/categorical? chart-form)
+        sel1qs (into (f/meta-fields chart-form :with-submission-details? true) chart-form)
         stringqs (filter f/text? chart-form)]
     (testing "chart-chooser menu renders properly"
       (is (every? (-> container (sel :li.submenu-list) texts set)
@@ -40,10 +40,15 @@
       ;; First icon is a clock, for submission time
       (is (= "fa fa-clock-o"
              (-> container (sel1 :ul) (sel :i.fa) first (dommy/attr :class))))
-      ;; Rest of the items should be horizontal chart (for select one)
-      (is (= (repeat (count sel1qs) "fa fa-bar-chart fa-flip-h-rotate-90")
-             (->> (-> container (sel1 :ul) (sel :i.fa) rest)
-                  (map #(dommy/attr % :class))))))
+      ;; Rest of the items should be horizontal chart
+      (->> (map #(f/get-icon %) sel1qs)
+           (map (fn [i] (dommy/attr i :class)))
+           rest)
+      (is (=  (->> (map #(f/get-icon %) sel1qs)
+                   (map (fn [i] (dommy/attr i :class)))
+                   rest)
+              (->> (-> container (sel1 :ul) (sel :i.fa) rest)
+                   (map #(dommy/attr % :class))))))
     (testing "string questions are unclickable on the chart menu"
       (let [stringq-texts (map :label stringqs)
             num-stringqs (count stringqs)
