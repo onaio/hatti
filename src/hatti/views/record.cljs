@@ -41,7 +41,7 @@
 (defmethod print-xls-report-btn :default
   [cursor owner]
   (om/component
-   (html nil)))
+   (html [:div {:id "print-xls-report"}])))
 
 ;; A single row of a question / answer pair
 (def qa-elements
