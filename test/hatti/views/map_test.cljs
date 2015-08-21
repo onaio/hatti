@@ -36,7 +36,11 @@
 ;; MAP COMPONENT TESTS
 
 (deftest viewby-menu-renders-properly
-  (let [sel1s (filter f/select-one? map-form)
+  (let [sel1s (filter #(or (f/categorical? %)
+                           (f/numeric? %)
+                           (f/text? %)
+                           (f/time-based? %)
+                           (f/calculate? %)) map-form)
         nodata {:view-by [] :dataset-info {:num_of_submissions 0}}
         somedata {:view-by [] :dataset-info {:num_of_submissions 100}}
         viewby-nodata (map-container map-viewby-legend nodata map-form owner)
@@ -45,7 +49,8 @@
         lis (sel menu :li)]
     (testing "viewby menu renders 'No data' when there is no data"
       (is (re-find #"No data" (dommy/html viewby-nodata))))
-    (testing "viewby menu renders labels from all select one fields"
+    (testing "viewby menu renders labels from all select one, numeric, text,
+              time-base and calculate fields"
       (is (= (map :label sel1s) (texts lis))))))
 
 (deftest viewby-answer-renders-properly

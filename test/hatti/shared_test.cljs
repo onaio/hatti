@@ -14,7 +14,7 @@
 
 (defn form-gen [n]
   (for [i (range n)]
-    {:type (rand-nth ["string" "select one"])
+    {:type (rand-nth ["string" "select one" "integer" "decimal" "calculate"])
      :full-name (str "hello" i)
      :name (str "hello" i)
      :label (str "Hello: " i)}))
