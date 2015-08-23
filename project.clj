@@ -14,7 +14,7 @@
                  [clj-time "0.7.0"]
                  [com.andrewmcveigh/cljs-time "0.2.3"]
                  ;; JS REQUIREMENTS
-                 [cljsjs/moment "2.9.0-0"]
+                 [cljsjs/moment "2.9.0-1"]
                  [prabhasp/leaflet-cljs "0.7.3"]
                  [cljsjs/jquery "1.9.1-0"]
                  [prabhasp/slickgrid-cljs "0.0.1"]
@@ -22,6 +22,7 @@
                  ;; TODO: make into cljs packages
                  [org.webjars/SlickGrid "2.1"]
                  ;; CLIENT REQUIREMENTS
+                 [prismatic/dommy "0.1.2"]
                  [cljs-http "0.1.17"]]
   :source-paths ["src"]
   :plugins [[lein-cljsbuild "1.0.5"]]
@@ -32,4 +33,19 @@
                         :output-dir "out"
                         :optimizations :none
                         :cache-analysis true
-                        :source-map true}}]})
+                        :source-map true}}
+            {:id "test"
+             :source-paths ["src/hatti"
+                            "test"]
+             :notify-command ["phantomjs"
+                              "phantom/unit-test.js"
+                              "phantom/unit-test.html"
+                              "target/main-test.js"]
+             :compiler {:output-to "target/main-test.js"
+                        :optimizations :whitespace
+                        :pretty-print true}}]
+   :test-commands {"unit-test"
+                   ["phantomjs"
+                    "phantom/unit-test.js"
+                    "phantom/unit-test.html"
+                    "target/main-test.js"]}})

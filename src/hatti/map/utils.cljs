@@ -181,7 +181,7 @@
 
 ;;;;; MAP
 
-(defn- create-map
+(defn create-map
   "Creates a leaflet map, rendering it to the dom element with given id."
   [id {:keys [mapbox-tiles include-google-maps?]}]
   (let [layers (map #(.tileLayer js/L (:url %)) mapbox-tiles)

@@ -26,7 +26,7 @@
       extra-field
       (conj extra-field forms/submission-time-field))))
 
-(defn all-fields [form is-filtered-dataview?]
+(defn all-fields [form & {:keys [is-filtered-dataview?]}]
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
@@ -77,7 +77,7 @@
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
   ([form get-label? language & {:keys [is-filtered-dataview?]}]
    (clj->js
-    (for [field (all-fields form is-filtered-dataview?)]
+    (for [field (all-fields form :is-filtered-dataview? is-filtered-dataview?)]
       (let [{:keys [name type full-name]} field
             label (if get-label? (get-label field language) name)]
         {:id name :field full-name :type type
@@ -95,7 +95,7 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? true) 
+  (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         Pager (.. js/Slick -Controls -Pager)
