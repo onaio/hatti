@@ -72,9 +72,11 @@
                     (sort-by #(get % "_submission_time"))
                     (map-indexed (fn [i v] (assoc v "_rank" (inc i))))
                     vec)
-               data)]
+               data)
+        num_of_submissions (count data)]
     (transact-app-data! app-state (fn [_] data))
-    (transact-app-state! app-state [:dataset-info :num_of_submissions] (fn [_] (count data)))))
+    (when-not (zero? num_of_submissions)
+      (transact-app-state! app-state [:dataset-info :num_of_submissions] (fn [_] num_of_submissions)))))
 
 ;; LANGUAGE
 

@@ -52,6 +52,16 @@
       (om/root shared/language-selector nil {:target c})
       (is (= (dommy/text (sel1 c [:span.dropdown :span])) "EN")))))
 
+
+(deftest num-of-submissions-updated-correctly
+  (testing "num_of_submissions in dataset-info is not replaced by
+  submission count if submission count is zero"
+    (let [num_of_submissions 2]
+      (shared/transact-app-state! shared/app-state [:dataset-info :num_of_submissions] #(-> num_of_submissions))
+      (shared/update-app-data! shared/app-state no-data)
+      (is (= (-> @shared/app-state :dataset-info :num_of_submissions) num_of_submissions))
+      (is (not= (-> @shared/app-state :dataset-info :num_of_submissions) 0)))))
+
 ;; TODO Move test to zerba
 #_(deftest update-data-on!-works
   (shared/update-app-data! small-thin-data :rerank? true)
