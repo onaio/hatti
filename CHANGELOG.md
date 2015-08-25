@@ -1,3 +1,9 @@
+v0.1.6
+ * remove extra metadata fields in table view for filtered dataviews
+ * tests
+ * don't use count for num_of_submissions if zero
+ * map zoom fix for datasets that contain -ve, +ve lat,lng values.
+
 v0.1.4
  * filter added for categorical view bys
  * cljx converted to cljc
