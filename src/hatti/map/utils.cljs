@@ -222,7 +222,11 @@
   (let [map-bounds (.getBounds leaflet-map)
         layer-bounds (.getBounds feature-layer)]
     (.invalidateSize leaflet-map false)
-    (when-not (.contains layer-bounds map-bounds)
+    ;; Re-fitting to bounds should happen if the map is more zoomed out
+    ;; than the data. The 0 get-zoom is an additional constraint for
+    ;; datasets that cross the axes (contain both -ve, +ve lat,lngs)
+    (when (or (zero? (.getZoom leaflet-map))
+              (not (.contains layer-bounds map-bounds)))
       (.fitBounds leaflet-map layer-bounds))))
 
 (defn- load-geo-json
