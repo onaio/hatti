@@ -3,6 +3,7 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -60,11 +61,11 @@
 
 (defn- get-id
   [marker]
-  (-> marker (aget "feature") (aget "properties") (aget "_id")))
+  (-> marker (aget "feature") (aget "properties") (aget _id)))
 
 (defn- get-rank
   [marker]
-  (-> marker (aget "feature") (aget "properties") (aget "_rank")))
+  (-> marker (aget "feature") (aget "properties") (aget _rank)))
 
 (defn get-style
   "Get the style of a marker. Second arg specifies style attribute to get.
@@ -176,7 +177,8 @@
                         :let [geo (get-as-geom record geofield)]
                         :when geo]
                     {:type "Feature"
-                     :properties {:_rank (inc idx) :_id (record "_id")}
+                     :properties {(keyword _rank) (inc idx)
+                                  (keyword _id) (record _id)}
                      :geometry geo})})))
 
 ;;;;; MAP
@@ -208,7 +210,7 @@
   (.on marker "click"
        #(when-not (is-clicked? marker)
           (put! event-chan {:submission-to-rank
-                            (aget (aget feature "properties") "_rank")})))
+                            (aget (aget feature "properties") _rank)})))
   (.on marker "mouseover"
        #(when-not (is-clicked? marker)
           (apply-hover-style marker)))
@@ -243,7 +245,7 @@
                                 #js {:onEachFeature on-events
                                      :pointToLayer point->marker
                                      :style stylefn})
-        ids (map #(get-in % [:properties :_id]) (:features geojson))
+        ids (map #(get-in % [:properties (keyword _id)]) (:features geojson))
         markers (.getLayers feature-layer)]
     (when-not (empty? (:features geojson))
       (when rezoom? (.fitBounds m (.getBounds feature-layer)))

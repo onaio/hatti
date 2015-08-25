@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.map.viewby :as vb]
@@ -15,6 +16,7 @@
                      viewby-answer-list viewby-answer-list-filter
                      map-viewby-answer-legend map-viewby-answer-close]]
             [hatti.views.record]))
+
 
 ;;;;; EVENT HANDLERS
 
@@ -30,7 +32,7 @@
              markers (vals (get-id-marker-map))]
          (when view-by
            (let [{:keys [full-name] :as field} (:field view-by)
-                 ids (map #(get % "_id") (:data @map-state))
+                 ids (map #(get % _id) (:data @map-state))
                  raw-answers (map #(get % full-name) (:data @map-state))
                  vb-info (vb/viewby-info field raw-answers ids)]
              (om/update! map-state [:view-by] vb-info)
@@ -57,13 +59,13 @@
          (when submission-to-rank
            (let [rank submission-to-rank
                  new-data (-> (filter
-                               #(= rank (get % "_rank"))
+                               #(= rank (get % _rank))
                                (:data @map-state))
                               first)]
              (om/update! map-state [:submission-clicked]
                          {:data new-data
                           :marker (get (get-id-marker-map)
-                                       (get new-data "_id"))
+                                       (get new-data _id))
                           :prev-marker prev-marker}))))))))
 
 (defn handle-data-updates
@@ -76,7 +78,7 @@
          (when data-updated
            (put! shared/event-chan
                  {:submission-to-rank
-                  (get-in @map-state [:submission-clicked :data "_rank"])})
+                  (get-in @map-state [:submission-clicked :data _rank])})
            (put! shared/event-chan
                  {:view-by (get-in @map-state [:view-by])})))))))
 

@@ -4,6 +4,7 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as forms :refer [get-label format-answer]]
             [hatti.views :refer [table-page table-header table-search
                                  label-changer submission-view]]
@@ -13,7 +14,6 @@
             [cljsjs.slickgrid-with-deps]))
 
 ;; DIVS
-
 (def table-id "submission-grid")
 (def pager-id "pager")
 
@@ -21,7 +21,7 @@
 (defn get-extra-fields
    "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name "_rank" :label "#" :name "_rank" :type "integer"}]]
+  (let [extra-field  [{:full-name _rank :label "#" :name _rank :type "integer"}]]
     (if is-filtered-dataview?
       extra-field
       (conj extra-field forms/submission-time-field))))
@@ -117,12 +117,12 @@
                   (.sort dataview (compfn args) (aget args "sortAsc"))))
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
-                  (let [rank (aget (.getItem dataview (aget args "row")) "_rank")]
+                  (let [rank (aget (.getItem dataview (aget args "row")) _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
     ;; page, filter, and data set-up on the dataview
     (.setPagingOptions dataview #js {:pageSize 25})
     (.setFilter dataview (partial filterfn form))
-    (.setItems dataview (clj->js data) "_id")
+    (.setItems dataview (clj->js data) _id)
     [grid dataview]))
 
 ;; EVENT LOOPS
@@ -141,7 +141,7 @@
                                    [:table-page :submission-clicked :data])]
          (when submission-to-rank
            (let [rank submission-to-rank
-                 submission (-> (filter #(= rank (get % "_rank"))
+                 submission (-> (filter #(= rank (get % _rank))
                                         (get-in @cursor [:table-page :data]))
                                 first)]
              (update-data! submission)))
@@ -270,5 +270,5 @@
               (handle-table-events cursor grid dataview))
             (do ; data has changed
               (.invalidateAllRows grid)
-              (.setItems dataview (clj->js new-data) "_id")
+              (.setItems dataview (clj->js new-data) _id)
               (.render grid))))))))

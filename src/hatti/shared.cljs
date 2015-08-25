@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! chan mult tap put! timeout]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
+            [hatti.constants :refer [_rank]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [json->cljs format last-url-param]]))
 
@@ -70,7 +71,7 @@
   (let [data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % "_submission_time"))
-                    (map-indexed (fn [i v] (assoc v "_rank" (inc i))))
+                    (map-indexed (fn [i v] (assoc v _rank (inc i))))
                     vec)
                data)
         num_of_submissions (count data)]
