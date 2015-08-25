@@ -137,16 +137,16 @@
                   "gps" "Point"
                   "geoshape" "Polygon"
                   "geotrace" "LineString"} (:type geofield))
-        parse (fn [s] (when (seq s)
+        parse (fn [s] (when (and (seq s) (not= s "n/a"))
                        (for [coord-string (string/split s #";")]
                          (let [[lat lng _ _ ] (string/split coord-string #" ")]
                            [(read-string lng) (read-string lat)]))))
         coordfn (case geotype
-                  "Point" reverse
+                  "Point" #(first (parse %))
                   "LineString" parse
                   "Polygon" #(vector (parse %))
                   identity)
-        key (if (= geotype "Point") "_geolocation" (:full-name geofield))
+        key (:full-name geofield)
         value (get record key)
         coords (coordfn value)]
     (if (f/osm? geofield)
