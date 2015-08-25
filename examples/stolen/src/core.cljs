@@ -2,9 +2,10 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om]
             [cljs.core.async :refer [<! put!]]
+            [cljsjs.papaparse]
             [milia.api.dataset :as api]
-            [milia.api.io :as io]
-            [milia.utils.remote :as milia-remote]
+            [milia.api.http :refer [parse-http]]
+            [milia.utils.remote :as milia-remote :refer [make-url]]
             [hatti.ona.forms :refer [flatten-form]]
             [hatti.ona.post-process :refer [integrate-attachments!]]
             [hatti.routing :as routing]
@@ -30,22 +31,32 @@
                   Tiles courtesy of
                   <a href=\"http://hot.openstreetmap.org/\">
                   Humanitarian OpenStreetMap Team</a>."}])
-(def auth-token nil)
+(swap! milia-remote/*credentials* merge {:temp-token ""})
 
 ;; HELPER
 (defn chart-getter [field-name]
   (let [suffix (str dataset-id ".json?field_name=" field-name)
-        chart-url (io/make-url "charts" suffix)]
-    (io/get-url chart-url {} auth-token)))
+        chart-url (make-url "charts" suffix)]
+    (parse-http :get chart-url)))
 
 ;; GET AND RENDER
 (go
- (let [data-chan (api/data auth-token dataset-id :raw? true)
-       form-chan (api/form auth-token dataset-id)
-       info-chan (api/metadata auth-token dataset-id)
-       data (-> (<! data-chan) :body json->cljs)
+ (let [parse (fn [s & [config]] (.parse js/Papa s config))
+       data-chan (api/data dataset-id
+                           :raw? true
+                           :format "csv"
+                           :accept-header "text/*")
+       form-chan (api/form dataset-id)
+       info-chan (api/metadata dataset-id)
+       data (-> (<! data-chan) :body
+                (parse #js {:header true
+                            :dynamicTyping true
+                            :skipEmptyLines true})
+                (aget "data")
+                js->clj)
        form (-> (<! form-chan) :body flatten-form)
        info (-> (<! info-chan) :body)]
+   (.log js/console (clj->js data))
    (shared/update-app-data! shared/app-state data :rerank? true)
    (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
    (integrate-attachments! shared/app-state form)
