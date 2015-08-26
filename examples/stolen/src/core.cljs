@@ -21,8 +21,9 @@
 (swap! milia-remote/hosts merge {:ui "localhost:8000"
                                  :data "ona.io"
                                  :ona-api-server-protocol "https"})
+;(def dataset-id "33597") ;; Stolen Sculptures
+(def dataset-id "73926") ;; 4799 record dataset
 
-(def dataset-id "33597") ;; Stolen Sculptures
 (def mapbox-tiles
   [{:url "http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
     :name "Humanitarian OpenStreetMap Team"
@@ -42,18 +43,22 @@
 (defn push-to-app-state!
   "Takes data in the vector inside *agg*, adds it to app state,
    and clears *agg*."
-  [*agg*]
-  (shared/transact-app-data! shared/app-state #(concat % @*agg*))
+  [*agg* & {:keys [completed?]}]
+  (shared/add-to-app-data! shared/app-state @*agg* :completed? completed?)
   (reset! *agg* []))
 
 (defn read-next-chunk!
   "If *n* is a power of 2 above 100, then flush the data into app-state,
   else store it inside *agg*, increment *n*, and move on."
   [data-chunk parser *n* *agg*]
-  (swap! *n* inc)
-  (if (and (> @*n* 1000) (integer? (.log2 js/Math @*n*)))
-    (push-to-app-state! *agg*)
-    (swap! *agg* conj (first (js->clj (.-data data-chunk))))))
+  (go
+   (swap! *n* inc)
+   (swap! *agg* conj (first (js->clj (.-data data-chunk))))
+   (when (and (> @*n* 1000) (integer? (.sqrt js/Math @*n*)))
+     (push-to-app-state! *agg*)
+     (.pause parser)
+     (<! (timeout 2))
+     (.resume parser))))
 
 (defn chunk-reader []
   "Returns a callback for step/chunk for papa-parse, ie,
@@ -63,7 +68,7 @@
   (let [*n* (atom 0)
         *agg* (atom [])]
     {:step (fn [chnk parser] (read-next-chunk! chnk parser *n* *agg*))
-     :complete #(push-to-app-state! *agg*)}))
+     :complete #(push-to-app-state! *agg* :completed? true)}))
 
 ;; GET AND RENDER
 (go
@@ -77,12 +82,6 @@
        {:keys [step complete]} (chunk-reader)
        form (-> (<! form-chan) :body flatten-form)
        info (-> (<! info-chan) :body)]
-   (-> (<! data-chan) :body
-       (parse (clj->js {:header true
-                        :dynamicTyping true
-                        :skipEmptyLines true
-                        :step step
-                        :complete complete})))
    (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
    (integrate-attachments! shared/app-state form)
    (om/root views/tabbed-dataview
@@ -90,5 +89,11 @@
             {:target (. js/document (getElementById "map"))
              :shared {:flat-form form
                       :map-config {:mapbox-tiles mapbox-tiles}}
-             :opts {:chart-get chart-getter}})))
+             :opts {:chart-get chart-getter}})
+   (-> (<! data-chan) :body
+       (parse (clj->js {:header true
+                        :dynamicTyping true
+                        :skipEmptyLines true
+                        :step step
+                        :complete complete})))))
 (routing/enable-dataview-routing!)
