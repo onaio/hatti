@@ -1,7 +1,7 @@
 (ns examples.stolen.core
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om]
-            [cljs.core.async :refer [<! put!]]
+            [cljs.core.async :refer [<! put! chan timeout]]
             [cljsjs.papaparse]
             [milia.api.dataset :as api]
             [milia.api.http :refer [parse-http]]
@@ -39,6 +39,32 @@
         chart-url (make-url "charts" suffix)]
     (parse-http :get chart-url)))
 
+(defn push-to-app-state!
+  "Takes data in the vector inside *agg*, adds it to app state,
+   and clears *agg*."
+  [*agg*]
+  (shared/transact-app-data! shared/app-state #(concat % @*agg*))
+  (reset! *agg* []))
+
+(defn read-next-chunk!
+  "If *n* is a power of 2 above 100, then flush the data into app-state,
+  else store it inside *agg*, increment *n*, and move on."
+  [data-chunk parser *n* *agg*]
+  (swap! *n* inc)
+  (if (and (> @*n* 1000) (integer? (.log2 js/Math @*n*)))
+    (push-to-app-state! *agg*)
+    (swap! *agg* conj (first (js->clj (.-data data-chunk))))))
+
+(defn chunk-reader []
+  "Returns a callback for step/chunk for papa-parse, ie,
+   a function that can be called on chunk and parser.
+   Closes two atoms: an int incrementor inside *n* and
+                     a vector aggregator inside *agg*."
+  (let [*n* (atom 0)
+        *agg* (atom [])]
+    {:step (fn [chnk parser] (read-next-chunk! chnk parser *n* *agg*))
+     :complete #(push-to-app-state! *agg*)}))
+
 ;; GET AND RENDER
 (go
  (let [parse (fn [s & [config]] (.parse js/Papa s config))
@@ -48,16 +74,15 @@
                            :accept-header "text/*")
        form-chan (api/form dataset-id)
        info-chan (api/metadata dataset-id)
-       data (-> (<! data-chan) :body
-                (parse #js {:header true
-                            :dynamicTyping true
-                            :skipEmptyLines true})
-                (aget "data")
-                js->clj)
+       {:keys [step complete]} (chunk-reader)
        form (-> (<! form-chan) :body flatten-form)
        info (-> (<! info-chan) :body)]
-   (.log js/console (clj->js data))
-   (shared/update-app-data! shared/app-state data :rerank? true)
+   (-> (<! data-chan) :body
+       (parse (clj->js {:header true
+                        :dynamicTyping true
+                        :skipEmptyLines true
+                        :step step
+                        :complete complete})))
    (shared/transact-app-state! shared/app-state [:dataset-info] (fn [_] info))
    (integrate-attachments! shared/app-state form)
    (om/root views/tabbed-dataview
