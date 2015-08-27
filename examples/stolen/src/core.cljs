@@ -40,35 +40,41 @@
         chart-url (make-url "charts" suffix)]
     (parse-http :get chart-url)))
 
-(defn push-to-app-state!
-  "Takes data in the vector inside *agg*, adds it to app state,
-   and clears *agg*."
-  [*agg* & {:keys [completed?]}]
-  (shared/add-to-app-data! shared/app-state @*agg* :completed? completed?)
-  (reset! *agg* []))
+(defn put-aggregated-data-into-state!
+  "Push the aggregated data that comes as messages into provided channel
+   into app-state. If there is a parser passed in, resume it."
+  [agg-data-channel]
+  (go
+   (while true
+     (let [{:keys [data completed? parser]} (<! agg-data-channel)]
+       (shared/add-to-app-data! shared/app-state data :completed? completed?)
+       ;; give browser some time to render things starting the parser again
+       (<! (timeout 100))
+       (when parser (.resume parser))))))
 
 (defn read-next-chunk!
   "If *n* is a power of 2 above 100, then flush the data into app-state,
   else store it inside *agg*, increment *n*, and move on."
-  [data-chunk parser *n* *agg*]
-  (go
+  [data-chunk parser *n* *agg* channel]
    (swap! *n* inc)
    (swap! *agg* conj (first (js->clj (.-data data-chunk))))
-   (when (and (> @*n* 1000) (integer? (.sqrt js/Math @*n*)))
-     (push-to-app-state! *agg*)
+   (when (and (>= @*n* 100) (integer? (.log10 js/Math @*n*)))
+     (put! channel {:data @*agg* :parser parser})
      (.pause parser)
-     (<! (timeout 2))
-     (.resume parser))))
+     (reset! *agg* [])))
 
 (defn chunk-reader []
-  "Returns a callback for step/chunk for papa-parse, ie,
-   a function that can be called on chunk and parser.
-   Closes two atoms: an int incrementor inside *n* and
-                     a vector aggregator inside *agg*."
+  "Returns a callback closure for step/chunk for papa-parse, ie, a function
+   that can be called on chunk and parser.
+   Closure contains an incrementor atom (*n*), a data aggregator atom (*agg*),
+   and a channel that the contents of *agg* will be flushed into app-state."
   (let [*n* (atom 0)
-        *agg* (atom [])]
-    {:step (fn [chnk parser] (read-next-chunk! chnk parser *n* *agg*))
-     :complete #(push-to-app-state! *agg* :completed? true)}))
+        *agg* (atom [])
+        channel (chan)]
+    (put-aggregated-data-into-state! channel)
+    {:step (fn [chnk parser]
+             (read-next-chunk! chnk parser *n* *agg* channel))
+     :complete #(put! channel {:data @*agg* :completed? true})}))
 
 ;; GET AND RENDER
 (go
@@ -92,7 +98,6 @@
              :opts {:chart-get chart-getter}})
    (-> (<! data-chan) :body
        (parse (clj->js {:header true
-                        :dynamicTyping true
                         :skipEmptyLines true
                         :step step
                         :complete complete})))))
