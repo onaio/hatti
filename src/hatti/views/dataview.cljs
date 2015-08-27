@@ -42,7 +42,7 @@
   (om/component (html nil)))
 
 (defmethod dataview-infobar :default
-  [{:keys [num_of_submissions]} owner]
+  [{:keys [num_of_submissions loading?]} owner]
   (reify
     om/IWillMount
     (will-mount [_]
@@ -66,7 +66,9 @@
            (when (f/multilingual? form)
              (om/build shared/language-selector nil))]
           [:div#data-status
-           [:span.rec (pluralize-number num_of_submissions " Record")]]
+           [:span.rec
+            (when loading? [:i.fa.fa-spinner.fa-pulse])
+            (pluralize-number num_of_submissions " Record")]]
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))
 

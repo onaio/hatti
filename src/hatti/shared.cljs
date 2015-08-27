@@ -1,6 +1,6 @@
 (ns hatti.shared
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<! chan mult tap put! timeout]]
+  (:require [cljs.core.async :refer [<! chan mult tap]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
             [hatti.constants :refer [_rank]]
@@ -46,18 +46,26 @@
     :dataset-info {}
     :languages {:current nil :all []}}))
 
+;; HATTI global app-state
+;; You can make replicas using (empty-app-state), but this is the only one
+;; that the language-cursor is wired to
 (def app-state (empty-app-state))
 
 ;; DATA UPDATERS
 
+;; A transact! function that optionally uses swap! if this atom
+;; has not been yet made into a root cursor by om.
 (defn transact!
   [app-state]
   (if (satisfies? om/ITransact app-state) om/transact! swap!))
 
+;; replicating the cursor semantics of om/transact!
+;; the ks allows you to "zoom into" a cursor
 (defn transact-app-state!
   [app-state ks transact-fn]
   ((transact! app-state) app-state #(update-in % ks transact-fn)))
 
+;; Replaces the `data` stored in the hatti app
 (defn transact-app-data!
   "Given a function over data, run a transact on data inside app-state."
   [app-state transact-fn]
@@ -80,6 +88,14 @@
       (transact-app-state! app-state
                            [:dataset-info :num_of_submissions]
                            (fn [_] num_of_submissions)))))
+
+(defn add-to-app-data!
+  "Add to app data."
+  [app-state data & {:keys [completed?]}]
+  (let [old-data (get-in @app-state [:map-page :data])]
+    ;; only re-rank if loading is completed
+    (update-app-data! app-state (concat old-data data) :rerank? completed?)
+    (transact-app-state! app-state [:dataset-info :loading?] #(not completed?))))
 
 ;; LANGUAGE
 

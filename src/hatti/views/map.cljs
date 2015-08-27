@@ -270,8 +270,9 @@
             new-data (:data next-props)
             old-field (:geofield (om/get-props owner))
             new-field (:geofield next-props)]
-        (when (or (not= old-data new-data)
-                  (not= old-field new-field))
+        (when (or (not= old-field new-field)
+                  (not= (count old-data) (count new-data))
+                  (not= old-data new-data))
           (let [{:keys [flat-form]} (om/get-shared owner)
                 {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
                 new-geojson (mu/as-geojson new-data flat-form new-field)]
