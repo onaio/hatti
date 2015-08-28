@@ -36,14 +36,13 @@
   (atom
    {:views {:all [:overview :map :table :chart :settings]
             :selected :overview}
-    :map-page {:data []
-               :submission-clicked {:data nil}
+    :map-page {:submission-clicked {:data nil}
                :geofield {}}
-    :table-page {:data []
-                 :submission-clicked {:data nil}}
+    :table-page {:submission-clicked {:data nil}}
     :chart-page {:visible-charts default-fields
                  :chart-data {}}
     :dataset-info {}
+    :data []
     :languages {:current nil :all []}}))
 
 ;; HATTI global app-state
@@ -69,8 +68,7 @@
 (defn transact-app-data!
   "Given a function over data, run a transact on data inside app-state."
   [app-state transact-fn]
-  (transact-app-state! app-state [:map-page :data] transact-fn)
-  (transact-app-state! app-state [:table-page :data] transact-fn))
+  (transact-app-state! app-state [:data] transact-fn))
 
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
@@ -92,7 +90,7 @@
 (defn add-to-app-data!
   "Add to app data."
   [app-state data & {:keys [completed?]}]
-  (let [old-data (get-in @app-state [:map-page :data])]
+  (let [old-data (:data @app-state)]
     ;; only re-rank if loading is completed
     (update-app-data! app-state (concat old-data data) :rerank? completed?)
     (transact-app-state! app-state [:dataset-info :loading?] #(not completed?))))

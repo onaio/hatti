@@ -128,21 +128,21 @@
 ;; EVENT LOOPS
 
 (defn handle-table-events
-  [cursor grid dataview]
+  [app-state grid dataview]
   "Event loop for the table view. Processes a tap of share/event-chan,
-   and updates cursor/dataview/grid as needed."
+   and updates app-state/dataview/grid as needed."
   (let [event-chan (shared/event-tap)]
     (go
      (while true
        (let [e (<! event-chan)
              {:keys [submission-to-rank submission-clicked submission-unclicked
                      filter-by new-columns re-render]} e
-             update-data! (partial om/update! cursor
+             update-data! (partial om/update! app-state
                                    [:table-page :submission-clicked :data])]
          (when submission-to-rank
            (let [rank submission-to-rank
                  submission (-> (filter #(= rank (get % _rank))
-                                        (get-in @cursor [:table-page :data]))
+                                        (get-in @app-state [:data]))
                                 first)]
              (update-data! submission)))
          (when submission-clicked
@@ -165,7 +165,7 @@
 ;; OM COMPONENTS
 
 (defmethod label-changer :default
-  [cursor owner]
+  [_ owner]
   (reify
     om/IInitState
     (init-state [_] {:name-or-label :label})
@@ -235,18 +235,18 @@
       [grid dataview])))
 
 (defmethod table-page :default
-  [cursor owner opts]
+  [app-state owner opts]
   "Om component for the table grid.
    Renders empty divs via om, hooks up slickgrid to these divs on did-mount."
   (reify
     om/IRenderState
     (render-state [_ _]
-      (let [no-data? (empty? (get-in cursor [:table-page :data]))
-            with-info #(merge % {:dataset-info (:dataset-info cursor)})]
+      (let [no-data? (empty? (get-in app-state [:data]))
+            with-info #(merge % {:dataset-info (:dataset-info app-state)})]
         (html
          [:div.table-view
           (om/build submission-view
-                    (with-info (get-in cursor [:table-page :submission-clicked]))
+                    (with-info (get-in app-state [:table-page :submission-clicked]))
                     {:opts (merge (select-keys opts #{:delete-record! :role})
                                   {:view :table})})
           (if no-data?
@@ -255,19 +255,19 @@
             [:div {:id table-id :class "slickgrid"}]])))
     om/IDidMount
     (did-mount [_]
-      (let [data (get-in cursor [:table-page :data])]
+      (let [data (get-in app-state [:data])]
         (when-let [[grid dataview] (init-grid! data owner)]
-          (handle-table-events cursor grid dataview))))
+          (handle-table-events app-state grid dataview))))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets slickgrid data if the table data has changed."
-      (let [old-data (get-in (om/get-props owner) [:table-page :data])
-            new-data (get-in next-props [:table-page :data])
+      (let [old-data (get-in (om/get-props owner) [:data])
+            new-data (get-in next-props [:data])
             {:keys [grid dataview]} (om/get-state owner)]
         (when (not= old-data new-data)
           (if (empty? old-data)
             (when-let [[grid dataview] (init-grid! new-data owner)]
-              (handle-table-events cursor grid dataview))
+              (handle-table-events app-state grid dataview))
             (do ; data has changed
               (.invalidateAllRows grid)
               (.setItems dataview (clj->js new-data) _id)
