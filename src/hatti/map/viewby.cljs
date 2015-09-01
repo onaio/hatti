@@ -132,8 +132,9 @@
   "Given a list of answers + query, returns map from answers to true/false.
    True if query is in the answer, false if not."
   (let [query-present? (fn [ans]
-                         (re-find (safe-regex query)
-                                  (f/format-answer field ans language)))]
+                         (when ans
+                           (re-find (safe-regex query)
+                                    (f/format-answer field ans language))))]
     {:visible-answers (filter query-present? answers)
      :answer->selected? (zipmap answers (map query-present? answers))}))
 
