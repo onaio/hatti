@@ -104,7 +104,9 @@
                          [:a {:class "inactive" :title "No geodata"}
                           (name view)]
                          [:a {:href (str "#/" (name view))
-                              :class (view->cls view)} label]))]
+                              :class (str (view->cls view) (when (contains? #{"map" "table" "chart"} (name view))
+                                                             " data-tabs"))} label]))]
+
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
