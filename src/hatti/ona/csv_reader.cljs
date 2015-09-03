@@ -1,6 +1,7 @@
 (ns hatti.ona.csv-reader
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<! put! chan timeout close!]]))
+  (:require [cljs.core.async :refer [<! put! chan timeout close!]]
+            [cljsjs.papaparse]))
 
 (defn process-aggregated-data!
   "Calls callback on aggregated data that come via messages in channel.
@@ -32,17 +33,23 @@
 (defn progressively-read-csv!
   "Given csv-string + callback for incremental data,
    progressively parses csv (with exponential chunk processing).
-   Channel-based asynchronization + waits allow browser to render in bckgrnd."
+   Channel-based asynchronization + waits allow browser to render in bckgrnd.
+   Returns a channel which is closed when processing is completed."
   [csv-string chunk-callback]
   (let [*n* (atom 0)
         *agg* (atom [])
         channel (chan)
+        return-channel (chan)
         step (fn [chnk parser]
                (read-next-chunk! chnk parser *n* *agg* channel))
-        complete #(put! channel {:data @*agg* :completed? true})
+        complete (fn [_]
+                   (put! channel {:data @*agg* :completed? true})
+                   (close! return-channel))
         config (clj->js {:header true
                          :skipEmptyLines true
                          :step step
                          :complete complete})]
     (process-aggregated-data! channel chunk-callback)
-    (.parse js/Papa csv-string config)))
+    (.parse js/Papa csv-string config)
+    return-channel))
+
