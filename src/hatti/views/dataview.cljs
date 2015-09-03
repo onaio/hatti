@@ -104,13 +104,21 @@
                          [:a {:class "inactive" :title "No geodata"}
                           (name view)]
                          [:a {:href (str "#/" (name view))
-                              :class (str (view->cls view) (when (contains? #{"map" "table" "chart"} (name view))
-                                                             " data-tabs"))} label]))]
+                              :class (view->cls view)} label]))
+            get->dv (fn [val]
+                      (contains? #{"Map" "Table" "Summary Charts"}  (last val)))
+            overview-page-anchors (map dv->link dataviews)
+            anchors-list (into [] overview-page-anchors)
+            anchors-in-span (filter get->dv overview-page-anchors)
+            overview-tab (get anchors-list 0)
+            settings-tab (get anchors-list 4)]
 
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
-           (map dv->link dataviews)
+            overview-tab
+            [:span {:class "data-tabs"} anchors-in-span]
+            settings-tab
            (om/build dataview-infobar (-> app-state :dataset-info))]
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
