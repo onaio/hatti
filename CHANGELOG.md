@@ -1,3 +1,7 @@
+v0.1.7
+ * Fix text search maps work for categories map for text
+ * Fix map zoom on initial load
+
 v0.1.6
  * remove extra metadata fields in table view for filtered dataviews
  * tests
