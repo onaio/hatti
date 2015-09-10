@@ -288,7 +288,8 @@
     (init-state [_]
       "Update geofield cursor if necessary, and return {:expanded false}"
       (when (empty? geofield)
-        (om/update! geofield (mu/default-geofield geofields)))
+        (om/update! geofield
+                    (f/default-geofield (om/get-shared owner [:flat-form]))))
       {:expanded false})
     om/IRenderState
     (render-state [_ _]

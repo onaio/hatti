@@ -257,6 +257,21 @@
   [flat-form]
   (remove meta? flat-form))
 
+(defn geofields [flat-form]
+  "Get just the geofields from the form."
+  (filter geofield? flat-form))
+
+(defn default-geofield [flat-form]
+  "From a list of geofields, get the default one to map.
+   Implementation: pick first geoshape if any, else pick first geofield."
+  (let [geofields (geofields flat-form)
+        geoshapes (filter geoshape? geofields)
+        geopoints (filter geopoint? geofields)]
+    (cond
+     (seq geoshapes) (first geoshapes)
+     (seq geopoints) (first geopoints)
+     :else (first geofields))))
+
 ;; UTILITY: languages
 
 (defn english? [language] (re-find #"(?i)english" (str language)))

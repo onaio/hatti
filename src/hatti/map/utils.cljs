@@ -155,21 +155,11 @@
       (when-not (or (nil? coords) (some nil? coords))
         {:type geotype :coordinates coords}))))
 
-(defn default-geofield [geofields]
-  "From a list of geofields, get the default one to map.
-   Implementation: pick first geoshape if any, else pick first geofield."
-  (let [geoshapes (filter f/geoshape? geofields)
-        geopoints (filter f/geopoint? geofields)]
-    (cond
-     (seq geoshapes) (first geoshapes)
-     (seq geopoints) (first geopoints)
-     :else (first geofields))))
-
 (defn as-geojson
   "Given the dataset, and the form schema, get out geojson.
    Optional specification of field will map that field data to the geom."
   ([dataset form]
-    (as-geojson dataset form (default-geofield (filter f/geofield? form))))
+    (as-geojson dataset form (f/default-geofield form)))
   ([dataset form geofield]
      (when geofield
        {:type "FeatureCollection"
