@@ -47,6 +47,7 @@
                   :settings
                   :table
                   :user-guide]
+            :disabled []
             :selected :overview
             :settings {:all [:basemaps
                              :form-info
