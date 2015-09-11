@@ -16,6 +16,7 @@
                  ;; JS REQUIREMENTS
                  [cljsjs/moment "2.9.0-1"]
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
+                 [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/jquery "1.9.1-0"]
                  [prabhasp/slickgrid-cljs "0.0.1"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
