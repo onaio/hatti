@@ -1,9 +1,10 @@
 (ns hatti.views.dataview-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [sel1]])
+                   [dommy.macros :refer [sel sel1]])
   (:require [cljs.test :as t]
             [dommy.core :as dommy]
             [hatti.shared :as shared]
+            [hatti.utils :refer [in?]]
             [hatti.views :refer [tabbed-dataview]]
             [hatti.test-utils :refer [big-thin-data
                                       data-gen
@@ -50,11 +51,16 @@
   (let [tabbed-view (tabbed-dataview-container shared/app-state)]
     (testing "Map tab is not rendered when there is no geodata"
       (is (= "map"
-             (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html)))))
-    #_(testing "Map, Chart and Table tabs are disabled"
-      (let [_ (shared/transact-app-state! shared/app-state
-                                                [:views :disabled]
-                                                [:map :chart :table])
-            tabbed-view (tabbed-dataview-container shared/app-state)]
-        (is (= "map chart table"
-               (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html))))))))
+             (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html)))))))
+
+(deftest disabled-tabbed-tests
+  (testing "Map, Chart and Table tabs are disabled"
+    (let [disabled-views [:map :table :chart]
+          data-atom (shared/empty-app-state)
+          _ (shared/transact-app-state! data-atom
+                                        [:views :disabled]
+                                        #(identity disabled-views))
+          tabbed-view (tabbed-dataview-container data-atom)]
+      (doseq [tab (-> tabbed-view (sel1 :div.tab-bar) (sel :.inactive))]
+        (is (in? disabled-views
+                 (keyword (dommy/html tab))))))))
