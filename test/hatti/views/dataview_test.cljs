@@ -1,18 +1,16 @@
 (ns hatti.views.dataview-test
-  (:require-macros [cljs.test :refer (is deftest testing)])
+  (:require-macros [cljs.test :refer (is deftest testing)]
+                   [dommy.macros :refer [sel1]])
   (:require [cljs.test :as t]
+            [dommy.core :as dommy]
             [hatti.shared :as shared]
-            [hatti.test-utils :refer [format]]))
-
-(defn data-gen [ncol nrow]
-  (let [rf (fn [max] (format "%02d" (inc (rand-int max))))]
-    (for [i (range nrow)]
-      (apply merge {"_id" i
-                    "_rank" (inc i)
-                    "_submission_time" (str "2012-" (rf 12) "-" (rf 28))}
-             (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
-
-(def big-thin-data (data-gen 1 100))
+            [hatti.views :refer [tabbed-dataview]]
+            [hatti.test-utils :refer [big-thin-data
+                                      data-gen
+                                      format
+                                      new-container!
+                                      thin-form]]
+            [om.core :as om :include-macros true]))
 
 ;; INITIAL STATE TESTS
 (deftest initial-state
@@ -31,3 +29,24 @@
                       (dget "_submission_time" data-100))]
         (is (= (sort test-dates) (conj (take 2 test-dates) (last test-dates))))
         (is (= s100 (sort s100)))))))
+
+
+;;TABBED DATAVIEW TESTS
+(defn- tabbed-dataview-container
+  [app-state]
+  (let [c (new-container!)
+        _ (om/root tabbed-dataview
+                   app-state
+                   {:shared {:flat-form thin-form
+                             :project-id "1"
+                             :project-name "Project"
+                             :dataset-id "2"
+                             :username "user"
+                             :view-type :default}
+                    :target c})]
+    c))
+
+(deftest tabbed-dataview-tests
+  (let [tabbed-view (tabbed-dataview-container shared/app-state)]
+    (testing "All tabs are rendered when none is disabled"
+      (is (re-find #"inactive" (dommy/html (sel1 tabbed-view)))))))
