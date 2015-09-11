@@ -49,4 +49,4 @@
 (deftest tabbed-dataview-tests
   (let [tabbed-view (tabbed-dataview-container shared/app-state)]
     (testing "All tabs are rendered when none is disabled"
-      (is (re-find #"inactive" (dommy/html (sel1 tabbed-view)))))))
+      (is (re-find #"inactive" (dommy/html tabbed-view))))))
