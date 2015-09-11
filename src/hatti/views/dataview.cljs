@@ -43,7 +43,7 @@
   (om/component (html nil)))
 
 (defmethod dataview-infobar :default
-  [{:keys [num_of_submissions loading?]} owner]
+  [{:keys [dataset-info status]} owner]
   (reify
     om/IWillMount
     (will-mount [_]
@@ -58,7 +58,9 @@
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
-            {:keys [dataset-id]} (om/get-shared owner)]
+            {:keys [dataset-id]} (om/get-shared owner)
+            {:keys [num_of_submissions]} dataset-info
+            {:keys [loading? total-records]} status]
         (html
          [:div.right.rec-summary.rec-margin
           [:div#language-selector
@@ -67,6 +69,8 @@
           [:div#data-status
            [:span.rec
             (when loading? [:i.fa.fa-spinner.fa-pulse])
+            (when (and total-records (not= total-records num_of_submissions))
+              (str " " total-records " / "))
             (pluralize-number num_of_submissions " Record")]]
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))
@@ -110,7 +114,8 @@
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
            (map dv->link dataviews)
-           (om/build dataview-infobar (-> app-state :dataset-info))]
+           (om/build dataview-infobar {:dataset-info (-> app-state :dataset-info)
+                                       :status (-> app-state :status)})]
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}

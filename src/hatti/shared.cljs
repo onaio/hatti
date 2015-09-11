@@ -44,6 +44,7 @@
                  :chart-data {}}
     :dataset-info {}
     :data []
+    :status {:total-records 0 :loading? true}
     :languages {:current nil :all []}}))
 
 ;; HATTI global app-state
@@ -69,20 +70,19 @@
                     (map-indexed (fn [i v] (assoc v _rank (inc i))))
                     vec)
                data)
-        num_of_submissions (count data)]
+        total-records (count data)]
     (transact-app-data! app-state (fn [_] data))
-    (when-not (zero? num_of_submissions)
-      (state/transact-app-state! app-state
-                                 [:dataset-info :num_of_submissions]
-                                 (fn [_] num_of_submissions)))))
+    (state/update-app-state! app-state [:status :total-records] total-records)))
 
 (defn add-to-app-data!
   "Add to app data."
   [app-state data & {:keys [completed?]}]
-  (let [old-data (:data @app-state)]
+  (let [old-data (:data @app-state)
+        new-data (concat old-data data)
+        total-count (count new-data)]
     ;; only re-rank if loading is completed
-    (update-app-data! app-state (concat old-data data) :rerank? completed?)
-    (state/transact-app-state! app-state [:dataset-info :loading?] #(not completed?))))
+    (update-app-data! app-state new-data :rerank? completed?)
+    (state/update-app-state! app-state [:status :loading?] (not completed?))))
 
 ;; LANGUAGE
 
