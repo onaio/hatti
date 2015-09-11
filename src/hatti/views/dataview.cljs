@@ -5,6 +5,7 @@
             [sablono.core :as html :refer-macros [html]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
+            [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
@@ -48,14 +49,12 @@
     (will-mount [_]
       (let [form (om/get-shared owner :flat-form)
             langs (f/get-languages form)
-            default-lang (f/default-lang langs)]
+            default-lang (f/default-lang langs)
+            lang-state {:all langs
+                        :default default-lang
+                        :current default-lang}]
         (when (f/multilingual? form)
-          (shared/transact-app-state!
-           shared/app-state
-           [:languages]
-           (fn [_] {:all langs
-                    :default default-lang
-                    :current default-lang})))))
+          (merge-into-app-state! shared/app-state [:languages] lang-state))))
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
@@ -76,9 +75,9 @@
   (let [view (keyword view)
         views (-> @shared/app-state :views :all)]
     (when (contains? (set views) view)
-      (shared/transact-app-state! shared/app-state
-                                  [:views :selected]
-                                  (fn [_] view))
+      (merge-into-app-state! shared/app-state
+                             [:views]
+                             {:selected view})
       (put! shared/event-chan {:re-render view}))))
 
 (defmethod tabbed-dataview :default
