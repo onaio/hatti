@@ -48,5 +48,13 @@
 
 (deftest tabbed-dataview-tests
   (let [tabbed-view (tabbed-dataview-container shared/app-state)]
-    (testing "All tabs are rendered when none is disabled"
-      (is (re-find #"inactive" (dommy/html tabbed-view))))))
+    (testing "Map tab is not rendered when there is no geodata"
+      (is (= "map"
+             (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html)))))
+    #_(testing "Map, Chart and Table tabs are disabled"
+      (let [_ (shared/transact-app-state! shared/app-state
+                                                [:views :disabled]
+                                                [:map :chart :table])
+            tabbed-view (tabbed-dataview-container shared/app-state)]
+        (is (= "map chart table"
+               (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html))))))))
