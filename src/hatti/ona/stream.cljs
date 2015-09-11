@@ -1,4 +1,4 @@
-(ns hatti.ona.csv-reader
+(ns hatti.ona.stream
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! put! chan timeout close!]]
             [cljsjs.oboe]))
@@ -42,7 +42,6 @@
          step (fn [line]
                 (read-next-chunk! (js->clj line) *n* *agg* channel))
          done (fn []
-                (.log js/console "DONE!")
                 (put! channel {:data @*agg* :completed? true})
                 (close! return-channel)) ]
      (process-aggregated-data! channel stepfn)
