@@ -76,7 +76,9 @@
         num_of_submissions (count data)]
     (transact-app-data! app-state (fn [_] data))
     (when-not (zero? num_of_submissions)
-      (transact-app-state! app-state [:dataset-info :num_of_submissions] (fn [_] num_of_submissions)))))
+      (transact-app-state! app-state
+                           [:dataset-info :num_of_submissions]
+                           (fn [_] num_of_submissions)))))
 
 ;; LANGUAGE
 
