@@ -14,7 +14,9 @@
        (when data (callback data completed?))
        ;; Timeout so browser can do some rendering before parsing again.
        (<! (timeout 10))
-       (when completed? (close! agg-data-channel))))))
+       (when completed?
+         (<! (timeout 1000))
+         (close! agg-data-channel))))))
 
 (defn read-next-chunk!
   "On each step of data, increment a counter *n*, and put data in a list *agg*.
@@ -30,22 +32,21 @@
 
 (defn streamingly-read-json!
   "Given url, a node pattern matcher, and a callback, streaming-read json."
-  ([url stepfn]
-   "streamingly read array json. !.* = everything immediately inside root."
-   (streamingly-read-json! url "!.*" stepfn))
-  ([url node-pattern stepfn]
-   (let [*n* (atom 0)
-         *agg* (atom [])
-         channel (chan)
-         return-channel (chan)
-         oboe (.oboe js/window url)
-         step (fn [line]
-                (read-next-chunk! (js->clj line) *n* *agg* channel))
-         done (fn []
-                (put! channel {:data @*agg* :completed? true})
-                (close! return-channel)) ]
-     (process-aggregated-data! channel stepfn)
-     (-> (.oboe js/window url)
-         (.node node-pattern step)
-         (.done done))
-     return-channel)))
+  [url stepfn & {:keys [oboe-headers]}]
+  (let [*n* (atom 0)
+        *agg* (atom [])
+        channel (chan)
+        return-channel (chan)
+        oboe-params (clj->js {:url url
+                              :headers oboe-headers
+                              :withCredentials true})
+        step (fn [line]
+               (read-next-chunk! (js->clj line) *n* *agg* channel))
+        done (fn []
+               (put! channel {:data @*agg* :completed? true})
+               (close! return-channel))]
+    (process-aggregated-data! channel stepfn)
+    (-> (.oboe js/window oboe-params)
+        (.node "!.*" step)
+        (.done done))
+    return-channel))
