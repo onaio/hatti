@@ -22,7 +22,7 @@
 
 (defn read-next-chunk!
   "On each step of data, increment read-count atom, and put data in a list agg.
-   After a exponentially increasing # of steps have been processes,
+   After a exponentially increasing # of steps have been processed,
    the aggregated data gets flushed into a channel, and parser is paused.
    The channel reader should resume the parser after processing the data."
   [data-chunk read-count agg channel]
