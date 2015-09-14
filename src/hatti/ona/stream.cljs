@@ -4,7 +4,6 @@
             [cljsjs.oboe]))
 
 (def small-delay 10)
-(def big-delay 1000)
 
 (defn process-aggregated-data!
   "Calls callback on aggregated data that come via messages in channel.
@@ -17,8 +16,7 @@
        (when data (callback data completed?))
        ;; Timeout so browser can do some rendering before parsing again.
        (<! (timeout small-delay))
-       (when completed?
-         (close! agg-data-channel))))))
+       (when completed? (close! agg-data-channel))))))
 
 (defn read-next-chunk!
   "On each step of data, increment read-count atom, and put data in a list agg.
