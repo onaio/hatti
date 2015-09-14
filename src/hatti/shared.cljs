@@ -63,7 +63,7 @@
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
    Sorts by submission time, and adds rank to the data, for table + map views."
-  [app-state data & {:keys [rerank?]}]
+  [app-state data & {:keys [rerank? completed?]}]
   (let [data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % "_submission_time"))
@@ -72,16 +72,16 @@
                data)
         total-records (count data)]
     (transact-app-data! app-state (fn [_] data))
-    (state/update-app-state! app-state [:status :total-records] total-records)))
+    (state/merge-into-app-state! app-state [:status]
+                                 {:total-records total-records
+                                  :loading? (not completed?)})))
 
 (defn add-to-app-data!
   "Add to app data."
   [app-state data & {:keys [completed?]}]
-  (let [old-data (:data @app-state)
-        new-data (concat old-data data)
-        total-count (count new-data)]
+  (let [old-data (:data @app-state)]
     ;; only re-rank if loading is completed
-    (update-app-data! app-state new-data :rerank? completed?)
+    (update-app-data! app-state (concat old-data data) :rerank? completed?)
     (state/update-app-state! app-state [:status :loading?] (not completed?))))
 
 ;; LANGUAGE
