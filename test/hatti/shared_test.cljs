@@ -52,35 +52,45 @@
       (om/root shared/language-selector nil {:target c})
       (is (= (dommy/text (sel1 c [:span.dropdown :span])) "EN")))))
 
-
-(deftest num-of-submissions-updated-correctly
-  (testing "num_of_submissions in dataset-info is not replaced by
-  submission count if submission count is zero"
-    (let [num_of_submissions 2]
-      (shared/transact-app-state! shared/app-state [:dataset-info :num_of_submissions] #(-> num_of_submissions))
-      (shared/update-app-data! shared/app-state no-data)
-      (is (= (-> @shared/app-state :dataset-info :num_of_submissions) num_of_submissions))
-      (is (not= (-> @shared/app-state :dataset-info :num_of_submissions) 0)))))
+(deftest status-updates
+  (testing "status (:total-records and :loading?) are updated correctly by update-app-state!."
+    (let [fake-data big-thin-data
+          test-state (shared/empty-app-state)]
+      (shared/update-app-data! test-state fake-data :rerank? true)
+      (is (= (-> @test-state :status :loading?) true))
+      (is (= (-> @test-state :status :total-records) 100))
+      (shared/update-app-data! test-state fake-data :completed? true)
+      (is (= (-> @test-state :status :loading?) false))
+      (is (= (-> @test-state :status :total-records) 100))))
+  (testing "status (:total-records and :loading?) are updated correctly by update-app-state!."
+    (let [fake-data big-thin-data
+          test-state (shared/empty-app-state)]
+      (shared/add-to-app-data! test-state fake-data :rerank? true)
+      (is (= (-> @test-state :status :loading?) true))
+      (is (= (-> @test-state :status :total-records) 100))
+      (shared/add-to-app-data! test-state fake-data :completed? true)
+      (is (= (-> @test-state :status :loading?) false))
+      (is (= (-> @test-state :status :total-records) 200)))))
 
 ;; TODO Move test to zerba
 #_(deftest update-data-on!-works
-  (shared/update-app-data! small-thin-data :rerank? true)
-  (testing "update-data-on! :delete works"
-    (let [initial-data @shared/app-state
-          ids (fn [data] (map #(get % "_id") (get-in data [:map-page :data])))]
-      (shared/update-data-on! :delete {:instance-id 1})
-      (is (contains? (-> initial-data ids set) 1))
-      (is (not (contains? (-> @shared/app-state ids set) 1))))))
+    (shared/update-app-data! shared/app-state small-thin-data :rerank? true)
+    (testing "update-data-on! :delete works"
+      (let [initial-data @shared/app-state
+            ids (fn [data] (map #(get % "_id") (get-in data [:map-page :data])))]
+        (shared/update-data-on! :delete {:instance-id 1})
+        (is (contains? (-> initial-data ids set) 1))
+        (is (not (contains? (-> @shared/app-state ids set) 1))))))
 
 ;; TODO Move test to zerba
 #_(deftest data-is-extracted-from-osm-properly
-  (shared/update-app-data! osm-data :re-rank? true)
-  (shared/update-app-state-with-osm-data! osm-form osm-xml)
-  (testing "updating data with osm bits works"
-    (let [data (get-in @shared/app-state [:map-page :data])]
-      (is (nil? (-> data (nth 2) (get "osm_building"))))
-      (is (= (-> data first (get "osm_building") keys)
-             (list :osm-id :type :geom :name :tags)))
+    (shared/update-app-data! osm-data :re-rank? true)
+    (shared/update-app-state-with-osm-data! osm-form osm-xml)
+    (testing "updating data with osm bits works"
+      (let [data (get-in @shared/app-state [:map-page :data])]
+        (is (nil? (-> data (nth 2) (get "osm_building"))))
+        (is (= (-> data first (get "osm_building") keys)
+               (list :osm-id :type :geom :name :tags)))
       (is (= "way" (-> data first (get "osm_building") :type)))
       (is (= "Polygon" (-> data first (get "osm_building") :geom :type))))))
 
