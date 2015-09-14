@@ -3,6 +3,7 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -60,11 +61,11 @@
 
 (defn- get-id
   [marker]
-  (-> marker (aget "feature") (aget "properties") (aget "_id")))
+  (-> marker (aget "feature") (aget "properties") (aget _id)))
 
 (defn- get-rank
   [marker]
-  (-> marker (aget "feature") (aget "properties") (aget "_rank")))
+  (-> marker (aget "feature") (aget "properties") (aget _rank)))
 
 (defn get-style
   "Get the style of a marker. Second arg specifies style attribute to get.
@@ -137,16 +138,16 @@
                   "gps" "Point"
                   "geoshape" "Polygon"
                   "geotrace" "LineString"} (:type geofield))
-        parse (fn [s] (when (seq s)
+        parse (fn [s] (when (and (seq s) (not= s "n/a"))
                        (for [coord-string (string/split s #";")]
                          (let [[lat lng _ _ ] (string/split coord-string #" ")]
                            [(read-string lng) (read-string lat)]))))
         coordfn (case geotype
-                  "Point" reverse
+                  "Point" #(first (parse %))
                   "LineString" parse
                   "Polygon" #(vector (parse %))
                   identity)
-        key (if (= geotype "Point") "_geolocation" (:full-name geofield))
+        key (:full-name geofield)
         value (get record key)
         coords (coordfn value)]
     (if (f/osm? geofield)
@@ -154,21 +155,11 @@
       (when-not (or (nil? coords) (some nil? coords))
         {:type geotype :coordinates coords}))))
 
-(defn default-geofield [geofields]
-  "From a list of geofields, get the default one to map.
-   Implementation: pick first geoshape if any, else pick first geofield."
-  (let [geoshapes (filter f/geoshape? geofields)
-        geopoints (filter f/geopoint? geofields)]
-    (cond
-     (seq geoshapes) (first geoshapes)
-     (seq geopoints) (first geopoints)
-     :else (first geofields))))
-
 (defn as-geojson
   "Given the dataset, and the form schema, get out geojson.
    Optional specification of field will map that field data to the geom."
   ([dataset form]
-    (as-geojson dataset form (default-geofield (filter f/geofield? form))))
+    (as-geojson dataset form (f/default-geofield form)))
   ([dataset form geofield]
      (when geofield
        {:type "FeatureCollection"
@@ -176,7 +167,8 @@
                         :let [geo (get-as-geom record geofield)]
                         :when geo]
                     {:type "Feature"
-                     :properties {:_rank (inc idx) :_id (record "_id")}
+                     :properties {(keyword _rank) (inc idx)
+                                  (keyword _id) (record _id)}
                      :geometry geo})})))
 
 ;;;;; MAP
@@ -208,7 +200,7 @@
   (.on marker "click"
        #(when-not (is-clicked? marker)
           (put! event-chan {:submission-to-rank
-                            (aget (aget feature "properties") "_rank")})))
+                            (aget (aget feature "properties") _rank)})))
   (.on marker "mouseover"
        #(when-not (is-clicked? marker)
           (apply-hover-style marker)))
@@ -243,7 +235,7 @@
                                 #js {:onEachFeature on-events
                                      :pointToLayer point->marker
                                      :style stylefn})
-        ids (map #(get-in % [:properties :_id]) (:features geojson))
+        ids (map #(get-in % [:properties (keyword _id)]) (:features geojson))
         markers (.getLayers feature-layer)]
     (when-not (empty? (:features geojson))
       (when rezoom? (.fitBounds m (.getBounds feature-layer)))

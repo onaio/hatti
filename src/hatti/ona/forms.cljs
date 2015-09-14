@@ -1,15 +1,16 @@
 (ns hatti.ona.forms
   (:require [clojure.string :as string]
+            [hatti.constants :refer [_submission_time _submitted_by]]
             [hatti.utils :refer [format last-url-param]]))
 
 ;; CONSTANTS
 (def no-answer "No Answer")
 (def submission-time-field
-  {:name "_submission_time" :full-name "_submission_time"
+  {:name _submission_time :full-name _submission_time
    :label "Submission Time" :type "dateTime"})
 
 (def submitted-by-field
-  {:name "_submitted_by" :full-name "_submitted_by"
+  {:name _submitted_by :full-name _submitted_by
    :label "Submitted by" :type "text"})
 
 (def extra-submission-details [submission-time-field submitted-by-field])
@@ -204,8 +205,8 @@
                   "phonenumber"   "Phone number"
                   (:name field))
                 (case (:name field)
-                  "_submission_time" "Submission time"
-                  "_submitted_by" "Submitted by"
+                  _submission_time "Submission time"
+                  _submitted_by "Submitted by"
                   ""))]
     (if (:label field) field (assoc field :label label))))
 
@@ -256,6 +257,21 @@
   "Get just the fields in this form that are not meta fields."
   [flat-form]
   (remove meta? flat-form))
+
+(defn geofields [flat-form]
+  "Get just the geofields from the form."
+  (filter geofield? flat-form))
+
+(defn default-geofield [flat-form]
+  "From a list of geofields, get the default one to map.
+   Implementation: pick first geoshape if any, else pick first geofield."
+  (let [geofields (geofields flat-form)
+        geoshapes (filter geoshape? geofields)
+        geopoints (filter geopoint? geofields)]
+    (cond
+     (seq geoshapes) (first geoshapes)
+     (seq geopoints) (first geopoints)
+     :else (first geofields))))
 
 ;; UTILITY: languages
 

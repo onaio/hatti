@@ -20,18 +20,24 @@ This library is a work-in-progress to package up much of the dataview used in On
 
 `app-state` has the following structure:
 ```clj
-   {:map-page {:data []
-               :submission-clicked {:data nil}
-               :geofield {}}
-    :table-page {:data []
-                 :submission-clicked {:data nil}}
+   {:data []
+   :map-page {:submission-clicked {:data nil}
+              :geofield {}}
+    :table-page {:submission-clicked {:data nil}}
     :chart-page {:visible-charts []
                  :chart-data {}}
     :dataset-info {}
     :languages {:current nil :all []}}
 ```
 
-(Near Future: only one copy of `data` at top-level).
+The meaning of the state is as follows:
+
+ * `:data` should be all of the data for this dataset. A list of records, each record being a submission.
+ * `:dataset-info` is what is available via the `/forms/` endpoint. Inside here, there should be things like form `metadata`, `num_of_submissions` and `instances_with_geopoints`, `enketo_url`, `enketo_preview_url` and such.
+ * `languages` stores the set of languages labels in this form are written in inside of `:all`, the currently selected language (default English) is store in :current. This part of the app-state is used by the reference cursor language-cursor.
+ * `:map-page`, `:table-page`, and `:chart-page` contain the state necessary for each of those pages.
+   * `:submission-clicked` stores data about the record which is clicked.
+   * `visible-charts` is the list of all charts that the user has called up on this page. `chart-data` is a map that stores the raw chart API data for all of the fields that the user has requested charts on.
 
 User has the responsibility of updating `:data`, `:dataset-info` and `:flat-form` by fetching them; the utility `flatten-form` is available to convert what you get from `Ona` into a *flat* form..
 

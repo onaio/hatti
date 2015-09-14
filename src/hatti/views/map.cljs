@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.map.viewby :as vb]
@@ -16,12 +17,13 @@
                      map-viewby-answer-legend map-viewby-answer-close]]
             [hatti.views.record]))
 
+
 ;;;;; EVENT HANDLERS
 
 (defn handle-viewby-events
   "Listens to view-by events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
-  [map-state {:keys [get-id-marker-map]}]
+  [app-state {:keys [get-id-marker-map]}]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
@@ -30,45 +32,45 @@
              markers (vals (get-id-marker-map))]
          (when view-by
            (let [{:keys [full-name] :as field} (:field view-by)
-                 ids (map #(get % "_id") (:data @map-state))
-                 raw-answers (map #(get % full-name) (:data @map-state))
+                 ids (map #(get % _id) (:data @app-state))
+                 raw-answers (map #(get % full-name) (:data @app-state))
                  vb-info (vb/viewby-info field raw-answers ids)]
-             (om/update! map-state [:view-by] vb-info)
+             (om/update! app-state [:map-page :view-by] vb-info)
              (vb/view-by! vb-info markers)))
          (when view-by-filtered
-           (vb/view-by! (:view-by @map-state) markers))
+           (vb/view-by! (get-in @app-state [:map-page :view-by]) markers))
          (when view-by-closed
-           (om/update! map-state [:view-by] {})
+           (om/update! app-state [:map-page :view-by] {})
            (mu/clear-all-styles markers)))))))
 
 (defn handle-submission-events
   "Listens to sumission events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
-  [map-state {:keys [get-id-marker-map]}]
+  [app-state {:keys [get-id-marker-map]}]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
        (let [e (<! event-chan)
              {:keys [submission-to-rank submission-unclicked]} e
-             prev-marker (get-in @map-state [:submission-clicked :marker])]
+             prev-marker (get-in @app-state [:map-page :submission-clicked :marker])]
          (when submission-unclicked
-           (om/update! map-state [:submission-clicked]
+           (om/update! app-state [:map-page :submission-clicked]
                        {:data nil :prev-marker prev-marker}))
          (when submission-to-rank
            (let [rank submission-to-rank
                  new-data (-> (filter
-                               #(= rank (get % "_rank"))
-                               (:data @map-state))
+                               #(= rank (get % _rank))
+                               (:data @app-state))
                               first)]
-             (om/update! map-state [:submission-clicked]
+             (om/update! app-state [:map-page :submission-clicked]
                          {:data new-data
                           :marker (get (get-id-marker-map)
-                                       (get new-data "_id"))
+                                       (get new-data _id))
                           :prev-marker prev-marker}))))))))
 
 (defn handle-data-updates
   "Fires events that need to be re-fired when data updates."
-  [map-state]
+  [app-state]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
@@ -76,13 +78,13 @@
          (when data-updated
            (put! shared/event-chan
                  {:submission-to-rank
-                  (get-in @map-state [:submission-clicked :data "_rank"])})
+                  (get-in @app-state [:map-page :submission-clicked :data _rank])})
            (put! shared/event-chan
-                 {:view-by (get-in @map-state [:view-by])})))))))
+                 {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
 (defn handle-re-render
   "Handles the re-render event"
-  [map-state {:keys [re-render!]}]
+  [app-state {:keys [re-render!]}]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
@@ -93,11 +95,11 @@
 
 (defn handle-map-events
   "Creates multiple channels and delegates events to them."
-  [map-state opts]
-  (handle-viewby-events map-state opts)
-  (handle-submission-events map-state opts)
-  (handle-re-render map-state opts)
-  (handle-data-updates map-state))
+  [app-state opts]
+  (handle-viewby-events app-state opts)
+  (handle-submission-events app-state opts)
+  (handle-re-render app-state opts)
+  (handle-data-updates app-state))
 
 ;;;;; OM COMPONENTS
 
@@ -240,7 +242,7 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
-(defmethod map-and-markers :default [cursor owner]
+(defmethod map-and-markers :default [app-state owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
   (reify
@@ -251,13 +253,13 @@
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
-      (let [data (get-in cursor [:data])
+      (let [data (:data app-state)
             form (om/get-shared owner :flat-form)
             geojson (mu/as-geojson data form)
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
                                           (om/get-state owner :feature-layer))]
         (load-geojson-helper owner geojson)
-        (handle-map-events cursor
+        (handle-map-events app-state
                            {:re-render! rerender!
                             :get-id-marker-map
                             #(om/get-state owner :id-marker-map)})))
@@ -266,10 +268,11 @@
       "will-recieve-props resets leaflet geojson if the map data has changed."
       (let [old-data (:data (om/get-props owner))
             new-data (:data next-props)
-            old-field (:geofield (om/get-props owner))
-            new-field (:geofield next-props)]
-        (when (or (not= old-data new-data)
-                  (not= old-field new-field))
+            old-field (get-in (om/get-props owner) [:map-page :geofield])
+            new-field (get-in next-props [:map-page :geofield])]
+        (when (or (not= old-field new-field)
+                  (not= (count old-data) (count new-data))
+                  (not= old-data new-data))
           (let [{:keys [flat-form]} (om/get-shared owner)
                 {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
                 new-geojson (mu/as-geojson new-data flat-form new-field)]
@@ -285,7 +288,8 @@
     (init-state [_]
       "Update geofield cursor if necessary, and return {:expanded false}"
       (when (empty? geofield)
-        (om/update! geofield (mu/default-geofield geofields)))
+        (om/update! geofield
+                    (f/default-geofield (om/get-shared owner [:flat-form]))))
       {:expanded false})
     om/IRenderState
     (render-state [_ _]
@@ -319,7 +323,7 @@
         (html
          [:div {:id "map-holder"}
           (om/build map-and-markers
-                    (:map-page cursor)
+                    cursor
                     {:opts opts})
           (om/build map-geofield-chooser
                     (get-in cursor [:map-page :geofield])

@@ -5,6 +5,7 @@
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [cljsjs.moment]
+            [hatti.constants :refer [_rank]]
             [hatti.views :refer [submission-view repeat-view
                                  edit-delete print-xls-report-btn]]
             [hatti.ona.forms :as f]
@@ -154,7 +155,7 @@
         (let [form (om/get-shared owner [:flat-form])
               language (:current (om/observe owner (shared/language-cursor)))
               {:keys [data dataset-info]} cursor
-              cur-rank (get data "_rank")
+              cur-rank (get data _rank)
               instance-id (get data "_id")
               sdatetime (js/moment (get data "_submission_time"))
               {:keys [top-level-wrap topbar-wrap header-wrap section-wrap

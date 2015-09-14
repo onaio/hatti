@@ -5,6 +5,7 @@
             [sablono.core :as html :refer-macros [html]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
+            [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
@@ -42,31 +43,35 @@
   (om/component (html nil)))
 
 (defmethod dataview-infobar :default
-  [{:keys [num_of_submissions]} owner]
+  [{:keys [dataset-info status]} owner]
   (reify
     om/IWillMount
     (will-mount [_]
       (let [form (om/get-shared owner :flat-form)
             langs (f/get-languages form)
-            default-lang (f/default-lang langs)]
+            default-lang (f/default-lang langs)
+            lang-state {:all langs
+                        :default default-lang
+                        :current default-lang}]
         (when (f/multilingual? form)
-          (shared/transact-app-state!
-           shared/app-state
-           [:languages]
-           (fn [_] {:all langs
-                    :default default-lang
-                    :current default-lang})))))
+          (merge-into-app-state! shared/app-state [:languages] lang-state))))
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
-            {:keys [dataset-id]} (om/get-shared owner)]
+            {:keys [dataset-id]} (om/get-shared owner)
+            {:keys [num_of_submissions]} dataset-info
+            {:keys [loading? total-records]} status]
         (html
          [:div.right.rec-summary.rec-margin
           [:div#language-selector
            (when (f/multilingual? form)
              (om/build shared/language-selector nil))]
           [:div#data-status
-           [:span.rec (pluralize-number num_of_submissions " Record")]]
+           [:span.rec
+            (when loading? [:i.fa.fa-spinner.fa-pulse])
+            (when (and total-records (not= total-records num_of_submissions))
+              (str " " total-records " / "))
+            (pluralize-number num_of_submissions " Record")]]
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))
 
@@ -74,9 +79,9 @@
   (let [view (keyword view)
         views (-> @shared/app-state :views :all)]
     (when (contains? (set views) view)
-      (shared/transact-app-state! shared/app-state
-                                  [:views :selected]
-                                  (fn [_] view))
+      (merge-into-app-state! shared/app-state
+                             [:views]
+                             {:selected view})
       (put! shared/event-chan {:re-render view}))))
 
 (defmethod tabbed-dataview :default
@@ -109,7 +114,8 @@
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
            (map dv->link dataviews)
-           (om/build dataview-infobar (-> app-state :dataset-info))]
+           (om/build dataview-infobar {:dataset-info (-> app-state :dataset-info)
+                                       :status (-> app-state :status)})]
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}

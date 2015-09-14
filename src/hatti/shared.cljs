@@ -1,10 +1,12 @@
 (ns hatti.shared
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<! chan mult tap put! timeout]]
+  (:require [cljs.core.async :refer [<! chan mult tap]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
+            [hatti.constants :refer [_rank]]
             [hatti.ona.forms :as f]
-            [hatti.utils :refer [json->cljs format last-url-param]]))
+            [hatti.utils :refer [json->cljs format last-url-param]]
+            [hatti.utils.om.state :as state]))
 
 ;; (SHARED) EVENT CHANNELS
 
@@ -35,50 +37,52 @@
   (atom
    {:views {:all [:overview :map :table :chart :settings]
             :selected :overview}
-    :map-page {:data []
-               :submission-clicked {:data nil}
+    :map-page {:submission-clicked {:data nil}
                :geofield {}}
-    :table-page {:data []
-                 :submission-clicked {:data nil}}
+    :table-page {:submission-clicked {:data nil}}
     :chart-page {:visible-charts default-fields
                  :chart-data {}}
     :dataset-info {}
+    :data []
+    :status {:total-records 0 :loading? true}
     :languages {:current nil :all []}}))
 
+;; HATTI global app-state
+;; You can make replicas using (empty-app-state), but this is the only one
+;; that the language-cursor is wired to
 (def app-state (empty-app-state))
 
 ;; DATA UPDATERS
 
-(defn transact!
-  [app-state]
-  (if (satisfies? om/ITransact app-state) om/transact! swap!))
-
-(defn transact-app-state!
-  [app-state ks transact-fn]
-  ((transact! app-state) app-state #(update-in % ks transact-fn)))
-
+;; Replaces the `data` stored in the hatti app
 (defn transact-app-data!
   "Given a function over data, run a transact on data inside app-state."
   [app-state transact-fn]
-  (transact-app-state! app-state [:map-page :data] transact-fn)
-  (transact-app-state! app-state [:table-page :data] transact-fn))
+  (state/transact-app-state! app-state [:data] transact-fn))
 
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
    Sorts by submission time, and adds rank to the data, for table + map views."
-  [app-state data & {:keys [rerank?]}]
+  [app-state data & {:keys [rerank? completed?]}]
   (let [data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % "_submission_time"))
-                    (map-indexed (fn [i v] (assoc v "_rank" (inc i))))
+                    (map-indexed (fn [i v] (assoc v _rank (inc i))))
                     vec)
                data)
-        num_of_submissions (count data)]
+        total-records (count data)]
     (transact-app-data! app-state (fn [_] data))
-    (when-not (zero? num_of_submissions)
-      (transact-app-state! app-state
-                           [:dataset-info :num_of_submissions]
-                           (fn [_] num_of_submissions)))))
+    (state/merge-into-app-state! app-state [:status]
+                                 {:total-records total-records
+                                  :loading? (not completed?)})))
+
+(defn add-to-app-data!
+  "Add to app data."
+  [app-state data & {:keys [completed?]}]
+  (let [old-data (:data @app-state)]
+    ;; only re-rank if loading is completed
+    (update-app-data! app-state (concat old-data data) :rerank? completed?)
+    (state/update-app-state! app-state [:status :loading?] (not completed?))))
 
 ;; LANGUAGE
 

@@ -1,5 +1,6 @@
 (ns hatti.ona.post-process
-  (:require [hatti.utils :refer [url last-url-param format]]
+  (:require [hatti.constants :refer [_id _rank]]
+            [hatti.utils :refer [url last-url-param format]]
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
@@ -20,7 +21,7 @@
                    osmid (and osmdatum (re-find #"[0-9]+" osmdatum))]
                (when osmid
                  {osmid (merge {:field field}
-                             (select-keys datum #{"_id" "_rank"}))}))))
+                             (select-keys datum #{_id _rank}))}))))
          flatten
          (into {}))))
 
