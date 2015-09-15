@@ -57,7 +57,7 @@
     (when-not (empty? osm-fields)
       (let [data (get-in app-state [:map-page :data])
             osm-id->osm-data (osm-id->osm-data data form osm-xml)
-            osm-val->osm-id #(re-find #"[0-9]+" %)
+            osm-val->osm-id #(re-find #"[-]?[0-9]+" %)
             osm-val->osm-data (fn [osm-val]
                                 (when osm-val
                                   (osm-id->osm-data
