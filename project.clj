@@ -1,5 +1,7 @@
 (defproject org.clojars.onaio/hatti "0.1.8-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
+  :license "Apache 2, see LICENSE"
+  :url "https://github.com/onaio/hatti"
   :dependencies [ ;; CORE HATTI REQUIREMENTS
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "0.0-3308"]
