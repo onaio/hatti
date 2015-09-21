@@ -28,7 +28,8 @@
   (swap! agg conj data-chunk)
   (when (and (>= @read-count 100) (integer? (.log10 js/Math @read-count)))
     (put! channel {:data @agg})
-    (reset! agg [])))
+    (reset! agg [])
+    (.drop js/oboe)))
 
 (defn streamingly-read-json!
   "Given url, a node pattern matcher, and a callback, streaming-read json."
