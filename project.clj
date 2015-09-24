@@ -28,7 +28,7 @@
                  [prismatic/dommy "0.1.2"]
                  [cljs-http "0.1.17"]]
   :source-paths ["src"]
-  :plugins [[lein-cljsbuild "1.0.5"]]
+  :plugins [[lein-cljsbuild "1.1.0"]]
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild
   {:builds [{:id "hatti"
