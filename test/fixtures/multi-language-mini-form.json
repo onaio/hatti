@@ -1,0 +1,60 @@
+{
+    "children": [
+        {
+            "label": {
+                "English": "1. What is your name?",
+                "French": "1. Quel est v\u00f4tre nom?"
+            },
+            "name": "q1_nom",
+            "type": "text"
+        },
+        {
+            "bind": {
+                "required": "yes"
+            },
+            "label": {
+                "English": "4. How many siblings do you have?",
+                "French": "4. Combien de fr\u00e8res et soeurs avez-vous?"
+            },
+            "name": "q4_freres_soeurs",
+            "type": "integer"
+        },
+        {
+            "bind": {
+                "required": "yes"
+            },
+            "children": [
+                {
+                    "label": {
+                        "English": "Yes",
+                        "French": "Oui"
+                    },
+                    "name": "oui"
+                },
+                {
+                    "label": {
+                        "English": "No",
+                        "French": "Non"
+                    },
+                    "name": "non"
+                }
+            ],
+            "label": {
+                "English": "5. Is ndol\u00e9 your favorite food?",
+                "French": "5. Est ndol\u00e9 votre plat pr\u00e9fer\u00e9?"
+            },
+            "name": "q5_ndole",
+            "type": "select one"
+        },
+        {
+            "name": "start",
+            "type": "start"
+        }
+    ],
+    "default_language": "default",
+    "id_string": "test_mini_form_multi_language",
+    "name": "test_mini_form_multi_language",
+    "sms_keyword": "test_mini_form_multi_language",
+    "title": "test_mini_form_multi_language",
+    "type": "survey"
+}

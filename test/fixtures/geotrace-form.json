@@ -1,0 +1,39 @@
+{
+    "children": [
+        {
+            "label": "Record a Geotrace",
+            "name": "trace1",
+            "type": "geotrace"
+        },
+        {
+            "label": "Value: ${shape1}",
+            "name": "shape1_note",
+            "type": "note"
+        },
+        {
+            "children": [
+                {
+                    "bind": {
+                        "calculate": "concat('uuid:', uuid())",
+                        "readonly": "true()"
+                    },
+                    "name": "instanceID",
+                    "type": "calculate"
+                }
+            ],
+            "control": {
+                "bodyless": true
+            },
+            "name": "meta",
+            "type": "group"
+        }
+    ],
+    "default_language": "default",
+    "id_string": "trace",
+    "name": "trace",
+    "sms_keyword": "trace",
+    "style": "theme-grid",
+    "title": "trace",
+    "type": "survey",
+    "version": "2.1"
+}

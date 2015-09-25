@@ -1,0 +1,83 @@
+[
+    {
+        "_attachments": [],
+        "_bamboo_dataset_id": "",
+        "_geolocation": [
+            7.937983,
+            -11.59225
+        ],
+        "_id": 394571,
+        "_notes": [],
+        "_status": "submitted_via_web",
+        "_submission_time": "2014-10-16T09:15:38",
+        "_submitted_by": "ukanga",
+        "_tags": [],
+        "_uuid": "b9378f28-f0cc-4626-8a07-c1261c82dead",
+        "_xform_id_string": "area",
+        "formhub/uuid": "876960af293748b4bbacf2f3585c6968",
+        "meta/instanceID": "uuid:b9378f28-f0cc-4626-8a07-c1261c82dead",
+        "geopoint1": "7.937983 -11.59225 0 0",
+        "shape1": "7.937983 -11.59225 0 0;7.9324 -11.5902 0 0;7.927 -11.5857 0 0;7.925 -11.578 0 0;7.9267 -11.5722 0 0;7.9325 -11.5708 0 0;7.9372 -11.5737 0 0;7.9393 -11.579 0 0;7.940024 -11.589375 0 0;7.937983 -11.59225 0 0",
+        "shape1_area": "2823543.42"
+    },
+    {
+        "_attachments": [],
+        "_bamboo_dataset_id": "",
+        "_geolocation": [
+            7.9377,
+            -11.5845
+        ],
+        "_id": 394639,
+        "_notes": [],
+        "_status": "submitted_via_web",
+        "_submission_time": "2014-11-05T03:53:32",
+        "_submitted_by": "ukanga",
+        "_tags": [],
+        "_uuid": "75f74ca1-2a6a-42e8-a559-1dd8d1df0837",
+        "_xform_id_string": "area",
+        "formhub/uuid": "876960af293748b4bbacf2f3585c6968",
+        "meta/instanceID": "uuid:75f74ca1-2a6a-42e8-a559-1dd8d1df0837",
+        "geopoint1": "7.9377 -11.5845 0 0",
+        "shape1": "7.9377 -11.5845 0 0;7.9324 -11.5902 0 0;7.927 -11.5857 0 0;7.925 -11.578 0 0;7.924169 -11.570749 0 0;7.9325 -11.5708 0 0;7.9372 -11.5737 0 0;7.9393 -11.579 0 0;7.9377 -11.5845 0 0",
+        "shape1_area": "2511834.96"
+    },
+    {
+        "_attachments": [],
+        "_bamboo_dataset_id": "",
+        "_geolocation": [
+            7.775107,
+            -11.509552
+        ],
+        "_id": 394640,
+        "_notes": [],
+        "_status": "submitted_via_web",
+        "_submission_time": "2014-11-05T03:54:49",
+        "_submitted_by": "ukanga",
+        "_tags": [],
+        "_uuid": "af137004-cc33-4822-b88c-0ff64a67d46a",
+        "_xform_id_string": "area",
+        "formhub/uuid": "876960af293748b4bbacf2f3585c6968",
+        "meta/instanceID": "uuid:af137004-cc33-4822-b88c-0ff64a67d46a",
+        "geopoint1": "7.775107 -11.509552 0 0",
+        "shape1": "7.77903 -11.509552 0 0;7.774863 -11.515989 0 0;7.775107 -11.512148 0 0;7.775915 -11.510271 0 0;7.777786 -11.509627 0 0;7.77903 -11.509552 0 0",
+        "shape1_area": "124998.41"
+    },
+    {
+        "_attachments": [],
+        "_bamboo_dataset_id": "",
+        "_geolocation": [
+            null,
+            null
+        ],
+        "_id": 394641,
+        "_notes": [],
+        "_status": "submitted_via_web",
+        "_submission_time": "2014-11-05T03:55:29",
+        "_submitted_by": "ukanga",
+        "_tags": [],
+        "_uuid": "99d7b20c-736b-40d8-8a89-28712cb775a0",
+        "_xform_id_string": "area",
+        "formhub/uuid": "876960af293748b4bbacf2f3585c6968",
+        "meta/instanceID": "uuid:99d7b20c-736b-40d8-8a89-28712cb775a0"
+    }
+]

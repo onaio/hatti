@@ -1,0 +1,56 @@
+{
+    "children": [
+        {
+            "label": "Record a Geopoint",
+            "name": "geopoint1",
+            "type": "geopoint"
+        },
+        {
+            "label": "Record a Geoshape",
+            "name": "shape1",
+            "type": "geoshape"
+        },
+        {
+            "label": "Value: ${shape1}",
+            "name": "shape1_note",
+            "type": "note"
+        },
+        {
+            "bind": {
+                "calculate": "area(${shape1})"
+            },
+            "name": "shape1_area",
+            "type": "calculate"
+        },
+        {
+            "label": "Calculated area in m2: ${shape1_area}",
+            "name": "shape1_area_note",
+            "type": "note"
+        },
+        {
+            "children": [
+                {
+                    "bind": {
+                        "calculate": "concat('uuid:', uuid())",
+                        "readonly": "true()"
+                    },
+                    "name": "instanceID",
+                    "type": "calculate"
+                }
+            ],
+            "control": {
+                "bodyless": true
+            },
+            "name": "meta",
+            "type": "group"
+        }
+    ],
+    "default_language": "default",
+    "id_string": "area",
+    "name": "area",
+    "sms_keyword": "area",
+    "style": "theme-grid",
+    "title": "area",
+    "type": "survey",
+    "version": "2.1"
+}
