@@ -9,11 +9,12 @@
 
 (defn get-form [which]
   (let [file (case which
-                :single-language (read-file "test/fixtures/mini-form-9-elements.json")
-                :multi-langauge  (read-file "test/fixtures/multi-language-mini-form.json")
-                :geoshape        (read-file "test/fixtures/geoshape-form.json")
-                :geopoint        (read-file "test/fixtures/geopoint-form.json")
-                :geotrace        (read-file "test/fixtures/geotrace-form.json"))]
+               :single-language   (read-file "test/fixtures/mini-form-9-elements.json")
+               :multi-langauge    (read-file "test/fixtures/multi-language-mini-form.json")
+               :geoshape          (read-file "test/fixtures/geoshape-form.json")
+               :geopoint          (read-file "test/fixtures/geopoint-form.json")
+               :geotrace          (read-file "test/fixtures/geotrace-form.json")
+               :groups-in-repeats (read-file "test/fixtures/groups-in-repeats-form.json"))]
     (utils/json->js->cljs file)))
 
 (defn get-data [which]
@@ -25,6 +26,7 @@
 
 (def single-language-form (get-form :single-language))
 (def multi-language-form (get-form :multi-langauge))
+(def groups-in-repeats-form (get-form :groups-in-repeats))
 (def geoshape-form (get-form :geoshape))
 (def geopoint-form (get-form :geopoint))
 (def geotrace-form (get-form :geotrace))
@@ -44,8 +46,10 @@
                                                      (map group->repeat (:children single-language-form)))
         flattened1 (forms/flatten-form form-with-repeat)
         flattened2 (forms/flatten-form form-with-repeat :flatten-repeats? true)
+        flattened3 (forms/flatten-form groups-in-repeats-form)
         repeat1 (first (filter forms/repeat? flattened1))
         repeat2 (first (filter forms/repeat? flattened2))
+        repeat3 (:children (first (filter forms/repeat? flattened3)))
         with-consent #(re-find #"informed_consent" (:full-name %))]
     (testing "We have 3 top-level elements without :flatten-repeats?, 9 with."
       (is (= (count flattened1) 3))
@@ -53,7 +57,9 @@
       (is (= (->> flattened1 (filter with-consent) count) 1))
       (is (= (->> flattened2 (filter with-consent) count)) 7))
     (testing ":full-name of sub-repeat elements are same with + w/o flattening"
-      (is (= (map :full-name (:children (last flattened1))) (drop 3 (map :full-name flattened2)))))))
+      (is (= (map :full-name (:children (last flattened1))) (drop 3 (map :full-name flattened2)))))
+    (testing "groups in repeats are flattened"
+      (is (= (count repeat3) 3)))))
 
 (deftest regarding-language-utilties
   (let [flat-form-1 (forms/flatten-form single-language-form)
