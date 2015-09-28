@@ -8,22 +8,20 @@
 
 
 (defn get-form [which]
-  (let [fname (case which
-                :single-language "mini-form-9-elements.json"
-                :multi-langauge  "multi-language-mini-form.json"
-                :geoshape        "geoshape-form.json"
-                :geopoint        "geopoint-form.json"
-                :geotrace        "geotrace-form.json")]
-    (-> (read-file "test/fixtures" "/mini-form-9-elements.json")
-        (js->clj keyword :keywordize-keys true))))
+  (let [file (case which
+                :single-language (read-file "test/fixtures/mini-form-9-elements.json")
+                :multi-langauge  (read-file "test/fixtures/multi-language-mini-form.json")
+                :geoshape        (read-file "test/fixtures/geoshape-form.json")
+                :geopoint        (read-file "test/fixtures/geopoint-form.json")
+                :geotrace        (read-file "test/fixtures/geotrace-form.json"))]
+    (utils/json->js->cljs file)))
 
 (defn get-data [which]
-  (let [fname (case which
-                :geoshape "geoshape-data.json"
-                :geopoint "geopoint-data.json"
-                :geotrace "geotrace-data.json")]
-    (-> (read-file "test/fixtures" "/mini-form-9-elements.json")
-        (js->clj keyword))))
+  (let [file (case which
+                :geoshape (read-file "test/fixtures/geoshape-data.json")
+                :geopoint (read-file "test/fixtures/geopoint-data.json")
+                :geotrace (read-file "test/fixtures/geotrace-data.json"))]
+    (utils/json->js->cljs file)))
 
 (def single-language-form (get-form :single-language))
 (def multi-language-form (get-form :multi-langauge))
@@ -117,11 +115,11 @@
       (let [first-option (first (:children q-selm))
             two-options (take 2 (:children q-selm))
             two-answers (string/join #" " (map :name two-options))
-            has-label? #(partial utils/substring? (:label %))]
+            has-label? #(partial utils/substring? (:label %) %)]
         (is (= (forms/format-answer q-selm "") "No Answer"))
-        (is (= (forms/format-answer q-selm (:name first-option)) (has-label? first-option)))
-        (is (= (forms/format-answer q-selm two-answers) (has-label? (first two-options))))
-        (is (= (forms/format-answer q-selm two-answers) (has-label? (second two-options))))))
+        (is (has-label? first-option (forms/format-answer q-selm (:name first-option))))
+        (is (has-label? (first two-options) (forms/format-answer q-selm two-answers)))
+        (is (has-label? (second two-options) (forms/format-answer q-selm two-answers)))))
     (testing "image answers are rendered as they should be"
       (let [image1 "bar.jpg"
             image2 {:filename "foo/bar.jpg"
@@ -141,4 +139,4 @@
         (is (= (subs txt-link (- (count txt-link) 12) (count txt-link)) "bar.jpg </a>"))))
     (testing "repeat answers returns nil if no element, a list starting with :span otherwise"
       (is (= (forms/format-answer q-repeat []) ""))
-      (is (= (forms/format-answer q-repeat [{"foo" "bar"}]) string?)))))
+      (is (= (forms/format-answer q-repeat [{"foo" "bar"}]) "Repeated data with 1 answers.")))))
