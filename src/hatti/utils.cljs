@@ -1,5 +1,6 @@
 (ns hatti.utils
   (:require [clojure.string :refer [split join]]
+            [clojure.string :refer [join lower-case split]]
             [goog.string.format]
             [goog.string]
             [inflections.core :refer [plural]]))
@@ -54,3 +55,12 @@
   "Create an appropriately pluralized string prefix by number."
   [number kind]
   (join " " [number (if (= 1 number) kind (plural kind))]))
+
+(defn ^boolean substring?
+  "True if substring is a substring of string"
+  ([substring string]
+   ((complement nil?) (re-find (re-pattern substring) string)))
+  ([substring string & {:keys [case-sensitive?]}]
+   (if case-sensitive?
+     (substring? substring string)
+     (substring? (lower-case substring) (lower-case string)))))

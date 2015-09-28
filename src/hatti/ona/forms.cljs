@@ -231,7 +231,7 @@
               (repeat? nd) (if flatten-repeats?
                              (concat (conj acc mini-nd) new-children)
                              (conj acc (assoc nd :children
-                                         (apply concat new-children))))
+                                                 (flatten (apply concat new-children)))))
               :else (conj acc nd))))]
     (let [nodes (flatten (map #(name-label-map % nil []) (:children form)))
           langs (->> nodes (map #(:langs (meta %))) flatten distinct)]

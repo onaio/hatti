@@ -1,0 +1,168 @@
+{
+    "children": [
+        {
+            "bind": {
+                "constraint": "(.>=1 and .<=20)"
+            },
+            "label": "CODE ENQUETEUR",
+            "name": "code_enqueteur",
+            "type": "integer"
+        },
+        {
+            "hint": "entrer la date d'aujourd'hui",
+            "label": "Date de l'entrevue",
+            "name": "intrevue_date",
+            "type": "date"
+        },
+        {
+            "bind": {
+                "relevant": "${consent_note}='1'"
+            },
+            "name": "informed_consent",
+            "type": "group",
+            "children": [
+                {
+                    "label": "Section A :Questions d\u00e9mographiques",
+                    "name": "campagne_vita_mebendazole",
+                    "type": "note"
+                },
+                {
+                    "bind": {
+                        "required": "yes"
+                    },
+                    "children": [
+                        {
+                            "label": "Parpaings/ciment",
+                            "name": "1"
+                        },
+                        {
+                            "label": "Maison en bois",
+                            "name": "2"
+                        },
+                        {
+                            "label": "Autre",
+                            "name": "99"
+                        }
+                    ],
+                    "hint": "(sur la base de vos observations)",
+                    "label": "1) Principaux mat\u00e9riaux utilis\u00e9s pour les murs",
+                    "name": "q1",
+                    "type": "select one"
+                },
+                {
+                    "bind": {
+                        "relevant": "${q1}='99'"
+                    },
+                    "label": "1.1) Sp\u00e9cifier d'autres",
+                    "name": "q1_autre",
+                    "type": "text"
+                },
+                {
+                    "bind": {
+                        "required": "yes"
+                    },
+                    "children": [
+                        {
+                            "label": "T\u00f4le",
+                            "name": "1"
+                        },
+                        {
+                            "label": "B\u00e9ton",
+                            "name": "2"
+                        },
+                        {
+                            "label": "Autre",
+                            "name": "99"
+                        }
+                    ],
+                    "hint": "(sur la base de vos observations)",
+                    "label": "2) Principaux mat\u00e9riaux utilis\u00e9s pour le toit",
+                    "name": "q2",
+                    "type": "select one"
+                },
+                {
+                    "bind": {
+                        "relevant": "${q2}='99'"
+                    },
+                    "label": "2.1) Sp\u00e9cifier d'autres",
+                    "name": "q2_autre",
+                    "type": "text"
+                },
+                {
+                    "children": [
+                        {
+                            "label": "Mobilisateur/distributeur",
+                            "name": "q12_1"
+                        },
+                        {
+                            "label": "TV",
+                            "name": "q12_2"
+                        },
+                        {
+                            "label": "Tract",
+                            "name": "q12_3"
+                        },
+                        {
+                            "label": "\u00c9cole",
+                            "name": "q12_4"
+                        },
+                        {
+                            "label": "Personnel de sant\u00e9",
+                            "name": "q12_5"
+                        },
+                        {
+                            "label": "De bouche \u00e0 oreille",
+                            "name": "q12_6"
+                        },
+                        {
+                            "label": "Radio",
+                            "name": "q12_7"
+                        },
+                        {
+                            "label": "Voiture sonoris\u00e9e/moto",
+                            "name": "q12_8"
+                        },
+                        {
+                            "label": "\u00c9glise/Mosqu\u00e9e",
+                            "name": "q12_9"
+                        },
+                        {
+                            "label": "Affiche",
+                            "name": "q12_10"
+                        },
+                        {
+                            "label": "D\u00e9pliant/brochure",
+                            "name": "q12_11"
+                        },
+                        {
+                            "label": "Voisin",
+                            "name": "q12_12"
+                        },
+                        {
+                            "label": "Accoucheuse traditionnelle",
+                            "name": "q12_13"
+                        },
+                        {
+                            "label": "Ne se souvient pas",
+                            "name": "q12_88"
+                        },
+                        {
+                            "label": "Autre (pr\u00e9ciser)",
+                            "name": "q12_99"
+                        }
+                    ],
+                    "hint": "(Plusieurs r\u00e9ponses sont possibles)",
+                    "label": "12) Si oui,par quel moyen avez-vous eu l'information sur la campagne?",
+                    "name": "q12",
+                    "type": "select all that apply"
+                }
+            ]
+        }
+    ],
+    "default_language": "default",
+    "id_string": "test_mini_form",
+    "name": "test_mini_form",
+    "sms_keyword": "test_mini_form",
+    "title": "test_mini_form",
+    "type": "survey"
+}

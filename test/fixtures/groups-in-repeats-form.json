@@ -1,0 +1,64 @@
+{
+  "children": [
+    {
+      "control": {
+        "jr:count": "${rpt_photo_count}"
+      },
+      "type": "repeat",
+      "children": [
+        {
+          "bind": {
+            "calculate": "position(..)"
+          },
+          "type": "calculate",
+          "name": "pos_photo"
+        },
+        {
+          "bind": {
+            "relevant": "${pos_photo}<=${num_photos}"
+          },
+          "type": "group",
+          "children": [
+            {
+              "type": "photo",
+              "name": "photo",
+              "label": {
+                "English": "Photo number ${pos_photo}:"
+              }
+            }
+          ],
+          "name": "grp_photo"
+        }
+      ],
+      "name": "rpt_photo"
+    },
+    {
+      "name": "ben_type",
+      "hint": {
+        "English": "Unregistered beneficiaries' is for when you wish to interview members of the community for an activity that does not have individually registered beneficiaries."
+      },
+      "bind": {
+        "required": "yes"
+      },
+      "label": {
+        "English": "Are you interviewing registered beneficiaries, or unregistered beneficiaries?"
+      },
+      "type": "select one",
+      "children": [
+        {
+          "name": "reg",
+          "label": {
+            "English": "Registered Beneficiaries"
+          }
+        },
+        {
+          "name": "unreg",
+          "label": {
+            "English": "Unregistered Beneficiaries"
+          }
+        }
+      ]
+    }
+  ]
+}
+        
