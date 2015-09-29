@@ -84,6 +84,10 @@
          :name label :toolTip label :sortable true
          :formatter (partial formatter field language)})))))
 
+(defn- init-sg-pager [grid dataview]
+  (let [Pager (.. js/Slick -Controls -Pager)]
+    (Pager. dataview grid (js/jQuery (str "#" pager-id)))))
+
 (def sg-options
   "Options to feed the slickgrid constructor."
   #js {:enableColumnReorder false
@@ -98,10 +102,8 @@
   (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
-        Pager (.. js/Slick -Controls -Pager)
         dataview (DataView.)
-        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)
-        pager (Pager. dataview grid (js/jQuery (str "#" pager-id)))]
+        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
     ;; dataview / grid hookup
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
@@ -120,6 +122,7 @@
                   (let [rank (aget (.getItem dataview (aget args "row")) _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
     ;; page, filter, and data set-up on the dataview
+    (init-sg-pager grid dataview)
     (.setPagingOptions dataview #js {:pageSize 25})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
@@ -160,7 +163,8 @@
            (go (<! (timeout 20))
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
-               (.render grid))))))))
+               (.render grid)
+               (init-sg-pager grid dataview))))))))
 
 ;; OM COMPONENTS
 
