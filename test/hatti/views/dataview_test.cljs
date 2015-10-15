@@ -5,6 +5,7 @@
             [dommy.core :as dommy]
             [hatti.shared :as shared]
             [hatti.utils :refer [in?]]
+            [hatti.utils.om.state :as state]
             [hatti.views :refer [tabbed-dataview]]
             [hatti.test-utils :refer [big-thin-data
                                       data-gen
@@ -57,7 +58,7 @@
   (testing "Map, Chart and Table tabs are disabled"
     (let [disabled-views [:map :table :chart]
           data-atom (shared/empty-app-state)
-          _ (shared/transact-app-state! data-atom
+          _ (state/transact-app-state! data-atom
                                         [:views :disabled]
                                         #(identity disabled-views))
           tabbed-view (tabbed-dataview-container data-atom)]
