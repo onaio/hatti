@@ -105,11 +105,14 @@
             dataviews (->> app-state :views :all
                            (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
-                       (if (and (= view :map) no-geodata?)
-                         [:a {:class "inactive" :title "No geodata"}
-                          (name view)]
-                         [:a {:href (str "#/" (name view))
-                              :class (view->cls view)} label]))]
+                       (let [active? (some #(= view %) (-> app-state :views :active))]
+                         (if (and (= view :map) no-geodata?)
+                           [:a {:class "inactive" :title "No geodata"}
+                            (name view)]
+                           [:a
+                            {:href (when active? (str "#/" (name view)))
+                             :class (if active? (view->cls view)
+                                                "inactive")} label])))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
