@@ -31,24 +31,30 @@
   :plugins [[lein-cljsbuild "1.1.0"]]
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild
-  {:builds [{:id "hatti"
-             :compiler {:output-to "out/hatti.js"
-                        :output-dir "out"
-                        :optimizations :none
-                        :cache-analysis true
-                        :source-map true}}
-            {:id "test"
-             :source-paths ["src/hatti"
-                            "test"]
-             :notify-command ["phantomjs"
-                              "phantom/unit-test.js"
-                              "phantom/unit-test.html"
-                              "target/main-test.js"]
-             :compiler {:output-to "target/main-test.js"
-                        :optimizations :whitespace
-                        :pretty-print true}}]
-   :test-commands {"unit-test"
-                   ["phantomjs"
-                    "phantom/unit-test.js"
-                    "phantom/unit-test.html"
-                    "target/main-test.js"]}})
+  {:builds
+   [{:builds
+               [{:id "hatti"
+                 :compiler
+                     {:output-dir "out"
+                      :cache-analysis true
+                      :optimizations :none
+                      :output-to "out/hatti.js"
+                      :source-map true}}
+                {:notify-command
+                               ["phantomjs"
+                                "phantom/unit-test.js"
+                                "phantom/unit-test.html"
+                                "target/main-test.js"]
+                 :source-paths ["src/hatti" "test"]
+                 :id "test",
+                 :compiler
+                               {:optimizations :whitespace,
+                                :output-to "target/main-test.js"
+                                :pretty-print true}}]
+     :test-commands
+               {"unit-test"
+                ["phantomjs"
+                 "phantom/unit-test.js"
+                 "phantom/unit-test.html"
+                 "target/main-test.js"]}
+     :compiler {:exclude ["charting.cljc" "macros.clj"]}}]})
