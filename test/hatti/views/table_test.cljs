@@ -1,6 +1,6 @@
 (ns hatti.views.table-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [node sel sel1]])
+                   [dommy.core :refer [sel sel1]])
   (:require [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]

@@ -1,6 +1,6 @@
 (ns hatti.shared-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                    [dommy.macros :refer [node sel sel1]])
+                    [dommy.core :refer [sel sel1]])
   (:require [cljs.test :as t]
             [dommy.core :as dommy]
             [om.core :as om :include-macros true]
