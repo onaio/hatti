@@ -13,9 +13,7 @@
    Saturated red+brown disabled due to clash with the :clicked color."
   ["#1f78b4"
    "#33a02c"
-   ;"#e31a1c"
    "#6a3d9a"
-   ;"#ff7f00"
    "#ffff99"
    "#b15928"
    "#a6cee3"
@@ -48,9 +46,10 @@
   [answers]
   (merge (zipmap answers (repeat true)) {nil false}))
 
-(defn preprocess-answers [field raw-answers]
+(defn preprocess-answers
   "Preproccesses answers depending on the field. For multi-selects, return type
    is a list of list of strings. For other types, a list of strings."
+  [field raw-answers]
   (cond
     (f/select-one? field) raw-answers
     (f/text? field) raw-answers
@@ -60,8 +59,9 @@
     (f/select-all? field) (->> raw-answers
                                (map #(when % (s/split % #" "))))))
 
-(defn field->colors [field]
+(defn field->colors
   "Returns the appropriate set of colors given the field."
+  [field]
   (cond
     ;; if too many options w/in select-one field, fall back to select-all style
     (f/select-one? field) (if (<= (count (:children field))
@@ -128,9 +128,9 @@
       (mu/bring-to-top-if-selected id-selected? marker))))
 
 (defn filter-answer-data-structures
-  [answers query field language]
   "Given a list of answers + query, returns map from answers to true/false.
    True if query is in the answer, false if not."
+  [answers query field language]
   (let [query-present? (fn [ans]
                          (when ans
                            (re-find (safe-regex query)
@@ -148,17 +148,17 @@
                                 (= (set visible)
                                    (->> a->s (filter second) keys set)))]
     (if (nil? answer)
-      ; nil cannot be selected or deselected: no-change
+      ;; nil cannot be selected or deselected: no-change
       answer->selected?
-      ; else -> the logic begins
+      ;; else -> the logic begins
       (if (all-visible-selected? answer->selected? visible-answers)
-        ; first click -> *just* select this answer
+        ;; first click -> *just* select this answer
         (merge (zipmap all-answers (repeat false)) {answer true})
-        ; not first click ->  toggle this answer, leave the rest
+        ;; not first click ->  toggle this answer, leave the rest
         (let [toggled (update-in answer->selected? [answer] not)]
           (if (every? false? (vals toggled))
-            ; special rule: nothing is clicked -> make everything clicked
+            ;; special rule: nothing is clicked -> make everything clicked
             (merge (zipmap all-answers (repeat false))
                    (all-but-nil-selected visible-answers))
-            ; else: some things are clicked -> leave alone
+            ;; else: some things are clicked -> leave alone
             toggled))))))
