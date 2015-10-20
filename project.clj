@@ -4,7 +4,7 @@
   :url "https://github.com/onaio/hatti"
   :dependencies [;; Core libraries
                  [org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "0.0-3308"]
+                 [org.clojure/clojurescript "1.7.145"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.8.8"]
