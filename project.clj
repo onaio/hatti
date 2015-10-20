@@ -1,4 +1,4 @@
-(defproject org.clojars.onaio/hatti "0.1.9"
+(defproject org.clojars.onaio/hatti "0.2"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
