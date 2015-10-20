@@ -33,28 +33,28 @@
   :cljsbuild
   {:builds
    [{:builds
-               [{:id "hatti"
-                 :compiler
-                     {:output-dir "out"
-                      :cache-analysis true
-                      :optimizations :none
-                      :output-to "out/hatti.js"
-                      :source-map true}}
-                {:notify-command
-                               ["phantomjs"
-                                "phantom/unit-test.js"
-                                "phantom/unit-test.html"
-                                "target/main-test.js"]
-                 :source-paths ["src/hatti" "test"]
-                 :id "test",
-                 :compiler
-                               {:optimizations :whitespace,
-                                :output-to "target/main-test.js"
-                                :pretty-print true}}]
+     [{:id "hatti"
+       :compiler
+       {:output-dir "out"
+        :cache-analysis true
+        :optimizations :none
+        :output-to "out/hatti.js"
+        :source-map true}}
+      {:notify-command
+       ["phantomjs"
+        "phantom/unit-test.js"
+        "phantom/unit-test.html"
+        "target/main-test.js"]
+       :source-paths ["src/hatti" "test"]
+       :id "test"
+       :compiler
+       {:optimizations :whitespace,
+        :output-to "target/main-test.js"
+        :pretty-print true}}]
      :test-commands
-               {"unit-test"
-                ["phantomjs"
-                 "phantom/unit-test.js"
-                 "phantom/unit-test.html"
-                 "target/main-test.js"]}
+     {"unit-test"
+      ["phantomjs"
+       "phantom/unit-test.js"
+       "phantom/unit-test.html"
+       "target/main-test.js"]}
      :compiler {:exclude ["charting.cljc" "macros.clj"]}}]})
