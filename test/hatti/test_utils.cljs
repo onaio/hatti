@@ -1,6 +1,6 @@
 (ns hatti.test-utils
   (:require [dommy.core :as dommy])
-  (:require-macros [dommy.macros :refer [sel sel1]]))
+  (:require-macros [dommy.core :refer [sel sel1]]))
 
 
 ;;====================

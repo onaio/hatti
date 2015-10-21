@@ -1,6 +1,6 @@
 (ns hatti.views.map-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [node sel sel1]])
+                   [dommy.core :refer [sel sel1]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [<! chan put!]]
             [dommy.core :as dommy]

@@ -1,6 +1,6 @@
 (ns hatti.ona.post-process-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [sel1 sel]])
+                   [dommy.core :refer [sel1 sel]])
   (:require [cljs.core.async :refer [chan]]
             [hatti.ona.post-process :as post-process]))
 
@@ -77,4 +77,3 @@
       (is (= (-> tags2 keys set)
              #{:building :addr:postcode :addr:street :name :building:levels
                :amenity :addr:housenumber :name:fr :addr:city})))))
-

@@ -1,6 +1,6 @@
 (ns hatti.map.utils-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [sel1 sel]]
+                   [dommy.core :refer [sel1 sel]]
                    #_[ona.utils.macros :refer [read-file]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [chan]]
@@ -11,8 +11,9 @@
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.map.utils :as mu]
-            #_[ona.dataview.osm-utils-test :refer [osm-xml osm-form osm-data
-                                                 osm-road-field osm-building-field]]))
+            #_[ona.dataview.osm-utils-test
+               :refer [osm-xml osm-form osm-data
+                       osm-road-field osm-building-field]]))
 
 ;; DATA GEN HELPERS
 
