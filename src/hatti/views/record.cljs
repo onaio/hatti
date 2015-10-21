@@ -32,7 +32,7 @@
         new-rank ((case dir :left dec :right inc) cur-rank)]
     [:a {:on-click (click-fn
                     #(put! shared/event-chan {:submission-to-rank new-rank}))
-         :class "pure-button" :href "#"} [:i {:class icon}]]))
+         :class "pure-button btn-default" :href "#"} [:i {:class icon}]]))
 
 (defn submission-closer []
   [:a {:on-click (click-fn
