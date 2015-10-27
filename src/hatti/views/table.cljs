@@ -140,7 +140,10 @@
                     (put! shared/event-chan {:submission-to-rank rank}))))
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
-    (.setPagingOptions dataview #js {:pageSize 25})
+    (.setPagingOptions dataview #js
+        {:pageSize (or (get-in @shared/app-state
+                               [:table-page :num-displayed-records])
+                       25)})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
     [grid dataview]))
