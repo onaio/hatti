@@ -138,6 +138,12 @@
                   (let [rank (aget (.getItem dataview (aget args "row"))
                                    _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
+    (.subscribe (.-onRowsChanged dataview)
+                (fn [e args]
+                  (put! shared/event-chan
+                        {:page
+                         (inc (aget (.getPagingInfo dataview) "pageNum"))})))
+
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview #js
