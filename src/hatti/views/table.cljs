@@ -10,7 +10,7 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn safe-regex]]
+            [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
             [cljsjs.slickgrid-with-deps]))
 
 ;; DIVS
@@ -95,7 +95,17 @@
        :rowHeight 24
        :enableTextSelectionOnCells true})
 
-(defn sg-init [data form is-filtered-dataview?]
+(defn bind-external-slick-grid-event-handlers
+  [grid event-handlers]
+  (doall
+   (for [[handler-key handler-function] event-handlers]
+     (let [handler-name (hyphen->camel-case (name handler-key))
+           event (aget grid handler-name)]
+       (.subscribe
+        event
+        handler-function)))))
+
+(defn sg-init [data form is-filtered-dataview? external-event-handlers]
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
@@ -105,6 +115,7 @@
         dataview (DataView.)
         grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
     ;; dataview / grid hookup
+    (bind-external-slick-grid-event-handlers grid external-event-handlers)
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
                   (.updateRowCount grid)
@@ -229,19 +240,42 @@
      [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
-  [data owner]
+  [data owner slick-grid-event-handlers]
   "Initializes grid + dataview, and stores them in owner's state."
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-          [grid dataview] (sg-init data flat-form is-filtered-dataview?)]
+          [grid dataview] (sg-init data flat-form is-filtered-dataview? slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
 (defmethod table-page :default
-  [app-state owner opts]
+  [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
-   Renders empty divs via om, hooks up slickgrid to these divs on did-mount."
+   Renders empty divs via om, hooks up slickgrid to these divs on did-mount.
+   slick-grid-event-handlers is a map containing any of the following keys
+   :on-scroll
+   :on-sort
+   :on-header-context-menu
+   :on-header-click
+   :on-mouse-enter
+   :on-mouse-leave
+   :on-click
+   :on-dbl-click
+   :on-context-menu
+   :on-key-down
+   :on-add-new-row
+   :on-validation-error
+   :on-viewport-changed
+   :on-columns-reordered
+   :on-columns-resized
+   :on-cell-change
+   :on-before-edit-cell
+   :on-before-cell-editor-destroy
+   :on-header-cell-rendered
+   each of whose value is a function of the form (fn [event args] ) as described
+   in the SlickGrid documentation for event handlers.
+   https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (reify
     om/IRenderState
     (render-state [_ _]
@@ -260,7 +294,7 @@
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]
-        (when-let [[grid dataview] (init-grid! data owner)]
+        (when-let [[grid dataview] (init-grid! data owner slick-grid-event-handlers)]
           (handle-table-events app-state grid dataview))))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
@@ -270,7 +304,7 @@
             {:keys [grid dataview]} (om/get-state owner)]
         (when (not= old-data new-data)
           (if (empty? old-data)
-            (when-let [[grid dataview] (init-grid! new-data owner)]
+            (when-let [[grid dataview] (init-grid! new-data owner slick-grid-event-handlers)]
               (handle-table-events app-state grid dataview))
             (do ; data has changed
               (.invalidateAllRows grid)
