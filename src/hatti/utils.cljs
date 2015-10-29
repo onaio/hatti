@@ -1,6 +1,5 @@
 (ns hatti.utils
-  (:require [clojure.string :refer [split join]]
-            [clojure.string :refer [join lower-case split]]
+  (:require [clojure.string :refer [join lower-case split upper-case replace]]
             [goog.string.format]
             [goog.string]
             [inflections.core :refer [plural]]))
@@ -70,3 +69,11 @@
    (if case-sensitive?
      (substring? substring string)
      (substring? (lower-case substring) (lower-case string)))))
+
+(defn hyphen->camel-case
+  [source-string]
+  (js/console.log source-string)
+  (replace source-string
+           #"(-)(.)"
+           #(let [[_ _ letter-to-uppercase] %]
+              (upper-case letter-to-uppercase))))
