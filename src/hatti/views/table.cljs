@@ -148,7 +148,7 @@
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview #js
         {:pageSize (or (get-in @shared/app-state
-                               [:table-page :num-displayed-records])
+                               [:table-page :paging :num-displayed-records])
                        25)})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
