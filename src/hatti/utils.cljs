@@ -72,7 +72,6 @@
 
 (defn hyphen->camel-case
   [source-string]
-  (js/console.log source-string)
   (replace source-string
            #"(-)(.)"
            #(let [[_ _ letter-to-uppercase] %]
