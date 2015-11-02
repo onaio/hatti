@@ -10,7 +10,7 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn safe-regex]]
+            [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
             [cljsjs.slickgrid-with-deps]))
 
 ;; DIVS
@@ -26,10 +26,11 @@
       extra-field
       (conj extra-field forms/submission-time-field))))
 
-(defn all-fields [form & {:keys [is-filtered-dataview?]}]
+(defn all-fields
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
+  [form & {:keys [is-filtered-dataview?]}]
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
                (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
@@ -37,10 +38,11 @@
 
 ;; SLICKGRID HELPER FUNCTIONS
 
-(defn compfn [args]
+(defn compfn
   "Comparator function for the slickgrid dataview.
    args.sortCol is the column being sorted, a and b are rows to compare.
    Claims a is bigger (return 1) if value for a > b, or a is null / empty."
+  [args]
   (fn [a b]
     (let [col (aget args "sortCol")
           lower #(if (string? %) (clojure.string/lower-case %) %)
@@ -48,10 +50,11 @@
           bval (lower (aget b (aget col "field")))]
       (if (or (nil? aval) (> aval bval)) 1 -1))))
 
-(defn filterfn [form item args]
+(defn filterfn
   "Filter function for the slickgrid dataview, use as (partial filterfn form)
    item is the row, args contains query.
    Return value of false corresponds with exclusion, true with inclusion."
+  [form item args]
   (if-not args
     true ; don't filter anything if args is undefined
     (let [indexed-form (zipmap (map :full-name form) form)
@@ -65,9 +68,10 @@
                         (remove nil?))]
       (not (empty? filtered)))))
 
-(defn formatter [field language row cell value columnDef dataContext]
+(defn formatter
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
+  [field language row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
@@ -95,16 +99,27 @@
        :rowHeight 24
        :enableTextSelectionOnCells true})
 
-(defn sg-init [data form is-filtered-dataview?]
+(defn bind-external-slick-grid-event-handlers
+  [grid event-handlers]
+  (doall
+   (for [[handler-key handler-function] event-handlers
+         :let [handler-name (hyphen->camel-case (name handler-key))
+               event (aget grid handler-name)]]
+     (.subscribe event handler-function))))
+
+(defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? is-filtered-dataview?)
+  [data form is-filtered-dataview? external-event-handlers]
+  (let [columns (flat-form->sg-columns
+                 form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
         grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
     ;; dataview / grid hookup
+    (bind-external-slick-grid-event-handlers grid external-event-handlers)
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
                   (.updateRowCount grid)
@@ -119,7 +134,8 @@
                   (.sort dataview (compfn args) (aget args "sortAsc"))))
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
-                  (let [rank (aget (.getItem dataview (aget args "row")) _rank)]
+                  (let [rank (aget (.getItem dataview (aget args "row"))
+                                   _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
@@ -131,9 +147,9 @@
 ;; EVENT LOOPS
 
 (defn handle-table-events
-  [app-state grid dataview]
   "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
+  [app-state grid dataview]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
@@ -159,7 +175,8 @@
            (.setFilterArgs dataview (clj->js {:query filter-by}))
            (.refresh dataview))
          (when (= re-render :table)
-           ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render table
+           ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
+           ;; table
            (go (<! (timeout 20))
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
@@ -229,19 +246,42 @@
      [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
-  [data owner]
+  [data owner slick-grid-event-handlers]
   "Initializes grid + dataview, and stores them in owner's state."
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-          [grid dataview] (sg-init data flat-form is-filtered-dataview?)]
+          [grid dataview] (sg-init data flat-form is-filtered-dataview? slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
 (defmethod table-page :default
-  [app-state owner opts]
+  [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
-   Renders empty divs via om, hooks up slickgrid to these divs on did-mount."
+   Renders empty divs via om, hooks up slickgrid to these divs on did-mount.
+   slick-grid-event-handlers is a map containing any of the following keys
+   :on-scroll
+   :on-sort
+   :on-header-context-menu
+   :on-header-click
+   :on-mouse-enter
+   :on-mouse-leave
+   :on-click
+   :on-dbl-click
+   :on-context-menu
+   :on-key-down
+   :on-add-new-row
+   :on-validation-error
+   :on-viewport-changed
+   :on-columns-reordered
+   :on-columns-resized
+   :on-cell-change
+   :on-before-edit-cell
+   :on-before-cell-editor-destroy
+   :on-header-cell-rendered
+   each of whose value is a function of the form (fn [event args] ) as described
+   in the SlickGrid documentation for event handlers.
+   https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (reify
     om/IRenderState
     (render-state [_ _]
@@ -260,7 +300,7 @@
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]
-        (when-let [[grid dataview] (init-grid! data owner)]
+        (when-let [[grid dataview] (init-grid! data owner slick-grid-event-handlers)]
           (handle-table-events app-state grid dataview))))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
@@ -270,7 +310,7 @@
             {:keys [grid dataview]} (om/get-state owner)]
         (when (not= old-data new-data)
           (if (empty? old-data)
-            (when-let [[grid dataview] (init-grid! new-data owner)]
+            (when-let [[grid dataview] (init-grid! new-data owner slick-grid-event-handlers)]
               (handle-table-events app-state grid dataview))
             (do ; data has changed
               (.invalidateAllRows grid)
