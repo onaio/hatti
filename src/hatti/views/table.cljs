@@ -98,12 +98,10 @@
 (defn bind-external-slick-grid-event-handlers
   [grid event-handlers]
   (doall
-   (for [[handler-key handler-function] event-handlers]
-     (let [handler-name (hyphen->camel-case (name handler-key))
-           event (aget grid handler-name)]
-       (.subscribe
-        event
-        handler-function)))))
+   (for [[handler-key handler-function] event-handlers
+         :let [handler-name (hyphen->camel-case (name handler-key))
+               event (aget grid handler-name)]]
+     (.subscribe event handler-function))))
 
 (defn sg-init [data form is-filtered-dataview? external-event-handlers]
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.

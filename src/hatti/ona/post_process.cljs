@@ -63,8 +63,9 @@
                                 ;; precomputed osm-data value. This condition
                                 ;; ensures only strings are parsed for OSM ids
                                 (if (string? osm-val)
-                                  (if-let [osm-submission-data (osm-data
-                                                     (osm-val->osm-id osm-val))]
+                                  (if-let [osm-submission-data
+                                           (osm-data
+                                            (osm-val->osm-id osm-val))]
                                     osm-submission-data
                                     osm-val)
                                   osm-val))
