@@ -56,16 +56,21 @@
   (let [osm-fields (filter forms/osm? form)]
     (when-not (empty? osm-fields)
       (let [data (get-in app-state [:map-page :data])
-            osm-id->osm-data (osm-id->osm-data data form osm-xml)
+            osm-data (osm-id->osm-data data form osm-xml)
             osm-val->osm-id #(re-find #"[-]?[0-9]+" %)
             osm-val->osm-data (fn [osm-val]
-                                (when osm-val
-                                  (osm-id->osm-data
-                                   (osm-val->osm-id osm-val))))
+                                ;; The OSM-val can be either a string or a
+                                ;; precomputed osm-data value. This condition
+                                ;; ensures only strings are parsed for OSM ids
+                                (if (string? osm-val)
+                                  (osm-data
+                                   (osm-val->osm-id osm-val))
+                                  osm-val))
             updater (fn [osm-key]
                       (fn [data]
                         (for [datum data]
                           (update-in datum [osm-key] osm-val->osm-data))))]
+
         (doseq [osm-field osm-fields]
           (shared/transact-app-data! app-state (updater (:full-name osm-field))))))))
 
