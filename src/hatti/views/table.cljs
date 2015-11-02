@@ -26,10 +26,11 @@
       extra-field
       (conj extra-field forms/submission-time-field))))
 
-(defn all-fields [form & {:keys [is-filtered-dataview?]}]
+(defn all-fields
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
+  [form & {:keys [is-filtered-dataview?]}]
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
                (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
@@ -37,10 +38,11 @@
 
 ;; SLICKGRID HELPER FUNCTIONS
 
-(defn compfn [args]
+(defn compfn
   "Comparator function for the slickgrid dataview.
    args.sortCol is the column being sorted, a and b are rows to compare.
    Claims a is bigger (return 1) if value for a > b, or a is null / empty."
+  [args]
   (fn [a b]
     (let [col (aget args "sortCol")
           lower #(if (string? %) (clojure.string/lower-case %) %)
@@ -48,10 +50,11 @@
           bval (lower (aget b (aget col "field")))]
       (if (or (nil? aval) (> aval bval)) 1 -1))))
 
-(defn filterfn [form item args]
+(defn filterfn
   "Filter function for the slickgrid dataview, use as (partial filterfn form)
    item is the row, args contains query.
    Return value of false corresponds with exclusion, true with inclusion."
+  [form item args]
   (if-not args
     true ; don't filter anything if args is undefined
     (let [indexed-form (zipmap (map :full-name form) form)
@@ -65,9 +68,10 @@
                         (remove nil?))]
       (not (empty? filtered)))))
 
-(defn formatter [field language row cell value columnDef dataContext]
+(defn formatter
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
+  [field language row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
@@ -103,11 +107,13 @@
                event (aget grid handler-name)]]
      (.subscribe event handler-function))))
 
-(defn sg-init [data form is-filtered-dataview? external-event-handlers]
+(defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  (let [columns (flat-form->sg-columns form true nil :is-filtered-dataview? is-filtered-dataview?)
+  [data form is-filtered-dataview? external-event-handlers]
+  (let [columns (flat-form->sg-columns
+                 form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -128,7 +134,8 @@
                   (.sort dataview (compfn args) (aget args "sortAsc"))))
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
-                  (let [rank (aget (.getItem dataview (aget args "row")) _rank)]
+                  (let [rank (aget (.getItem dataview (aget args "row"))
+                                   _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
@@ -140,9 +147,9 @@
 ;; EVENT LOOPS
 
 (defn handle-table-events
-  [app-state grid dataview]
   "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
+  [app-state grid dataview]
   (let [event-chan (shared/event-tap)]
     (go
      (while true
@@ -168,7 +175,8 @@
            (.setFilterArgs dataview (clj->js {:query filter-by}))
            (.refresh dataview))
          (when (= re-render :table)
-           ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render table
+           ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
+           ;; table
            (go (<! (timeout 20))
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
