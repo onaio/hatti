@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [<! chan mult tap]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
-            [hatti.constants :refer [_rank]]
+            [hatti.constants :refer [_rank _submission_time]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [json->cljs format last-url-param]]
             [hatti.utils.om.state :as state]))
@@ -63,10 +63,10 @@
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
    Sorts by submission time, and adds rank to the data, for table + map views."
-  [app-state data & {:keys [rerank? completed?]}]
+  [app-state data & {:keys [rerank? completed? sort-field]}]
   (let [data (if (and rerank? (seq data))
                (->> data
-                    (sort-by #(get % "_submission_time"))
+                    (sort-by #(get % (or sort-field _submission_time)))
                     (map-indexed (fn [i v] (assoc v _rank (inc i))))
                     vec)
                data)
