@@ -309,10 +309,10 @@
                     (with-info (get-in app-state [:table-page :submission-clicked]))
                     {:opts (merge (select-keys opts #{:delete-record! :role})
                                   {:view :table})})
-          (if no-data?
-            [:h3 "No Data"]
-            (om/build table-header app-state))
-            [:div {:id table-id :class "slickgrid"}]])))
+          (om/build table-header nil)
+          [:div {:id table-id :class "slickgrid"}
+           (when no-data?
+             [:span {:class "empty-state"} "No data"])]])))
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]
