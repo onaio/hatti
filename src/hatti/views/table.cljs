@@ -252,13 +252,14 @@
               :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
 (defmethod table-header :default
-  [_ owner]
+  [app-state owner]
   (om/component
    (html
     [:div {:class "topbar"}
      [:div {:id pager-id}]
-     (om/build table-search nil)
-     (om/build label-changer nil)])))
+     (om/build label-changer nil)
+     (om/build table-search app-state)
+     [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
   [data owner slick-grid-event-handlers]
@@ -310,7 +311,7 @@
                                   {:view :table})})
           (if no-data?
             [:h3 "No Data"]
-            (om/build table-header nil))
+            (om/build table-header app-state))
             [:div {:id table-id :class "slickgrid"}]])))
     om/IDidMount
     (did-mount [_]
