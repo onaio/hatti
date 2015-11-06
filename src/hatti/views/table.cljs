@@ -94,10 +94,11 @@
 
 (def sg-options
   "Options to feed the slickgrid constructor."
-  #js {:enableColumnReorder false
-       :autoHeight true
-       :rowHeight 24
-       :enableTextSelectionOnCells true})
+  #js {:autoHeight true
+       :enableColumnReorder false
+       :enableTextSelectionOnCells true
+       :rowHeight 40
+       :syncColumnCellResize true})
 
 (defn bind-external-slick-grid-event-handlers
   [grid event-handlers]
