@@ -241,9 +241,8 @@
    (html
     [:div {:class "topbar"}
      [:div {:id pager-id}]
-     (om/build label-changer nil)
      (om/build table-search nil)
-     [:div {:style {:clear "both"}}]])))
+     (om/build label-changer nil)])))
 
 (defn- init-grid!
   [data owner slick-grid-event-handlers]
