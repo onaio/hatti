@@ -94,10 +94,11 @@
 
 (def sg-options
   "Options to feed the slickgrid constructor."
-  #js {:enableColumnReorder false
-       :autoHeight true
-       :rowHeight 24
-       :enableTextSelectionOnCells true})
+  #js {:autoHeight true
+       :enableColumnReorder false
+       :enableTextSelectionOnCells true
+       :rowHeight 40
+       :syncColumnCellResize true})
 
 (defn bind-external-slick-grid-event-handlers
   [grid event-handlers]
@@ -241,9 +242,8 @@
    (html
     [:div {:class "topbar"}
      [:div {:id pager-id}]
-     (om/build label-changer nil)
      (om/build table-search nil)
-     [:div {:style {:clear "both"}}]])))
+     (om/build label-changer nil)])))
 
 (defn- init-grid!
   [data owner slick-grid-event-handlers]
