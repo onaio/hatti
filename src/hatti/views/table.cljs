@@ -88,9 +88,13 @@
          :name label :toolTip label :sortable true
          :formatter (partial formatter field language)})))))
 
-(defn- init-sg-pager [grid dataview]
-  (let [Pager (.. js/Slick -Controls -Pager)]
-    (Pager. dataview grid (js/jQuery (str "#" pager-id)))))
+(defn- init-sg-pager [grid dataview & {:keys [page-count]}]
+  (let [Pager (.. js/Slick -Controls -Pager)
+        pager (Pager. dataview
+                      grid
+                      (js/jQuery (str "#" pager-id))
+                      #js {:totalDisplayPages page-count})]
+    pager))
 
 (def sg-options
   "Options to feed the slickgrid constructor."
@@ -108,7 +112,8 @@
                event (aget grid handler-name)]]
      (.subscribe event handler-function))))
 
-(defn sg-init
+(defn sg-init [data form is-filtered-dataview?
+               & {:keys [page-count]}]
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
@@ -118,7 +123,9 @@
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
-        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
+        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)
+        {{{:keys [num-displayed-records total-page-count]} :paging} :table-page}
+        @shared/app-state]
     ;; dataview / grid hookup
     (bind-external-slick-grid-event-handlers grid external-event-handlers)
     (.subscribe (.-onRowCountChanged dataview)
@@ -151,11 +158,9 @@
                          (inc (aget (.getPagingInfo dataview) "pageNum"))})))
 
     ;; page, filter, and data set-up on the dataview
-    (init-sg-pager grid dataview)
-    (.setPagingOptions dataview #js
-        {:pageSize (or (get-in @shared/app-state
-                               [:table-page :paging :num-displayed-records])
-                       25)})
+    (init-sg-pager grid dataview :page-count total-page-count)
+    (.setPagingOptions dataview
+                       #js {:pageSize (or num-displayed-records 25)})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
     [grid dataview]))
@@ -172,6 +177,8 @@
        (let [e (<! event-chan)
              {:keys [submission-to-rank submission-clicked submission-unclicked
                      filter-by new-columns re-render]} e
+             {{{:keys [total-page-count]} :paging} :table-page}
+             @shared/app-state
              update-data! (partial om/update! app-state
                                    [:table-page :submission-clicked :data])]
          (when submission-to-rank
@@ -197,7 +204,7 @@
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
                (.render grid)
-               (init-sg-pager grid dataview))))))))
+               (init-sg-pager grid dataview :page-count total-page-count))))))))
 
 ;; OM COMPONENTS
 
