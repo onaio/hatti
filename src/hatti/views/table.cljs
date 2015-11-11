@@ -143,6 +143,7 @@
     (.setPagingOptions dataview #js {:pageSize 25})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
+    (.registerPlugin grid (.AutoColumnSize js/Slick))
     [grid dataview]))
 
 ;; EVENT LOOPS
