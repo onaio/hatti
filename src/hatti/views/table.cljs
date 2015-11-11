@@ -104,7 +104,7 @@
        :rowHeight 40
        :syncColumnCellResize true})
 
-(defn bind-external-slick-grid-event-handlers
+(defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
   (doall
    (for [[handler-key handler-function] event-handlers
@@ -112,14 +112,22 @@
                event (aget grid handler-name)]]
      (.subscribe event handler-function))))
 
-(defn sg-init [data form is-filtered-dataview?
-               & {:keys [page-count]}]
+(defn bind-external-sg-grid-dataview-handlers
+  [dataview event-handlers]
+  (doall
+    (for [[handler-key handler-function] event-handlers
+          :let [handler-name (hyphen->camel-case (name handler-key))
+                event (aget dataview handler-name)]]
+      (.subscribe event handler-function))))
+
+(defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form is-filtered-dataview? external-event-handlers]
+  [data form is-filtered-dataview? {:keys [grid-event-handlers
+                                           dataview-event-handlers]}]
   (let [columns (flat-form->sg-columns
-                 form true nil :is-filtered-dataview? is-filtered-dataview?)
+                  form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -127,7 +135,9 @@
         {{{:keys [num-displayed-records total-page-count]} :paging} :table-page}
         @shared/app-state]
     ;; dataview / grid hookup
-    (bind-external-slick-grid-event-handlers grid external-event-handlers)
+    (bind-external-sg-grid-event-handlers grid grid-event-handlers)
+    (bind-external-sg-grid-dataview-handlers dataview dataview-event-handlers)
+
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
                   (.updateRowCount grid)
@@ -151,11 +161,6 @@
                   (let [rank (aget (.getItem dataview (aget args "row"))
                                    _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
-    (.subscribe (.-onRowsChanged dataview)
-                (fn [e args]
-                  (put! shared/event-chan
-                        {:page
-                         (inc (aget (.getPagingInfo dataview) "pageNum"))})))
 
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview :page-count total-page-count)
