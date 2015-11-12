@@ -253,7 +253,7 @@
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
-      (let [data (:data app-state)
+      (let [{{:keys [data]} :map-page} app-state
             form (om/get-shared owner :flat-form)
             geojson (mu/as-geojson data form)
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
@@ -266,8 +266,8 @@
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets leaflet geojson if the map data has changed."
-      (let [old-data (:data (om/get-props owner))
-            new-data (:data next-props)
+      (let [{{old-data :data} :map-page} (om/get-props owner)
+            {{new-data :data} :map-page} next-props
             old-field (get-in (om/get-props owner) [:map-page :geofield])
             new-field (get-in next-props [:map-page :geofield])]
         (when (or (not= old-field new-field)
