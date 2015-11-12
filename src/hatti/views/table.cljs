@@ -144,16 +144,7 @@
                 (fn [e args]
                   (.invalidateRows grid (aget args "rows"))
                   (.render grid)))
-    ;; sort / double-click handlers
-    (.subscribe (.-onSort grid)
-                (fn [e args]
-                  ;; We need to provide a key to
-                  ;; check where to sort the data from. (commented out for now)
-                  #_(.sort dataview (compfn args) (aget args "sortAsc"))
-                  ;; Handles sorting on server-side
-                  (let [sortAsc (aget args "sortAsc")
-                        sortCol (aget args "sortCol")]
-                    (put! shared/event-chan {:sortd {:field (aget sortCol "field") :sortAsc sortAsc}}))))
+    ;; Double-click handlers
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
                   (let [rank (aget (.getItem dataview (aget args "row"))
