@@ -318,7 +318,7 @@
                     (with-info (get-in app-state [:table-page :submission-clicked]))
                     {:opts (merge (select-keys opts #{:delete-record! :role})
                                   {:view :table})})
-          (om/build table-header nil)
+          (om/build table-header app-state)
           [:div {:id table-id :class "slickgrid"}
            (when no-data?
              [:span {:class "empty-state"} "No data"])]])))
