@@ -51,15 +51,15 @@
     (go
      (while true
        (let [e (<! event-chan)
-             {:keys [map-submission-to-rank submission-unclicked]} e
+             {:keys [mapped-submission-to-rank submission-unclicked]} e
              prev-marker (get-in @app-state [:map-page :submission-clicked :marker])]
          (when submission-unclicked
            (om/update! app-state [:map-page :submission-clicked]
                        {:data nil :prev-marker prev-marker}))
-         (when map-submission-to-rank
-           (let [rank map-submission-to-rank
+         (when mapped-submission-to-rank
+           (let [rank mapped-submission-to-rank
                  new-data (-> (filter
-                               #(= rank (get % _id))
+                               #(= rank (get % _rank))
                                (get-in @app-state [:map-page :data]))
                               first)]
              (om/update! app-state [:map-page :submission-clicked]
@@ -77,7 +77,7 @@
        (let [{:keys [data-updated] :as e} (<! event-chan)]
          (when data-updated
            (put! shared/event-chan
-                 {:map-submission-to-rank
+                 {:mapped-submission-to-rank
                   (get-in @app-state [:map-page :submission-clicked :data _id])})
            (put! shared/event-chan
                  {:view-by (get-in @app-state [:map-page :view-by])})))))))
