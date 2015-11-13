@@ -13,6 +13,8 @@
             [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
             [cljsjs.slickgrid-with-deps]))
 
+(def default-num-displayed-records 25)
+
 ;; DIVS
 (def table-id "submission-grid")
 (def pager-id "pager")
@@ -155,7 +157,8 @@
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
-                       #js {:pageSize (or num-displayed-records 25)
+                       #js {:pageSize (or num-displayed-records
+                                          default-num-displayed-records)
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
