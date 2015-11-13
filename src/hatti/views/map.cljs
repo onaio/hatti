@@ -60,7 +60,7 @@
            (let [rank map-submission-to-rank
                  new-data (-> (filter
                                #(= rank (get % _id))
-                               (:data @app-state))
+                               (get-in @app-state [:map-page :data]))
                               first)]
              (om/update! app-state [:map-page :submission-clicked]
                          {:data new-data
