@@ -199,8 +199,8 @@
   [feature marker event-chan]
   (.on marker "click"
        #(when-not (is-clicked? marker)
-          (put! event-chan {:submission-to-rank
-                            (aget (aget feature "properties") _rank)})))
+          (put! event-chan {:map-submission-to-rank
+                            (aget (aget feature "properties") _id)})))
   (.on marker "mouseover"
        #(when-not (is-clicked? marker)
           (apply-hover-style marker)))
