@@ -13,6 +13,8 @@
             [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
             [cljsjs.slickgrid-with-deps]))
 
+(def default-num-displayed-records 25)
+
 ;; DIVS
 (def table-id "submission-grid")
 (def pager-id "pager")
@@ -21,7 +23,8 @@
 (defn get-extra-fields
    "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name _rank :label "#" :name _rank :type "integer"}]]
+  (let [extra-field  [{:full-name _id :label "id" :name _id :type
+                                  "integer"}]]
     (if is-filtered-dataview?
       extra-field
       (conj extra-field forms/submission-time-field))))
@@ -90,7 +93,9 @@
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
-    (Pager. dataview grid (js/jQuery (str "#" pager-id)))))
+    (Pager. dataview
+            grid
+            (js/jQuery (str "#" pager-id)))))
 
 (def sg-options
   "Options to feed the slickgrid constructor."
@@ -100,7 +105,7 @@
        :rowHeight 40
        :syncColumnCellResize true})
 
-(defn bind-external-slick-grid-event-handlers
+(defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
   (doall
    (for [[handler-key handler-function] event-handlers
@@ -108,19 +113,32 @@
                event (aget grid handler-name)]]
      (.subscribe event handler-function))))
 
+(defn bind-external-sg-grid-dataview-handlers
+  [dataview event-handlers]
+  (doall
+    (for [[handler-key handler-function] event-handlers
+          :let [handler-name (hyphen->camel-case (name handler-key))
+                event (aget dataview handler-name)]]
+      (.subscribe event handler-function))))
+
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form is-filtered-dataview? external-event-handlers]
+  [data form is-filtered-dataview? {:keys [grid-event-handlers
+                                           dataview-event-handlers]}]
   (let [columns (flat-form->sg-columns
-                 form true nil :is-filtered-dataview? is-filtered-dataview?)
+                  form true nil :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
-        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
+        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)
+        {{{:keys [num-displayed-records total-page-count]} :paging} :table-page}
+        @shared/app-state]
     ;; dataview / grid hookup
-    (bind-external-slick-grid-event-handlers grid external-event-handlers)
+    (bind-external-sg-grid-event-handlers grid grid-event-handlers)
+    (bind-external-sg-grid-dataview-handlers dataview dataview-event-handlers)
+
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
                   (.updateRowCount grid)
@@ -129,18 +147,19 @@
                 (fn [e args]
                   (.invalidateRows grid (aget args "rows"))
                   (.render grid)))
-    ;; sort / double-click handlers
-    (.subscribe (.-onSort grid)
-                (fn [e args]
-                  (.sort dataview (compfn args) (aget args "sortAsc"))))
+    ;; Double-click handlers
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
-                  (let [rank (aget (.getItem dataview (aget args "row"))
-                                   _rank)]
-                    (put! shared/event-chan {:submission-to-rank rank}))))
+                  (let [id (aget (.getItem dataview (aget args "row"))
+                                   _id)]
+                    (put! shared/event-chan {:submission-to-rank id}))))
+
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
-    (.setPagingOptions dataview #js {:pageSize 25})
+    (.setPagingOptions dataview
+                       #js {:pageSize (or num-displayed-records
+                                          default-num-displayed-records)
+                            :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
     [grid dataview]))
@@ -160,8 +179,8 @@
              update-data! (partial om/update! app-state
                                    [:table-page :submission-clicked :data])]
          (when submission-to-rank
-           (let [rank submission-to-rank
-                 submission (-> (filter #(= rank (get % _rank))
+           (let [id submission-to-rank
+                 submission (-> (filter #(= id (get % _id))
                                         (get-in @app-state [:data]))
                                 first)]
              (update-data! submission)))
@@ -237,13 +256,14 @@
               :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
 (defmethod table-header :default
-  [_ owner]
+  [app-state owner]
   (om/component
    (html
     [:div {:class "topbar"}
      [:div {:id pager-id}]
-     (om/build table-search nil)
-     (om/build label-changer nil)])))
+     (om/build label-changer nil)
+     (om/build table-search app-state)
+     [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
   [data owner slick-grid-event-handlers]
@@ -293,10 +313,10 @@
                     (with-info (get-in app-state [:table-page :submission-clicked]))
                     {:opts (merge (select-keys opts #{:delete-record! :role})
                                   {:view :table})})
-          (if no-data?
-            [:h3 "No Data"]
-            (om/build table-header nil))
-            [:div {:id table-id :class "slickgrid"}]])))
+          (om/build table-header app-state)
+          [:div {:id table-id :class "slickgrid"}
+           (when no-data?
+             [:span {:class "empty-state"} "No data"])]])))
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]

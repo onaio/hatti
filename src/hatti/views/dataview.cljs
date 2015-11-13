@@ -69,8 +69,6 @@
           [:div#data-status
            [:span.rec
             (when loading? [:i.fa.fa-spinner.fa-pulse])
-            (when (and total-records (not= total-records num_of_submissions))
-              (str " " total-records " / "))
             (pluralize-number num_of_submissions " Record")]]
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))

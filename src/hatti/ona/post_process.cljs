@@ -4,6 +4,7 @@
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
+            [hatti.utils.om.state :refer [transact-app-state!]]
             [cljsjs.jquery]
             [osmtogeojson]))
 
@@ -123,10 +124,12 @@
       (reduce integrate record repeat-fields))))
 
 (defn integrate-attachments!
-  [app-state flat-form]
+  [app-state flat-form & {:keys [app-data-keys]
+                          :or {app-data-keys [:data]}}]
   "Inlines data from within _atatchments into each record within app-state."
-  (shared/transact-app-data!
+  (transact-app-state!
    app-state
+   app-data-keys
    #(->> %
          (integrate-attachments flat-form)
          (integrate-attachments-in-repeats flat-form))))

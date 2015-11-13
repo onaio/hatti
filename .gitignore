@@ -16,6 +16,10 @@ examples/css
 examples/*/index.html
 examples/*/data
 
+# Ignore checkouts
+
+checkouts
+
 *.asc
 *.iml
 .lein-failures

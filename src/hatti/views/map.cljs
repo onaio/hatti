@@ -51,16 +51,16 @@
     (go
      (while true
        (let [e (<! event-chan)
-             {:keys [submission-to-rank submission-unclicked]} e
+             {:keys [mapped-submission-to-rank submission-unclicked]} e
              prev-marker (get-in @app-state [:map-page :submission-clicked :marker])]
          (when submission-unclicked
            (om/update! app-state [:map-page :submission-clicked]
                        {:data nil :prev-marker prev-marker}))
-         (when submission-to-rank
-           (let [rank submission-to-rank
+         (when mapped-submission-to-rank
+           (let [rank mapped-submission-to-rank
                  new-data (-> (filter
                                #(= rank (get % _rank))
-                               (:data @app-state))
+                               (get-in @app-state [:map-page :data]))
                               first)]
              (om/update! app-state [:map-page :submission-clicked]
                          {:data new-data
@@ -77,8 +77,8 @@
        (let [{:keys [data-updated] :as e} (<! event-chan)]
          (when data-updated
            (put! shared/event-chan
-                 {:submission-to-rank
-                  (get-in @app-state [:map-page :submission-clicked :data _rank])})
+                 {:mapped-submission-to-rank
+                  (get-in @app-state [:map-page :submission-clicked :data _id])})
            (put! shared/event-chan
                  {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
@@ -253,7 +253,7 @@
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
-      (let [data (:data app-state)
+      (let [{{:keys [data]} :map-page} app-state
             form (om/get-shared owner :flat-form)
             geojson (mu/as-geojson data form)
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
@@ -266,8 +266,8 @@
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets leaflet geojson if the map data has changed."
-      (let [old-data (:data (om/get-props owner))
-            new-data (:data next-props)
+      (let [{{old-data :data} :map-page} (om/get-props owner)
+            {{new-data :data} :map-page} next-props
             old-field (get-in (om/get-props owner) [:map-page :geofield])
             new-field (get-in next-props [:map-page :geofield])]
         (when (or (not= old-field new-field)

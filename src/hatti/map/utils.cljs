@@ -194,12 +194,12 @@
 
 (defn- register-mouse-events
   "Mouse events for markers.
-  On click or arrow, submission-to-rank events are generated.
+  On click or arrow, mapped-submission-to-rank events are generated.
   On hover, marker is brought to the front and color changed."
   [feature marker event-chan]
   (.on marker "click"
        #(when-not (is-clicked? marker)
-          (put! event-chan {:submission-to-rank
+          (put! event-chan {:mapped-submission-to-rank
                             (aget (aget feature "properties") _rank)})))
   (.on marker "mouseover"
        #(when-not (is-clicked? marker)

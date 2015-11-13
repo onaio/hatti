@@ -1,4 +1,4 @@
-(defproject onaio/hatti "0.1.12-SNAPSHOT"
+(defproject onaio/hatti "0.1.12-table-data-pagination-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
@@ -20,7 +20,7 @@
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
                  [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/jquery "1.9.1-0"]
-                 [prabhasp/slickgrid-cljs "0.0.1"]
+                 [onaio/slickgrid-cljs "0.0.2"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
                  ;; For client
