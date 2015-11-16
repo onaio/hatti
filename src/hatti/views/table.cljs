@@ -162,6 +162,7 @@
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
+    (.registerPlugin grid (.AutoColumnSize js/Slick))
     [grid dataview]))
 
 ;; EVENT LOOPS
@@ -201,7 +202,8 @@
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
                (.render grid)
-               (init-sg-pager grid dataview))))))))
+               (init-sg-pager grid dataview)
+               (.registerPlugin grid (.AutoColumnSize js/Slick)))))))))
 
 ;; OM COMPONENTS
 
