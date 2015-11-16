@@ -202,7 +202,8 @@
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
                (.render grid)
-               (init-sg-pager grid dataview))))))))
+               (init-sg-pager grid dataview)
+               (.registerPlugin grid (.AutoColumnSize js/Slick)))))))))
 
 ;; OM COMPONENTS
 
