@@ -51,12 +51,12 @@
                    :tags tags}})))))
 
 (defn integrate-osm-data!
-  [app-state form osm-xml]
+  [app-state form osm-xml app-state-keys]
   "Given some data post-processed from the ona server (ie, containing _id, _rank),
    and a string of osm-xml, produce a version with relevant osm data injected in."
   (let [osm-fields (filter forms/osm? form)]
     (when-not (empty? osm-fields)
-      (let [data (get-in app-state [:map-page :data])
+      (let [data (get-in app-state app-state-keys)
             osm-data (osm-id->osm-data data form osm-xml)
             osm-val->osm-id #(re-find #"[-]?[0-9]+" %)
             osm-val->osm-data (fn [osm-val]
@@ -76,7 +76,8 @@
                           (update-in datum [osm-key] osm-val->osm-data))))]
 
         (doseq [osm-field osm-fields]
-          (shared/transact-app-data! app-state (updater (:full-name osm-field))))))))
+          (transact-app-state! app-state app-state-keys
+                               (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
 (defn url-obj [media-obj]
