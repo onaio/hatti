@@ -18,6 +18,8 @@
             [hatti.views.overview]
             [hatti.utils :refer [click-fn pluralize-number]]))
 
+(def mapping-threshold 10000)
+
 (def dataview-map
   {:overview {:view :overview
               :label "Overview"
@@ -104,9 +106,18 @@
                            (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
                        (let [active? (some #(= view %) (-> app-state :views :active))]
-                         (if (and (= view :map) no-geodata?)
+                         (cond
+                           (and (= view :map) no-geodata?)
                            [:a {:class "inactive" :title "No geodata"}
                             (name view)]
+                           (and (= view :map)
+                                (> (-> app-state :dataset-info
+                                              :num_of_submissions)
+                                   mapping-threshold))
+                           [:a {:class "inactive"
+                                :title (str "Map does not support more than 10,000 points.")}
+                            (name view)]
+                           :else
                            [:a
                             {:href (when active? (str "#/" (name view)))
                              :class (if active? (view->cls view)
