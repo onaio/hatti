@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
+            [hatti.constants :refer [mapping-threshold]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.utils.om.state :refer [merge-into-app-state!]]
@@ -16,7 +17,7 @@
             [hatti.views.chart]
             [hatti.views.settings]
             [hatti.views.overview]
-            [hatti.utils :refer [click-fn pluralize-number]]))
+            [hatti.utils :refer [click-fn format pluralize-number]]))
 
 (def dataview-map
   {:overview {:view :overview
@@ -35,8 +36,8 @@
            :label "Summary Charts"
            :component chart-page}
    :settings {:view :settings
-             :label "Settings"
-             :component settings-page}})
+              :label "Settings"
+              :component settings-page}})
 
 (defmethod dataview-actions :default
   [cursor owner]
@@ -62,16 +63,16 @@
             {:keys [num_of_submissions]} dataset-info
             {:keys [loading? total-records]} status]
         (html
-         [:div.right.rec-summary.rec-margin
-          [:div#language-selector
-           (when (f/multilingual? form)
-             (om/build shared/language-selector nil))]
-          [:div#data-status
-           [:span.rec
-            (when loading? [:i.fa.fa-spinner.fa-pulse])
-            (pluralize-number num_of_submissions " Record")]]
-          [:div.divider]
-          (om/build dataview-actions dataset-id)])))))
+          [:div.right.rec-summary.rec-margin
+           [:div#language-selector
+            (when (f/multilingual? form)
+              (om/build shared/language-selector nil))]
+           [:div#data-status
+            [:span.rec
+             (when loading? [:i.fa.fa-spinner.fa-pulse])
+             (pluralize-number num_of_submissions " Record")]]
+           [:div.divider]
+           (om/build dataview-actions dataset-id)])))))
 
 (defn activate-view! [view]
   (let [view (keyword view)
@@ -103,14 +104,28 @@
             dataviews (->> app-state :views :all
                            (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
-                       (let [active? (some #(= view %) (-> app-state :views :active))]
-                         (if (and (= view :map) no-geodata?)
+                       (let [active? (some #(= view %) (-> app-state
+                                                           :views :active))]
+                         (cond
+                           (and (= view :map) no-geodata?)
                            [:a {:class "inactive" :title "No geodata"}
                             (name view)]
+                           (and (= view :map)
+                                (> (-> app-state
+                                       :dataset-info
+                                       :num_of_submissions)
+                                   mapping-threshold))
+                           [:a
+                            {:class "inactive"
+                             :title (format
+                                     "Map does not support more than %d points."
+                                     mapping-threshold)}
+                            (name view)]
+                           :else
                            [:a
                             {:href (when active? (str "#/" (name view)))
                              :class (if active? (view->cls view)
-                                                "inactive")} label])))]
+                                        "inactive")} label])))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
