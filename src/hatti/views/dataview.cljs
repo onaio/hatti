@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :refer [*mapping-threshold*]]
+            [hatti.constants :refer [mapping-threshold]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.utils.om.state :refer [merge-into-app-state!]]
@@ -17,7 +17,7 @@
             [hatti.views.chart]
             [hatti.views.settings]
             [hatti.views.overview]
-            [hatti.utils :refer [click-fn pluralize-number]]))
+            [hatti.utils :refer [click-fn format pluralize-number]]))
 
 (def dataview-map
   {:overview {:view :overview
@@ -104,7 +104,8 @@
             dataviews (->> app-state :views :all
                            (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
-                       (let [active? (some #(= view %) (-> app-state :views :active))]
+                       (let [active? (some #(= view %) (-> app-state
+                                                           :views :active))]
                          (cond
                            (and (= view :map) no-geodata?)
                            [:a {:class "inactive" :title "No geodata"}
@@ -113,23 +114,26 @@
                                 (> (-> app-state
                                        :dataset-info
                                        :num_of_submissions)
-                                   *mapping-threshold*))
-                           [:a {:class "inactive"
-                                :title (str "Map does not support more than 10,000 points.")}
+                                   mapping-threshold))
+                           [:a
+                            {:class "inactive"
+                             :title (format
+                                     "Map does not support more than %d points."
+                                     mapping-threshold)}
                             (name view)]
                            :else
                            [:a
                             {:href (when active? (str "#/" (name view)))
                              :class (if active? (view->cls view)
-                                                "inactive")} label])))]
+                                        "inactive")} label])))]
         (html
-          [:div.tab-container.dataset-tabs
-           [:div.tab-bar
-            (map dv->link dataviews)
-            (om/build dataview-infobar {:dataset-info (-> app-state :dataset-info)
-                                        :status (-> app-state :status)})]
-           (for [{:keys [component view]} dataviews]
-             [:div {:class (str "tab-page " (name view) "-page")
-                    :style {:display (view->display view)}}
-              [:div.tab-content {:id (str "tab-content" (name view))}
-               (om/build component app-state {:opts opts})]])])))))
+         [:div.tab-container.dataset-tabs
+          [:div.tab-bar
+           (map dv->link dataviews)
+           (om/build dataview-infobar {:dataset-info (-> app-state :dataset-info)
+                                       :status (-> app-state :status)})]
+          (for [{:keys [component view]} dataviews]
+            [:div {:class (str "tab-page " (name view) "-page")
+                   :style {:display (view->display view)}}
+             [:div.tab-content {:id (str "tab-content" (name view))}
+              (om/build component app-state {:opts opts})]])])))))
