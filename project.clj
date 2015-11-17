@@ -1,4 +1,4 @@
-(defproject onaio/hatti "0.1.13-map-cleanup-SNAPSHOT"
+(defproject onaio/hatti "0.1.13-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
