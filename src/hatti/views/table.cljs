@@ -37,7 +37,8 @@
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
                (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
-       (filter forms/has-data?)))
+       (filter forms/has-data?)
+       (distinct)))
 
 ;; SLICKGRID HELPER FUNCTIONS
 
