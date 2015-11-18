@@ -120,12 +120,13 @@
    both in the numeric category"
   [field]
   (cond
-    (text? field)       "column-string"
-    (time-based? field) "column-time"
-    (numeric? field)    "column-numeric"
-    (geofield? field)   "column-geofield"
-    (image? field)      "column-image"
-    :else               ""))
+    (text? field)        "column-string"
+    (numeric? field)     "column-numeric"
+    (time-based? field)  "column-time"
+    (categorical? field) "column-categorical"
+    (geofield? field)    "column-geofield"
+    (image? field)       "column-image"
+    :else                ""))
 
 (defn get-label
   "Gets the label object out of a map with key :label (eg. a field).

@@ -90,7 +90,8 @@
         {:id name :field full-name :type type
          :name label :toolTip label :sortable true
          :formatter (partial formatter field language)
-         :headerCssClass (get-column-class field)})))))
+         :headerCssClass (get-column-class field)
+         :cssClass (get-column-class field)})))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
