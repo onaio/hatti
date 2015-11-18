@@ -5,7 +5,7 @@
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :refer [_id _rank]]
-            [hatti.ona.forms :as forms :refer [get-label format-answer]]
+            [hatti.ona.forms :as forms :refer [get-label format-answer get-column-class]]
             [hatti.views :refer [table-page table-header table-search
                                  label-changer submission-view]]
             [hatti.views.record]
@@ -89,7 +89,10 @@
             label (if get-label? (get-label field language) name)]
         {:id name :field full-name :type type
          :name label :toolTip label :sortable true
-         :formatter (partial formatter field language)})))))
+         :formatter (partial formatter field language)
+         :headerCssClass (get-column-class field)
+         :cssClass (get-column-class field)
+         :minWidth 125})))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -226,7 +229,8 @@
                                                    (= :label %)
                                                    new-language)})
             choose (fn [k] (om/set-state! owner :name-or-label k)
-                           (colset! k))]
+                           (colset! k)
+                           (put! shared/event-chan {:re-render :table}))]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! name-or-label))

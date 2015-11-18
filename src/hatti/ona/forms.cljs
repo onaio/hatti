@@ -28,7 +28,7 @@
   (field-type-in-set? #{"group"} field))
 
 (defn repeat?
-  "Checks whether a filed in a form (ie, a field) is a repeat field"
+  "Checks whether a field in a form (ie, a field) is a repeat field"
   [field]
   (field-type-in-set? #{"repeat"} field))
 
@@ -114,6 +114,20 @@
          (calculate? field)   "fa fa-bar-chart"
          (categorical? field) "fa fa-bar-chart fa-flip-h-rotate-90"
          :else                "")}])
+
+(defn get-column-class 
+  "Assign class according to field type category, e.g. integer & decimals are
+   both in the numeric category"
+  [field]
+  (cond
+    (text? field)        "column-string"
+    (numeric? field)     "column-numeric"
+    (time-based? field)  "column-datetime"
+    (categorical? field) "column-categorical"
+    (geofield? field)    "column-geofield"
+    (image? field)       "column-image"
+    (meta? field)        "column-metadata"
+    :else                ""))
 
 (defn get-label
   "Gets the label object out of a map with key :label (eg. a field).
