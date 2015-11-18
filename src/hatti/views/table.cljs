@@ -150,9 +150,9 @@
     ;; Double-click handlers
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
-                  (let [id (aget (.getItem dataview (aget args "row"))
-                                   _id)]
-                    (put! shared/event-chan {:submission-to-rank id}))))
+                  (let [rank (aget (.getItem dataview (aget args "row"))
+                                   _rank)]
+                    (put! shared/event-chan {:submission-to-rank rank}))))
 
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
@@ -178,12 +178,14 @@
              {:keys [submission-to-rank submission-clicked submission-unclicked
                      filter-by new-columns re-render]} e
              update-data! (partial om/update! app-state
-                                   [:table-page :submission-clicked :data])]
+                                   [:table-page :submission-clicked :data])
+             get-submission-data (fn [field value]
+                                   (-> (filter #(= value (get % field))
+                                               (get-in @app-state [:data]))
+                                       first))]
          (when submission-to-rank
-           (let [id submission-to-rank
-                 submission (-> (filter #(= id (get % _id))
-                                        (get-in @app-state [:data]))
-                                first)]
+           (let [rank submission-to-rank
+                 submission (get-submission-data _rank rank)]
              (update-data! submission)))
          (when submission-clicked
            (update-data! submission-clicked))
