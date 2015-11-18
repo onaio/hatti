@@ -126,6 +126,7 @@
     (categorical? field) "column-categorical"
     (geofield? field)    "column-geofield"
     (image? field)       "column-image"
+    (meta? field)        "column-metadata"
     :else                ""))
 
 (defn get-label
