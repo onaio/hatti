@@ -27,11 +27,14 @@
 ;; Helper functions to help render buttons, etc.
 
 (defn submission-arrow
-  [dir cur-rank]
+  [dir cur-rank view]
   (let [icon (str "fa fa-arrow-" (name dir))
-        new-rank ((case dir :left dec :right inc) cur-rank)]
+        new-rank ((case dir :left dec :right inc) cur-rank)
+        event-key  (condp = view
+                     :map :mapped-submission-to-rank
+                     :table :submission-to-rank)]
     [:a {:on-click (click-fn
-                    #(put! shared/event-chan {:mapped-submission-to-rank new-rank}))
+                     #(put! shared/event-chan {event-key new-rank}))
          :class "pure-button btn-default" :href "#"} [:i {:class icon}]]))
 
 (defn submission-closer []
@@ -159,15 +162,13 @@
               instance-id (get data "_id")
               sdatetime (js/moment (get data "_submission_time"))
               {:keys [top-level-wrap topbar-wrap header-wrap section-wrap
-                      submission-info-wrap h4-cls]} (submission-elements view)
-              mapview? (= view :map)
-              tableview? (= view :table)]
+                      submission-info-wrap h4-cls]} (submission-elements view)]
           (html
            (when data
              (top-level-wrap
               (topbar-wrap
-               (when mapview? (submission-arrow :left cur-rank))
-               (when mapview? (submission-arrow :right cur-rank))
+               (submission-arrow :left cur-rank view)
+               (submission-arrow :right cur-rank view)
                (om/build print-xls-report-btn {:instance-id instance-id
                                                :dataset-info dataset-info})
                (submission-closer))
