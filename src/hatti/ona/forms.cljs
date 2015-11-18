@@ -122,7 +122,7 @@
   (cond
     (text? field)        "column-string"
     (numeric? field)     "column-numeric"
-    (time-based? field)  "column-time"
+    (time-based? field)  "column-datetime"
     (categorical? field) "column-categorical"
     (geofield? field)    "column-geofield"
     (image? field)       "column-image"

@@ -91,7 +91,8 @@
          :name label :toolTip label :sortable true
          :formatter (partial formatter field language)
          :headerCssClass (get-column-class field)
-         :cssClass (get-column-class field)})))))
+         :cssClass (get-column-class field)
+         :minWidth 125})))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -228,7 +229,8 @@
                                                    (= :label %)
                                                    new-language)})
             choose (fn [k] (om/set-state! owner :name-or-label k)
-                           (colset! k))]
+                           (colset! k)
+                           (put! shared/event-chan {:re-render :table}))]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! name-or-label))
