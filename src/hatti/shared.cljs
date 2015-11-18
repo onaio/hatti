@@ -65,14 +65,16 @@
    Sorts by submission time, and adds rank to the data, for table + map views."
   [app-state data & {:keys [rerank? completed? sort-field current-start-index]
                      :or {current-start-index 0}}]
-  (let [data (if (and rerank? (seq data))
+  (let [add-rank (fn [i v]
+                   (assoc v _rank
+                            (+ current-start-index
+                               (inc i))))
+        data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % (or sort-field _submission_time)))
-                    (map-indexed (fn [i v]
-                                   (assoc v _rank
-                                            (+ current-start-index
-                                               (inc i))))) vec)
-               data)
+                    (map-indexed add-rank) vec)
+               (->> data
+                    (map-indexed add-rank) vec))
         total-records (count data)]
     (transact-app-data! app-state (fn [_] data))
     (state/merge-into-app-state! app-state [:status]
