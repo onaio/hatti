@@ -59,6 +59,10 @@
       (is (some #(= "_submission_time" (:name %)) fields))
       (is (some #(= "_submission_time" (:name %)) more-fields)))
 
+    (testing "fields are not repeated"
+      (let [all-fields (tv/all-fields fat-form)]
+        (is (= (count all-fields) (count (group-by #(:name %) all-fields))))))
+
     (testing "group and note fields are removed"
       (is (not (->> more-fields (map :type) (contains? #{"note" "group"})))))))
 
