@@ -79,8 +79,8 @@
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
-(defn flat-form->sg-columns
-   "Get a set of slick grid column objects when given a flat form."
+(defn- flat-form->sg-columns
+  "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
   ([form get-label? language & {:keys [is-filtered-dataview?]}]
@@ -211,6 +211,14 @@
                (init-sg-pager grid dataview)
                (.registerPlugin grid (.AutoColumnSize js/Slick)))))))))
 
+(defn- render-options
+  [options owner colset!]
+  (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
+                             (colset! k)
+                             (put! shared/event-chan {:re-render :table}))]
+    (for [[k v] options]
+      [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
+
 ;; OM COMPONENTS
 
 (defmethod label-changer :default
@@ -220,27 +228,25 @@
     (init-state [_] {:name-or-label :label})
     om/IRenderState
     (render-state [_ {:keys [name-or-label language]}]
-      (let [options {:label [:span "Show: " [:strong "Label"]]
-                     :name [:span "Show: " [:strong "Name"]]}
+      (let [options {:label [:strong "Label"]
+                     :name [:strong "Name"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
                            {:new-columns
                             (flat-form->sg-columns flat-form
                                                    (= :label %)
-                                                   new-language)})
-            choose (fn [k] (om/set-state! owner :name-or-label k)
-                           (colset! k)
-                           (put! shared/event-chan {:re-render :table}))]
+                                                   new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! name-or-label))
         (html
-         [:div {:class "drop-hover" :id "header-display-dropdown"}
-          [:a {:href "#"}  (options name-or-label) [:i.fa.fa-angle-down]]
-          [:ul {:class "submenu no-dot"}
-           (for [[ok ov] options]
-             [:li [:a {:on-click (click-fn #(choose ok)) :href "#"} ov]])]])))))
+         [:div.label-changer
+          [:span.label-changer-label "Show:"]
+          [:div {:class "drop-hover" :id "header-display-dropdown"}
+           [:span (options name-or-label) [:i.fa.fa-angle-down]]
+           [:ul {:class "submenu no-dot"}
+            (render-options options owner colset!)]]])))))
 
 (defn delayed-search
   "Delayed search fires a query-event on event-chan if the value of the input
