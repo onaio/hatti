@@ -321,7 +321,9 @@
     om/IRenderState
     (render-state [_ _]
       (let [no-data? (empty? (get-in app-state [:data]))
-            with-info #(merge % {:dataset-info (:dataset-info app-state)})]
+            {:keys [num_of_submissions] :as dataset-info}
+            (:dataset-info app-state)
+            with-info #(merge % {:dataset-info dataset-info})]
         (html
          [:div.table-view
           (om/build submission-view
@@ -330,8 +332,10 @@
                                   {:view :table})})
           (om/build table-header app-state)
           [:div {:id table-id :class "slickgrid"}
-           (when no-data?
-             [:span {:class "empty-state"} "No data"])]])))
+           (if (and no-data? (zero? num_of_submissions))
+             [:span {:class "empty-state"} "No data"]
+             [:span
+              [:i.fa.fa-spinner.fa-pulse] "Loading..."])]])))
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]
