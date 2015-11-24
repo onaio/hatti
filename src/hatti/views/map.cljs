@@ -32,8 +32,9 @@
              markers (vals (get-id-marker-map))]
          (when view-by
            (let [{:keys [full-name] :as field} (:field view-by)
-                 ids (map #(get % _id) (:data @app-state))
-                 raw-answers (map #(get % full-name) (:data @app-state))
+                 ids (map #(get % _id) (-> @app-state :map-page :data))
+                 raw-answers (map #(get % full-name)
+                                  (-> @app-state :map-page :data))
                  vb-info (vb/viewby-info field raw-answers ids)]
              (om/update! app-state [:map-page :view-by] vb-info)
              (vb/view-by! vb-info markers)))
