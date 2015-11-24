@@ -93,7 +93,7 @@
          :formatter (partial formatter field language)
          :headerCssClass (get-column-class field)
          :cssClass (get-column-class field)
-         :minWidth 125})))))
+         :minWidth 50})))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
