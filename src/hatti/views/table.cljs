@@ -129,10 +129,10 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form is-filtered-dataview? {:keys [grid-event-handlers
-                                           dataview-event-handlers]}]
-  (let [columns (flat-form->sg-columns
-                  form true nil :is-filtered-dataview? is-filtered-dataview?)
+  [data form  current-language is-filtered-dataview?
+   {:keys [grid-event-handlers dataview-event-handlers]}]
+  (let [columns (flat-form->sg-columns form true current-language
+                  :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -285,7 +285,13 @@
   "Initializes grid + dataview, and stores them in owner's state."
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-          [grid dataview] (sg-init data flat-form is-filtered-dataview? slick-grid-event-handlers)]
+          current-language (:current
+                             (om/observe owner (shared/language-cursor)))
+          [grid dataview] (sg-init data
+                                   flat-form
+                                   current-language
+                                   is-filtered-dataview?
+                                   slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
