@@ -101,6 +101,9 @@
             grid
             (js/jQuery (str "#" pager-id)))))
 
+(defn- resizeColumns [grid]
+  (.registerPlugin grid (.AutoColumnSize js/Slick)))
+
 (def sg-options
   "Options to feed the slickgrid constructor."
   #js {:autoHeight true
@@ -129,10 +132,10 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form is-filtered-dataview? {:keys [grid-event-handlers
-                                           dataview-event-handlers]}]
-  (let [columns (flat-form->sg-columns
-                  form true nil :is-filtered-dataview? is-filtered-dataview?)
+  [data form  current-language is-filtered-dataview?
+   {:keys [grid-event-handlers dataview-event-handlers]}]
+  (let [columns (flat-form->sg-columns form true current-language
+                  :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -166,7 +169,7 @@
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
-    (.registerPlugin grid (.AutoColumnSize js/Slick))
+    (resizeColumns grid)
     [grid dataview]))
 
 ;; EVENT LOOPS
@@ -197,6 +200,7 @@
            (update-data! nil))
          (when new-columns
            (.setColumns grid new-columns)
+           (resizeColumns grid)
            (.render grid))
          (when filter-by
            (.setFilterArgs dataview (clj->js {:query filter-by}))
@@ -207,15 +211,14 @@
            (go (<! (timeout 20))
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
+               (resizeColumns grid)
                (.render grid)
-               (init-sg-pager grid dataview)
-               (.registerPlugin grid (.AutoColumnSize js/Slick)))))))))
+               (init-sg-pager grid dataview))))))))
 
 (defn- render-options
   [options owner colset!]
   (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
-                             (colset! k)
-                             (put! shared/event-chan {:re-render :table}))]
+                             (colset! k))]
     (for [[k v] options]
       [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
@@ -285,7 +288,13 @@
   "Initializes grid + dataview, and stores them in owner's state."
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-          [grid dataview] (sg-init data flat-form is-filtered-dataview? slick-grid-event-handlers)]
+          current-language (:current
+                             (om/observe owner (shared/language-cursor)))
+          [grid dataview] (sg-init data
+                                   flat-form
+                                   current-language
+                                   is-filtered-dataview?
+                                   slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
