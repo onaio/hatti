@@ -101,6 +101,9 @@
             grid
             (js/jQuery (str "#" pager-id)))))
 
+(defn- resizeColumns [grid]
+  (.registerPlugin grid (.AutoColumnSize js/Slick)))
+
 (def sg-options
   "Options to feed the slickgrid constructor."
   #js {:autoHeight true
@@ -166,7 +169,7 @@
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview (clj->js data) _id)
-    (.registerPlugin grid (.AutoColumnSize js/Slick))
+    (resizeColumns grid)
     [grid dataview]))
 
 ;; EVENT LOOPS
@@ -197,6 +200,7 @@
            (update-data! nil))
          (when new-columns
            (.setColumns grid new-columns)
+           (resizeColumns grid)
            (.render grid))
          (when filter-by
            (.setFilterArgs dataview (clj->js {:query filter-by}))
@@ -207,15 +211,14 @@
            (go (<! (timeout 20))
                (.resizeCanvas grid)
                (.invalidateAllRows grid)
+               (resizeColumns grid)
                (.render grid)
-               (init-sg-pager grid dataview)
-               (.registerPlugin grid (.AutoColumnSize js/Slick)))))))))
+               (init-sg-pager grid dataview))))))))
 
 (defn- render-options
   [options owner colset!]
   (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
-                             (colset! k)
-                             (put! shared/event-chan {:re-render :table}))]
+                             (colset! k))]
     (for [[k v] options]
       [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
