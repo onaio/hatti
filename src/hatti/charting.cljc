@@ -80,8 +80,7 @@
    metadata of this above value would be:
    {:bins ['1 to 2', '3 to 4', '5 to 6', '7 to 8', '9 to 10']}"
      [answers bins typ]
-     (let [numbers (->> answers
-                        (map (str->int typ)))
+     (let [numbers (map (str->int typ) answers)
            mx (reduce max (remove nil? numbers))
            mn (reduce min (remove nil? numbers))
            s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
