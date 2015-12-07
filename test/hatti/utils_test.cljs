@@ -6,4 +6,5 @@
   (testing "converts strings with single hyphen to camel case correctly"
     (is (= (hyphen->camel-case "a-string") "aString")))
   (testing "converts strings with multiple hyphens to camel case correctly"
-    (is (= (hyphen->camel-case "a-string-with-lots-of-hyphens") "aStringWithLotsOfHyphens"))))
+    (is (= (hyphen->camel-case "a-string-with-lots-of-hyphens")
+           "aStringWithLotsOfHyphens"))))

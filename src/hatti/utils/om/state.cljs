@@ -2,7 +2,8 @@
   (:require [om.core :as om :include-macros true]))
 
 (defn- transact!
-  "A transact! function that optionally uses swap! if this atom is not yet transactable?"
+  "A transact! function that optionally uses swap! if this atom is not yet
+   transactable?"
   [app-state]
   (if (satisfies? om/ITransact app-state) om/transact! swap!))
 
@@ -21,7 +22,8 @@
   (transact-app-state! app-state ks #(-> update-val))))
 
 (defn merge-into-app-state!
-  "Merges provided state into existing app-state, possibly after zoomint into ks."
+  "Merges provided state into existing app-state, possibly after zoomint into
+   ks."
   ([app-state state-to-merge]
    (transact-app-state! app-state #(merge % state-to-merge)))
   ([app-state ks state-to-merge]

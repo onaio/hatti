@@ -10,16 +10,18 @@
             [hatti.test-utils :refer [new-container! texts]]
             [hatti.ona.forms :as f]
             [om.core :as om :include-macros true]
-            [hatti.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
+            [hatti.shared-test :refer
+             [fat-form no-data small-fat-data data-gen]]))
 
 ;; CHART COMPONENT HELPERS
 
 (def chart-form (take 4 fat-form))
 (def chart-get-mock #(let [c (chan)] (put! c {:body nil}) c))
 
-(defn- chart-container [form]
+(defn- chart-container
   "Returns a container in which a map component has been rendered.
    `data` arg is directly passed into the component as its cursor."
+  [form]
   (let [cont (new-container!)
         arg {:shared {:flat-form form
                       :event-chan (chan)}
@@ -32,7 +34,8 @@
 
 (deftest charts-render-properly
   (let [container (chart-container chart-form)
-        sel1qs (into (f/meta-fields chart-form :with-submission-details? true) chart-form)
+        sel1qs (into (f/meta-fields chart-form :with-submission-details? true)
+                     chart-form)
         stringqs (filter f/text? chart-form)]
     (testing "chart-chooser menu renders properly"
       (is (every? (-> container (sel :li.submenu-list) texts set)
@@ -52,7 +55,8 @@
     (testing "string questions are unclickable on the chart menu"
       (let [stringq-texts (map :label stringqs)
             num-stringqs (count stringqs)
-            txt->href (into {} (map #(vector (dommy/text %) (dommy/attr % :href))
+            txt->href (into {} (map #(vector (dommy/text %)
+                                             (dommy/attr % :href))
                                     (sel container :a)))]
         (is (= (repeat num-stringqs nil)
                (map val (select-keys txt->href stringq-texts))))))

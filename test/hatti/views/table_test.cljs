@@ -20,7 +20,8 @@
                            (js->clj :keywordize-keys true))]
     (testing "slickgrid columns have the right types"
       (doseq [col slickgrid-cols]
-        (is (every? #{:id :name :field :sortable :toolTip :type :formatter}
+        (is (every? #{:id :name :field :sortable :toolTip :type :formatter
+                      :headerCssClass :minWidth :cssClass}
                     (set (keys col))))
         (is (= (:name col) (:toolTip col)))))
     (testing "compfn works on submission-time"
@@ -37,17 +38,23 @@
     (testing "filterfn basically works"
       ;; in our test data, if 2012-0 exists, it exists for key _submission_time
       (doseq [datum small-fat-data]
-        ; not not turns truthy/falsey into true/false
-        (is (= (not (not (re-find #"2012-0" (datum "_submission_time"))))
-               (tv/filterfn fat-form (clj->js datum) (clj->js {:query "2012-0"}))))))
+        ;; not not turns truthy/falsey into true/false
+        (is (= (re-find #"2012-0" (datum "_submission_time"))
+               (first
+                (tv/filterfn
+                 fat-form (clj->js datum) (clj->js {:query "2012-0"})))))))
     (testing "filterfn searches on labels, not names"
-      (let [form [{:full-name "q1" :name "q1" :label "Question 1" :type "select one"
+      (let [form [{:full-name "q1" :name "q1" :label "Question 1"
+                   :type "select one"
                    :children [{:name "o1" :label "Option 1"}
                               {:name "o2" :label "Option 2"}]}]
             data [{"q1" "o1"} {"q1" "o2"}]]
-        (is (tv/filterfn form (clj->js (first data)) (clj->js {:query "option 1"})))
-        (is (tv/filterfn form (clj->js (second data)) (clj->js {:query "option 2"})))
-        (is (not (tv/filterfn form (clj->js (first data)) (clj->js {:query "o1"}))))))))
+        (is (tv/filterfn
+             form (clj->js (first data)) (clj->js {:query "option 1"})))
+        (is (tv/filterfn
+             form (clj->js (second data)) (clj->js {:query "option 2"})))
+        (is (not (tv/filterfn
+                  form (clj->js (first data)) (clj->js {:query "o1"}))))))))
 
 (deftest all-fields-test
   (let [fields (tv/all-fields fat-form)

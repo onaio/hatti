@@ -1,7 +1,7 @@
 (ns hatti.map.utils-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.core :refer [sel1 sel]]
-                   #_[ona.utils.macros :refer [read-file]])
+                   #_[hatti.utils.macros :refer [read-file]])
   (:require [cljs.test :as t]
             [cljs.core.async :refer [chan]]
             [clojure.string :as s]
@@ -87,7 +87,8 @@
       ;; UNCLICK m1, everything should be #fff, all reset styles also fff
       (let [_ (mu/apply-unclick-style m1)]
         (is (equivalent-styles (repeat N fff) (map mu/get-style markers)))
-        (is (equivalent-styles (repeat N fff) (map #(mu/get-style % :reset) markers))))
+        (is (equivalent-styles (repeat N fff)
+                               (map #(mu/get-style % :reset) markers))))
       ;; CLEAR ALL STYLES
       (let [_ (mu/clear-all-styles markers)]
         (is (equivalent-styles (repeat N normal-style)

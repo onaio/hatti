@@ -5,7 +5,8 @@
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :refer [_id _rank]]
-            [hatti.ona.forms :as forms :refer [get-label format-answer get-column-class]]
+            [hatti.ona.forms :as forms
+             :refer [get-label format-answer get-column-class]]
             [hatti.views :refer [table-page table-header table-search
                                  label-changer submission-view]]
             [hatti.views.record]
@@ -36,7 +37,8 @@
   [form & {:keys [is-filtered-dataview?]}]
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
-               (forms/meta-fields form :with-submission-details? (not is-filtered-dataview?)))
+               (forms/meta-fields
+                form :with-submission-details? (not is-filtered-dataview?)))
        (filter forms/has-data?)
        (distinct)))
 
@@ -64,13 +66,14 @@
     (let [indexed-form (zipmap (map :full-name form) form)
           query (aget args "query")
           fmt-subitem (fn [[fname answer]]
-                        (format-answer (get indexed-form fname) answer nil true))
+                        (format-answer (get indexed-form fname)
+                                       answer nil true))
           filtered (->> item
                         js->clj
                         (map fmt-subitem)
                         (map #(re-find (safe-regex query) (str %)))
                         (remove nil?))]
-      (not (empty? filtered)))))
+      (seq filtered))))
 
 (defn formatter
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
@@ -180,40 +183,40 @@
   [app-state grid dataview]
   (let [event-chan (shared/event-tap)]
     (go
-     (while true
-       (let [e (<! event-chan)
-             {:keys [submission-to-rank submission-clicked submission-unclicked
-                     filter-by new-columns re-render]} e
-             update-data! (partial om/update! app-state
-                                   [:table-page :submission-clicked :data])
-             get-submission-data (fn [field value]
-                                   (-> (filter #(= value (get % field))
-                                               (get-in @app-state [:data]))
-                                       first))]
-         (when submission-to-rank
-           (let [rank submission-to-rank
-                 submission (get-submission-data _rank rank)]
-             (update-data! submission)))
-         (when submission-clicked
-           (update-data! submission-clicked))
-         (when submission-unclicked
-           (update-data! nil))
-         (when new-columns
-           (.setColumns grid new-columns)
-           (resizeColumns grid)
-           (.render grid))
-         (when filter-by
-           (.setFilterArgs dataview (clj->js {:query filter-by}))
-           (.refresh dataview))
-         (when (= re-render :table)
-           ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
-           ;; table
-           (go (<! (timeout 20))
-               (.resizeCanvas grid)
-               (.invalidateAllRows grid)
-               (resizeColumns grid)
-               (.render grid)
-               (init-sg-pager grid dataview))))))))
+      (while true
+        (let [e (<! event-chan)
+              {:keys [submission-to-rank submission-clicked submission-unclicked
+                      filter-by new-columns re-render]} e
+              update-data! (partial om/update! app-state
+                                    [:table-page :submission-clicked :data])
+              get-submission-data (fn [field value]
+                                    (first
+                                     (filter #(= value (get % field))
+                                             (get-in @app-state [:data]))))]
+          (when submission-to-rank
+            (let [rank submission-to-rank
+                  submission (get-submission-data _rank rank)]
+              (update-data! submission)))
+          (when submission-clicked
+            (update-data! submission-clicked))
+          (when submission-unclicked
+            (update-data! nil))
+          (when new-columns
+            (.setColumns grid new-columns)
+            (resizeColumns grid)
+            (.render grid))
+          (when filter-by
+            (.setFilterArgs dataview (clj->js {:query filter-by}))
+            (.refresh dataview))
+          (when (= re-render :table)
+            ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
+            ;; table
+            (go (<! (timeout 20))
+                (.resizeCanvas grid)
+                (.invalidateAllRows grid)
+                (resizeColumns grid)
+                (.render grid)
+                (init-sg-pager grid dataview))))))))
 
 (defn- render-options
   [options owner colset!]
@@ -323,7 +326,7 @@
    :on-before-edit-cell
    :on-before-cell-editor-destroy
    :on-header-cell-rendered
-   each of whose value is a function of the form (fn [event args] ) as described
+   each of whose value is a function of the form (fn [event args]) as described
    in the SlickGrid documentation for event handlers.
    https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (reify
@@ -336,7 +339,8 @@
         (html
          [:div.table-view
           (om/build submission-view
-                    (with-info (get-in app-state [:table-page :submission-clicked]))
+                    (with-info (get-in app-state
+                                       [:table-page :submission-clicked]))
                     {:opts (merge (select-keys opts #{:delete-record! :role})
                                   {:view :table})})
           (om/build table-header app-state)
@@ -348,7 +352,8 @@
     om/IDidMount
     (did-mount [_]
       (let [data (get-in app-state [:data])]
-        (when-let [[grid dataview] (init-grid! data owner slick-grid-event-handlers)]
+        (when-let [[grid dataview]
+                   (init-grid! data owner slick-grid-event-handlers)]
           (handle-table-events app-state grid dataview))))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
@@ -358,7 +363,8 @@
             {:keys [grid dataview]} (om/get-state owner)]
         (when (not= old-data new-data)
           (if (empty? old-data)
-            (when-let [[grid dataview] (init-grid! new-data owner slick-grid-event-handlers)]
+            (when-let [[grid dataview]
+                       (init-grid! new-data owner slick-grid-event-handlers)]
               (handle-table-events app-state grid dataview))
             (do ; data has changed
               (.invalidateAllRows grid)

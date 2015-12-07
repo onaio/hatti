@@ -8,13 +8,16 @@
 
 
 (defn get-form [which]
-  (let [file (case which
-               :single-language   (read-file "test/fixtures/mini-form-9-elements.json")
-               :multi-langauge    (read-file "test/fixtures/multi-language-mini-form.json")
-               :geoshape          (read-file "test/fixtures/geoshape-form.json")
-               :geopoint          (read-file "test/fixtures/geopoint-form.json")
-               :geotrace          (read-file "test/fixtures/geotrace-form.json")
-               :groups-in-repeats (read-file "test/fixtures/groups-in-repeats-form.json"))]
+  (let [file
+       (case which
+         :single-language (read-file "test/fixtures/mini-form-9-elements.json")
+         :multi-language
+         (read-file "test/fixtures/multi-language-mini-form.json")
+         :geoshape (read-file "test/fixtures/geoshape-form.json")
+         :geopoint (read-file "test/fixtures/geopoint-form.json")
+         :geotrace (read-file "test/fixtures/geotrace-form.json")
+         :groups-in-repeats
+         (read-file "test/fixtures/groups-in-repeats-form.json"))]
     (utils/json->js->cljs file)))
 
 (defn get-data [which]
@@ -25,7 +28,7 @@
     (utils/json->js->cljs file)))
 
 (def single-language-form (get-form :single-language))
-(def multi-language-form (get-form :multi-langauge))
+(def multi-language-form (get-form :multi-language))
 (def groups-in-repeats-form (get-form :groups-in-repeats))
 (def geoshape-form (get-form :geoshape))
 (def geopoint-form (get-form :geopoint))
@@ -38,12 +41,15 @@
     (is (= (count flat-form) 9))
     (is (= (count (filter identity full-names)) 9))
     (is (= (count (filter #(re-find #"informed_consent" %) full-names)) 7))
-    (is (= (filter nil? (map #(re-find (re-pattern %1) %2) names full-names)) ()))))
+    (is (= (filter nil? (map #(re-find (re-pattern %1) %2) names full-names))
+           ()))))
 
 (deftest flatten-form-deals-with-repeats-properly
   (let [group->repeat #(if (forms/group? %) (merge % {:type "repeat"}) %)
-        form-with-repeat (assoc single-language-form :children
-                                                     (map group->repeat (:children single-language-form)))
+        form-with-repeat
+        (assoc single-language-form
+               :children
+               (map group->repeat (:children single-language-form)))
         flattened1 (forms/flatten-form form-with-repeat)
         flattened2 (forms/flatten-form form-with-repeat :flatten-repeats? true)
         flattened3 (forms/flatten-form groups-in-repeats-form)
@@ -57,7 +63,8 @@
       (is (= (->> flattened1 (filter with-consent) count) 1))
       (is (= (->> flattened2 (filter with-consent) count)) 7))
     (testing ":full-name of sub-repeat elements are same with + w/o flattening"
-      (is (= (map :full-name (:children (last flattened1))) (drop 3 (map :full-name flattened2)))))
+      (is (= (map :full-name (:children (last flattened1)))
+             (drop 3 (map :full-name flattened2)))))
     (testing "groups in repeats are flattened"
       (is (= (count repeat3) 3)))))
 
@@ -92,7 +99,7 @@
       (is (= (forms/get-label nl2) "My Label"))
       (is (nil?  (forms/get-label "")))
       (is (nil? (forms/get-label {}))))
-    (testing "get label extracts label when langauge is given."
+    (testing "get label extracts label when language is given."
       (is (= (forms/get-label nl2 :English) "My Label"))
       (is (= (forms/get-label nl2 :French) "My Label"))
       (is (= (forms/get-label nl2 :Nepali) "मेरो लेबल")))
@@ -111,7 +118,8 @@
         q-repeat (merge q-text {:type "repeat"})]
     (testing "select one answers are formatted properly"
       (let [rand-option (rand-nth (:children q-sel1))]
-        (is (= (forms/format-answer q-sel1 (:name rand-option)) (:label rand-option)))
+        (is (= (forms/format-answer q-sel1 (:name rand-option))
+               (:label rand-option)))
         (is (= (forms/format-answer q-sel1 nil) forms/no-answer))))
     (testing "text and integer answers are left alone"
       (is (= (forms/format-answer q-text "foo") "foo"))
@@ -123,9 +131,12 @@
             two-answers (string/join #" " (map :name two-options))
             has-label? #(partial utils/substring? (:label %) %)]
         (is (= (forms/format-answer q-selm "") "No Answer"))
-        (is (has-label? first-option (forms/format-answer q-selm (:name first-option))))
-        (is (has-label? (first two-options) (forms/format-answer q-selm two-answers)))
-        (is (has-label? (second two-options) (forms/format-answer q-selm two-answers)))))
+        (is (has-label? first-option
+                        (forms/format-answer q-selm (:name first-option))))
+        (is (has-label? (first two-options)
+                        (forms/format-answer q-selm two-answers)))
+        (is (has-label? (second two-options)
+                        (forms/format-answer q-selm two-answers)))))
     (testing "image answers are rendered as they should be"
       (let [image1 "bar.jpg"
             image2 {:filename "foo/bar.jpg"
@@ -137,12 +148,17 @@
         (is (= (forms/format-answer q-img nil) nil))
         (is (= (forms/format-answer q-img "") ""))
         (is (= (forms/format-answer q-img image1) "bar.jpg"))
-        (is (= (forms/format-answer q-img image2) [:a {:href "IMAGE.jpg" :target "_blank"}
-                                                   [:img {:width "80px" :src "THUMB.jpg"}]]))
-        (is (= (forms/format-answer q-img image3) [:a {:href "IMAGE.jpg" :target "_blank"}
-                                                   [:img {:width "80px" :src "IMAGE.jpg"}]]))
+        (is (= (forms/format-answer q-img image2)
+               [:a {:href "IMAGE.jpg" :target "_blank"}
+                [:img {:width "80px" :src "THUMB.jpg"}]]))
+        (is (= (forms/format-answer q-img image3)
+               [:a {:href "IMAGE.jpg" :target "_blank"}
+                [:img {:width "80px" :src "IMAGE.jpg"}]]))
         (is (= (subs txt-link 0 36) "<a href='IMAGE.jpg' target='_blank'>"))
-        (is (= (subs txt-link (- (count txt-link) 12) (count txt-link)) "bar.jpg </a>"))))
-    (testing "repeat answers returns nil if no element, a list starting with :span otherwise"
+        (is (= (subs txt-link (- (count txt-link) 12) (count txt-link))
+               "bar.jpg </a>"))))
+    (testing "repeat answers returns nil if no element, a list starting with
+              :span otherwise"
       (is (= (forms/format-answer q-repeat []) ""))
-      (is (= (forms/format-answer q-repeat [{"foo" "bar"}]) "Repeated data with 1 answers.")))))
+      (is (= (forms/format-answer q-repeat [{"foo" "bar"}])
+             "Repeated data with 1 answers.")))))

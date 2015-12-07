@@ -39,7 +39,7 @@
       {color-key (if (id-selected? id) (id-color id) grey)})))
 
 (defn- move-nil-to-end [s]
-  (let [no-nil (into [] (remove nil? s))]
+  (let [no-nil (vec (remove nil? s))]
     (if (= s no-nil) s (conj no-nil nil))))
 
 (defn all-but-nil-selected
@@ -56,8 +56,7 @@
     (f/calculate? field) raw-answers
     (f/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
     (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
-    (f/select-all? field) (->> raw-answers
-                               (map #(when % (s/split % #" "))))))
+    (f/select-all? field) (map #(when % (s/split % #" ")) raw-answers)))
 
 (defn field->colors
   "Returns the appropriate set of colors given the field."
@@ -88,9 +87,10 @@
         sorted (cond
                  (or (f/categorical? field)
                      (f/text? field)
-                     (f/calculate? field)) (map first
-                                                (sort-by second > answer->count))
-                (or (f/time-based? field) (f/numeric? field)) (-> ans-s meta :bins))
+                     (f/calculate? field))
+                 (map first (sort-by second > answer->count))
+                 (or (f/time-based? field) (f/numeric? field))
+                 (-> ans-s meta :bins))
         sorted-nil-at-end (move-nil-to-end sorted)
         colors (field->colors field)
         defaults {:answers sorted-nil-at-end
@@ -141,7 +141,8 @@
 (defn toggle-answer-selected
   "This function appropriately toggles answer->selected? when answer is clicked
    answer->selected? is a map from answers to true/false. Special rules:
-   First click = select the answer. If nothing clicked, make everything clicked."
+   First click = select the answer. If nothing clicked, make everything
+   clicked."
   [answer->selected? visible-answers answer]
   (let [all-answers (vals answer->selected?)
         all-visible-selected? (fn [a->s visible]
