@@ -43,7 +43,8 @@
   "Converts string to integer, for typ (int|date)."
   (case typ
     "int" parse-int
-    "date" #(let [l (tc/to-long %)] (when l (safe-floor (/ l millis-in-day))))))
+    "date" #(let [l (tc/to-long (new js/Date %))]
+              (when l (safe-floor (/ l millis-in-day))))))
 
 (defn int->str [typ &{:keys [digits]
                       :or   {digits 1}}]
