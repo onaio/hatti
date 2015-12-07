@@ -43,7 +43,12 @@
   "Converts string to integer, for typ (int|date)."
   (case typ
     "int" parse-int
-    "date" #(let [l (tc/to-long %)] (when l (safe-floor (/ l millis-in-day))))))
+    "date" (fn [date-string]
+             (when date-string
+               (-> (new js/Date date-string)
+                   tc/to-long
+                   (/ millis-in-day)
+                   safe-floor)))))
 
 (defn int->str [typ &{:keys [digits]
                       :or   {digits 1}}]
@@ -53,7 +58,9 @@
         d->millis #(* millis-in-day %)
         date->str #? (:clj  #(tf/unparse (tf/formatters :year-month-day)
                                          (tc/from-long  %))
-                      :cljs #(.format (js/moment %) "ll"))]
+                      :cljs (fn [date]
+                              (when date
+                                (.format (js/moment date) "ll"))))]
     (case typ
       "int"  #(format int-fmt-s (float %))
       "date" #(date->str (d->millis %)))))
@@ -88,7 +95,8 @@
            strings (-> strings distinct vec)] ; remove repeats before output
        (with-meta results
          {:bins (if (contains? (set answers) nil)
-                  (conj strings nil) strings)}))))
+                  (conj strings nil)
+                  strings)}))))
 
 (defn label-count-pairs
   "Take chart-data from the ona API, returns label->count map.
