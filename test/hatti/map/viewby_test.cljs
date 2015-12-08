@@ -70,12 +70,15 @@
         ;; id-selected?
         (is (= (- N num-nil-sel1) (count (filter id-selected? ids))))))
     (testing "viewby-info works for integer"
-      (let [{:keys [answers answer->color answer->count answer->selected?]} vbi-int]
+      (let [{:keys [answers answer->color answer->count answer->selected?]}
+            vbi-int]
         ;; answers
-        (is (= answers ["0 to 19" "20 to 39" "40 to 59" "60 to 79" "80 to 99" nil]))
+        (is (= answers
+               ["0 to 19" "20 to 39" "40 to 59" "60 to 79" "80 to 99" nil]))
         ;; answer->color
         (is (= (remove-nil (sort answers)) (sort (keys answer->color))))
-        (is (every? (set vb/sequential-palette) (remove-nil (map answer->color answers))))
+        (is (every? (set vb/sequential-palette)
+                    (remove-nil (map answer->color answers))))
         ;; answer->count
         (is (= (sort answers) (sort (keys answer->count))))
         (is (= (count ids) (apply + (vals answer->count))))

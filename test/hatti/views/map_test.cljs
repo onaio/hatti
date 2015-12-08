@@ -12,7 +12,8 @@
             [hatti.test-utils :refer [new-container! texts owner readonly]]
             [hatti.ona.forms :as f]
             [om.core :as om :include-macros true]
-            [hatti.shared-test :refer [fat-form no-data small-fat-data data-gen]]))
+            [hatti.shared-test
+             :refer [fat-form no-data small-fat-data data-gen]]))
 
 ;; MAP COMPONENT HELPERS
 
@@ -58,7 +59,8 @@
                     :full-name "Name" :label "This is the label"
                     :children [{:name "1" :label "One"}
                                {:name "2" :label "Two"}]}
-        vbdata {:view-by (vb/viewby-info sel1-field ["1" "2" "2" nil nil nil] (range 7))
+        vbdata {:view-by (vb/viewby-info
+                          sel1-field ["1" "2" "2" nil nil nil] (range 7))
                 :dataset-info {:num_of_submissions 100}}
         viewby (map-container map-viewby-legend vbdata map-form owner)
         option-list (sel viewby :li)]

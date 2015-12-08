@@ -130,8 +130,9 @@
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
            (map dv->link dataviews)
-           (om/build dataview-infobar {:dataset-info (-> app-state :dataset-info)
-                                       :status (-> app-state :status)})]
+           (om/build dataview-infobar
+                     {:dataset-info (-> app-state :dataset-info)
+                      :status (-> app-state :status)})]
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}

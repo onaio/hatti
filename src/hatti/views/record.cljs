@@ -95,9 +95,9 @@
 
 (defmethod repeat-view :default
   [{:keys [data repeat-field lang]} owner {:keys [view]}]
-  "Renders data for a repeat field, which is complex; repeat fields are subforms.
-   data is expected to be an vector of repeated data, in each element of which
-   we expect data keyed by one of the :children fields of the repeat
+  "Renders data for a repeat field, which is complex; repeat fields are
+   subforms. Data is expected to be an vector of repeated data, in each element
+   of which we expect data keyed by one of the :children fields of the repeat
    lang is language (expected to change), view is either :map or :table."
   (reify
     om/IInitState
@@ -121,9 +121,9 @@
                              (for [fld (:children repeat-field)]
                                (format-as-question-answer view fld d lang)))
               tbl (fn [cls & body]
-                      [:tr {:class cls}
-                       [:td.no-pad {:col-span 2}
-                        [:table {:class cls} [:tbody body]]]])]
+                    [:tr {:class cls}
+                     [:td.no-pad {:col-span 2}
+                      [:table {:class cls} [:tbody body]]]])]
           (html
            (if collapsed?
              header

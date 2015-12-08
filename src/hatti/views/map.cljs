@@ -53,16 +53,17 @@
      (while true
        (let [e (<! event-chan)
              {:keys [mapped-submission-to-rank submission-unclicked]} e
-             prev-marker (get-in @app-state [:map-page :submission-clicked :marker])]
+             prev-marker (get-in @app-state
+                                 [:map-page :submission-clicked :marker])]
          (when submission-unclicked
            (om/update! app-state [:map-page :submission-clicked]
                        {:data nil :prev-marker prev-marker}))
          (when mapped-submission-to-rank
            (let [rank mapped-submission-to-rank
-                 new-data (-> (filter
-                               #(= rank (get % _rank))
-                               (get-in @app-state [:map-page :data]))
-                              first)]
+                 new-data (first
+                           (filter
+                            #(= rank (get % _rank))
+                            (get-in @app-state [:map-page :data])))]
              (om/update! app-state [:map-page :submission-clicked]
                          {:data new-data
                           :marker (get (get-id-marker-map)
@@ -79,7 +80,8 @@
          (when data-updated
            (put! shared/event-chan
                  {:mapped-submission-to-rank
-                  (get-in @app-state [:map-page :submission-clicked :data _id])})
+                  (get-in @app-state
+                          [:map-page :submission-clicked :data _id])})
            (put! shared/event-chan
                  {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
@@ -151,7 +153,8 @@
          language (:current (om/observe owner (shared/language-cursor)))
          filter! (fn [query]
                    (let [{:keys [visible-answers answer->selected?]}
-                           (vb/filter-answer-data-structures answers query field language)]
+                         (vb/filter-answer-data-structures
+                          answers query field language)]
                      (om/update! cursor :visible-answers visible-answers)
                      (om/update! cursor :answer->selected? answer->selected?))
                    (put! shared/event-chan {:view-by-filtered true}))]
@@ -214,8 +217,10 @@
     om/IRenderState
     (render-state [_ state]
        (html (if (empty? view-by)
-               (om/build map-viewby-menu dataset-info {:opts opts :init-state state})
-               (om/build map-viewby-answer-legend view-by {:init-state state}))))))
+               (om/build map-viewby-menu
+                         dataset-info {:opts opts :init-state state})
+               (om/build map-viewby-answer-legend
+                         view-by {:init-state state}))))))
 
 (defmethod map-record-legend :default
   [cursor owner opts]
@@ -237,7 +242,7 @@
                         (mu/create-map (om/get-node owner)
                                        (om/get-shared owner :map-config)))
         {:keys [feature-layer id->marker]}
-          (mu/load-geo-json leaflet-map geojson shared/event-chan :rezoom? true)]
+        (mu/load-geo-json leaflet-map geojson shared/event-chan :rezoom? true)]
     (om/set-state! owner :leaflet-map leaflet-map)
     (om/set-state! owner :feature-layer feature-layer)
     (om/set-state! owner :id-marker-map id->marker)

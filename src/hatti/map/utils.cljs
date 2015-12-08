@@ -180,15 +180,16 @@
         nlayers (zipmap (map :name mapbox-tiles) layers)
         named-layers (if include-google-maps?
                        (clj->js (assoc nlayers
-                                  "Google Satellite" (js* "new L.Google")))
+                                       "Google Satellite" (js* "new L.Google")))
                        (clj->js nlayers))
         m (.map js/L id #js {:layers (first layers) :zoomControl false})
         z ((.. js/L -control -zoom) #js {:position "bottomleft"})]
     ;; zoom control
     (.addTo z m)
     ;; layers control
-    (-> ((js* "L.control.layers") named-layers nil #js {:position "bottomleft"})
-        (.addTo m))
+    (.addTo
+     ((js* "L.control.layers") named-layers nil #js {:position "bottomleft"})
+     m)
     (.setView m #js [0 0] 1)
     m))
 
@@ -208,9 +209,10 @@
        #(when-not (is-clicked? marker)
           (apply-unclick-style marker))))
 
-(defn- re-render-map! [leaflet-map feature-layer]
+(defn- re-render-map!
   "Re-renders map by invalidating leaflet size.
    If map is zoomed out beyond layer-bounds, re-zooms to layer."
+  [leaflet-map feature-layer]
   (let [map-bounds (.getBounds leaflet-map)
         layer-bounds (.getBounds feature-layer)]
     (.invalidateSize leaflet-map false)
@@ -237,7 +239,9 @@
                                      :style stylefn})
         ids (map #(get-in % [:properties (keyword _id)]) (:features geojson))
         markers (.getLayers feature-layer)]
-    (when-not (empty? (:features geojson))
+    (when (seq (:features geojson))
       (when rezoom? (.fitBounds m (.getBounds feature-layer)))
       (.addTo feature-layer m))
-    {:feature-layer feature-layer :markers markers :id->marker (zipmap ids markers)}))
+    {:feature-layer feature-layer
+     :markers markers
+     :id->marker (zipmap ids markers)}))

@@ -53,7 +53,8 @@
       (is (= (dommy/text (sel1 c [:span.dropdown :span])) "EN")))))
 
 (deftest status-updates
-  (testing "status (:total-records and :loading?) are updated correctly by update-app-state!."
+  (testing "status (:total-records and :loading?) are updated correctly by
+            update-app-state!."
     (let [fake-data big-thin-data
           test-state (shared/empty-app-state)]
       (shared/update-app-data! test-state fake-data :rerank? true)
@@ -62,7 +63,8 @@
       (shared/update-app-data! test-state fake-data :completed? true)
       (is (= (-> @test-state :status :loading?) false))
       (is (= (-> @test-state :status :total-records) 100))))
-  (testing "status (:total-records and :loading?) are updated correctly by update-app-state!."
+  (testing "status (:total-records and :loading?) are updated correctly by
+            update-app-state!."
     (let [fake-data big-thin-data
           test-state (shared/empty-app-state)]
       (shared/add-to-app-data! test-state fake-data :rerank? true)
@@ -77,7 +79,8 @@
     (shared/update-app-data! shared/app-state small-thin-data :rerank? true)
     (testing "update-data-on! :delete works"
       (let [initial-data @shared/app-state
-            ids (fn [data] (map #(get % "_id") (get-in data [:map-page :data])))]
+            ids (fn [data] (map #(get % "_id")
+                               (get-in data [:map-page :data])))]
         (shared/update-data-on! :delete {:instance-id 1})
         (is (contains? (-> initial-data ids set) 1))
         (is (not (contains? (-> @shared/app-state ids set) 1))))))
@@ -95,24 +98,31 @@
       (is (= "Polygon" (-> data first (get "osm_building") :geom :type))))))
 
 #_(deftest integrate-attachments
-  (let [data [{"_attachments" [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
-                                "id" 287633}
-                               {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
-                                "id" 287632 }]
+  (let [data [{"_attachments"
+               [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
+                 "id" 287633}
+                {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
+                 "id" 287632 }]
                "historic_photo" "Bhkt36_hist2.jpg"
                "historic_photo2" "Bhkt36_hist.jpg"}]
         form [{:type "photo" :name "historic_photo" :full-name "historic_photo"}
-              {:type "photo" :name "historic_photo2" :full-name "historic_photo2"}]]
+              {:type "photo" :name "historic_photo2"
+               :full-name "historic_photo2"}]]
     (testing "attachments are integrated properly"
       (let [integrated-data (post-process/integrate-attachments form data)
             revised-record (first integrated-data)]
         (is (= (-> revised-record (get "historic_photo") :download_url)
-               (make-url "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+               (make-url
+                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is (= (-> revised-record (get "historic_photo") :small_download_url)
-               (make-url "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg&suffix=small")))))
+               (make-url
+                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg&su"
+                "ffix=small")))))
     (testing "data with no images doesn't get touched"
-      (let [form [{:type "string" :name "historic_photo" :full-name "historic_photo"}
-                  {:type "string" :name "historic_photo2" :full-name "historic_photo2"}]
+      (let [form [{:type "string" :name "historic_photo"
+                   :full-name "historic_photo"}
+                  {:type "string" :name "historic_photo2"
+                   :full-name "historic_photo2"}]
             untouched-data (post-process/integrate-attachments form data)]
         (is (= data untouched-data))))))
 
@@ -125,16 +135,24 @@
                 {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
                  "id" 287632 }]}]
         form [{:type "repeat" :name "repeat" :full-name "repeat"
-               :children [{:type "photo" :name "photo1" :full-name "repeat/photo1"}
-                          {:type "photo" :name "photo2" :full-name "repeat/photo2"}]}]]
+               :children [{:type "photo" :name "photo1"
+                           :full-name "repeat/photo1"}
+                          {:type "photo" :name "photo2"
+                           :full-name "repeat/photo2"}]}]]
     (testing "data is unchanged if no repeats"
       (let [new-form (assoc-in form [0 :type] "group")]
         (is (= (post-process/integrate-attachments-in-repeats new-form data)
                data))))
     (testing "attachments are integrated properly"
-      (let [integrated-data (post-process/integrate-attachments-in-repeats form data)
+      (let [integrated-data
+            (post-process/integrate-attachments-in-repeats form data)
             revised-record (first integrated-data)]
-        (is (= (-> revised-record (get "repeat") first (get "repeat/photo1") :download_url)
-               (make-url "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
-        (is (= (-> revised-record (get "repeat") first (get "repeat/photo2") :download_url)
-               (make-url "files/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))
+        (is (= (-> revised-record (get "repeat") first (get "repeat/photo1")
+                   :download_url)
+               (make-url
+                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+        (is (= (-> revised-record (get "repeat") first (get "repeat/photo2")
+                   :download_url)
+               (make-url
+                "files/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg"
+                )))))))

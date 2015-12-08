@@ -28,33 +28,29 @@
                  ;; For testing
                  [prismatic/dommy "1.1.0"]]
   :source-paths ["src"]
-  :plugins [[lein-cljsbuild "1.1.0"]]
+  :plugins [[lein-bikeshed-ona "0.2.1"]
+            [lein-cljsbuild "1.1.0"]
+            [lein-kibit "0.1.2"]
+            [lein-midje "3.1.3"]]
+  :profiles {:dev {:dependencies [[midje "1.8.1"]]}}
   :clean-targets ["out/hatti" "out/hatti.js"]
-  :cljsbuild
-  {:builds
-   [{:builds
-     [{:id "hatti"
-       :compiler
-       {:output-dir "out"
-        :cache-analysis true
-        :optimizations :none
-        :output-to "out/hatti.js"
-        :source-map true}}
-      {:notify-command
-       ["phantomjs"
-        "phantom/unit-test.js"
-        "phantom/unit-test.html"
-        "target/main-test.js"]
-       :source-paths ["src/hatti" "test"]
-       :id "test"
-       :compiler
-       {:optimizations :whitespace,
-        :output-to "target/main-test.js"
-        :pretty-print true}}]
-     :test-commands
-     {"unit-test"
-      ["phantomjs"
-       "phantom/unit-test.js"
-       "phantom/unit-test.html"
-       "target/main-test.js"]}
-     :compiler {:exclude ["charting.cljc" "macros.clj"]}}]})
+  :cljsbuild {:builds
+              {:prod {:source-paths ["src"]
+                      :compiler {:output-dir "out"
+                                 :cache-analysis true
+                                 :optimizations :none
+                                 :output-to "out/hatti.js"
+                                 :source-map true}}
+               :test {:source-paths ["src/hatti" "test"]
+                      :notify-command ["phantomjs"
+                                       "phantom/unit-test.js"
+                                       "phantom/unit-test.html"
+                                       "target/main-test.js"]
+                      :compiler {:optimizations :whitespace,
+                                 :output-to "target/main-test.js"
+                                 :pretty-print true}}}
+              :test-commands {"unit-test"
+                              ["phantomjs"
+                               "phantom/unit-test.js"
+                               "phantom/unit-test.html"
+                               "target/main-test.js"]}})

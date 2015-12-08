@@ -32,9 +32,12 @@
         _ (om/root submission-view
                    {:data data
                     :geofield gps-field
-                    :dataset-info {:metadata [{:xform 1
-                                               :data_value "tutorial_xlsform.xlsx|https://j2x.ona.io/xls/123"
-                                               :data_type "external_export"}]}}
+                    :dataset-info
+                    {:metadata
+                     [{:xform 1
+                       :data_value
+                       "tutorial_xlsform.xlsx|https://j2x.ona.io/xls/123"
+                       :data_type "external_export"}]}}
                    (merge args more-args))]
     c))
 
@@ -44,7 +47,8 @@
   (let [d (merge (first data)
                  {"_geolocation" [1.2, 2.1] "gps" "2.1 1.2 0 0"})
         meta-answers (vals (select-keys d (map :name (f/meta-fields gps-form))))
-        qstn-answers (vals (select-keys d (map :name (f/non-meta-fields gps-form))))
+        qstn-answers (vals (select-keys
+                            d (map :name (f/non-meta-fields gps-form))))
         s (submission-container :map d gps-form owner)
         es (submission-container :map d gps-form owner {:init-state
                                                {:expand-meta? true}})
@@ -79,7 +83,7 @@
       (om/root repeat-view
                {:data repeat-data :repeat-field form}
                {:target c1 :opts {:view :map}})
-      (is (not (sel1 :ol c1)))
+      (is (not (sel1 c1 :ol)))
       (is (= (str (count repeat-data)) (re-find #"[0-9]+" (dommy/text c1))))
       (is (re-find #"Show Repeats" (dommy/text c1))))
     (testing "when uncollapsed, repeat render internal data"
@@ -94,7 +98,8 @@
 (deftest map-vs-table-views-are-different
   (let [d (first data)
         meta-answers (vals (select-keys d (map :name (f/meta-fields gps-form))))
-        qstn-answers (vals (select-keys d (map :name (f/non-meta-fields gps-form))))
+        qstn-answers (vals (select-keys
+                            d (map :name (f/non-meta-fields gps-form))))
         map-el (submission-container :map d gps-form owner)
         tbl-el (submission-container :table d gps-form owner)
         submission-time (get d "_submission_time")]

@@ -115,7 +115,7 @@
          (categorical? field) "fa fa-bar-chart fa-flip-h-rotate-90"
          :else                "")}])
 
-(defn get-column-class 
+(defn get-column-class
   "Assign class according to field type category, e.g. integer & decimals are
    both in the numeric category"
   [field]
@@ -135,7 +135,7 @@
   ([labelled-obj] (get-label labelled-obj nil))
   ([{:keys [label name]} &[language]]
    (if-not (map? label)
-     (if label label name)
+     (or label name)
      (if (contains? (-> label keys set) language)
        (label language)
        (label (-> label keys sort first))))))
@@ -161,7 +161,7 @@
                                  (filter #(= answer (:name %)))
                                  first)
                      formatted (get-label option language)]
-                 (if formatted formatted answer)))
+                 (or formatted answer)))
        :selm (if (string/blank? answer)
                no-answer
                (let [names (set (string/split answer #" "))]
@@ -234,19 +234,21 @@
    :flatten-repeats? overrides default behavior, also flattens repeats."
   [form & {:keys [flatten-repeats?]}]
   (letfn [(name-label-map [nd prefix acc]
-           (let [{:keys [:type :children :name :label]} nd
-                 full-name (if prefix (str prefix "/" name) name)
-                 langs (when (map? label) (keys label))
-                 nd (with-meta (assoc nd :full-name full-name) {:langs langs})
-                 mini-nd (dissoc nd :children)
-                 new-children (map #(name-label-map % full-name []) children)]
-             (cond
-              (group? nd) (concat (conj acc mini-nd) new-children)
-              (repeat? nd) (if flatten-repeats?
-                             (concat (conj acc mini-nd) new-children)
-                             (conj acc (assoc nd :children
-                                                 (flatten (apply concat new-children)))))
-              :else (conj acc nd))))]
+            (let [{:keys [:type :children :name :label]} nd
+                  full-name (if prefix (str prefix "/" name) name)
+                  langs (when (map? label) (keys label))
+                  nd (with-meta (assoc nd :full-name full-name) {:langs langs})
+                  mini-nd (dissoc nd :children)
+                  new-children (map #(name-label-map % full-name []) children)]
+              (cond
+                (group? nd) (concat (conj acc mini-nd) new-children)
+                (repeat? nd) (if flatten-repeats?
+                               (concat (conj acc mini-nd) new-children)
+                               (conj acc
+                                     (assoc nd :children
+                                            (flatten
+                                             (apply concat new-children)))))
+                :else (conj acc nd))))]
     (let [nodes (flatten (map #(name-label-map % nil []) (:children form)))
           langs (->> nodes (map #(:langs (meta %))) flatten distinct)]
       (with-meta nodes {:languages (remove nil? langs)}))))

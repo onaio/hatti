@@ -2,42 +2,19 @@
   (:require [c2.layout.histogram :refer [histogram]]
             [c2.scale :as scale]
             [c2.svg :as svg]
-            [#?(:clj  clj-time.format
-                :cljs cljs-time.format) :as tf]
-            [#?(:clj  clj-time.coerce
-                :cljs cljs-time.coerce) :as tc]
-            [#? (:clj clojure.math.numeric-tower
-                :cljs hatti.maths) :refer [gcd lcm floor ceil abs]]
-            #?(:cljs [hatti.utils :refer [format]])
+            [cljs-time.format :as tf]
+            [cljs-time.coerce :as tc]
+            [hatti.maths :refer [gcd lcm floor ceil abs]]
+            [hatti.utils :refer [format]]
             [hatti.ona.forms :as f]
             [clojure.string :refer [join blank?]]))
 
 (def millis-in-day 86400000)
 
-(defn- safe-floor
-  "Like floor but returns nil if passed nil."
-  [n]
-  #?(:clj (try
-             (floor n)
-             (catch IllegalArgumentException e nil))
-     :cljs (floor n)))
-
-(defn- style
-  "Helper function to create the style argument in hiccup vectors.
-  (style :width '200px' :height '100px') => {:style 'width:200px;height:100px'}"
-  [style-map]
-  {:style #?(:cljs style-map
-             :clj  (->> (for [[k v] style-map]
-                          (str (name k) ": " v))
-                     (join ";" )))})
-
 (defn parse-int
   "Parse an integer from a string."
   [st]
-  #?(:clj (when st (if (instance? String st)
-                       (when-not (blank? st) (read-string st))
-                       st))
-     :cljs (let [ans (js/parseInt st)] (if (js/isNaN ans) nil ans))))
+  (let [ans (js/parseInt st)] (when-not (js/isNaN ans) ans)))
 
 (defn str->int [typ]
   "Converts string to integer, for typ (int|date)."
@@ -48,55 +25,49 @@
                (-> (new js/Date date-string)
                    tc/to-long
                    (/ millis-in-day)
-                   safe-floor)))))
+                   floor)))))
 
-(defn int->str [typ &{:keys [digits]
-                      :or   {digits 1}}]
+(defn int->str [typ &{:keys [digits] :or {digits 1}}]
   "Converts integers to strings, for type (int|date).
    Optional digits parameter = number of digits after decimal, default is 1."
   (let [int-fmt-s (str "%." digits "f")
         d->millis #(* millis-in-day %)
-        date->str #? (:clj  #(tf/unparse (tf/formatters :year-month-day)
-                                         (tc/from-long  %))
-                      :cljs (fn [date]
-                              (when date
-                                (.format (js/moment date) "ll"))))]
+        date->str #(when % (.format (js/moment %) "ll"))]
     (case typ
       "int"  #(format int-fmt-s (float %))
       "date" #(date->str (d->millis %)))))
 
 (defn range->str [[mn mx] typ]
   "Converts a range of typ (int|date) to a string."
-  (let [[mn mx] [(ceil mn) (safe-floor mx)]
+  (let [[mn mx] [(ceil mn) (floor mx)]
         fmt (int->str typ :digits 0)]
     (if (<= mx mn) (fmt mn)
       (join " to " [(fmt mn) (fmt mx)]))))
 
-#?(:cljs
-   (defn evenly-spaced-bins
-     "Given a list of answers, returns each one as a bin, in string form.
+(defn evenly-spaced-bins
+  "Given a list of answers, returns each one as a bin, in string form.
    nil is mapped to nil. The bins, in order, are returned as metadata.
    eg. (evenly-spaced-bins [1 2 10] 5 'int') => ['1 to 2' '1 to 2' '9 to 10']
    metadata of this above value would be:
    {:bins ['1 to 2', '3 to 4', '5 to 6', '7 to 8', '9 to 10']}"
-     [answers bins typ]
-     (let [numbers (map (str->int typ) answers)
-           mx (reduce max (remove nil? numbers))
-           mn (reduce min (remove nil? numbers))
-           s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
-           is (map safe-floor (map #(when % (s %)) numbers))
-           t (scale/linear :domain [0 bins] :range [mn mx])
-           lbounds (->> (range bins) (map t) (map float) distinct)
-           ubounds (conj (mapv #(if (= % (safe-floor %))
-                                  (dec %) %) (drop 1 lbounds)) mx)
-           fmt (int->str typ :digits 0)
-           strings (mapv #(range->str [%1 %2] typ) lbounds ubounds)
-           results (map (fn [i] (when i (get strings (int i)))) is)
-           strings (-> strings distinct vec)] ; remove repeats before output
-       (with-meta results
-         {:bins (if (contains? (set answers) nil)
-                  (conj strings nil)
-                  strings)}))))
+  [answers bins typ]
+  (let [numbers (map (str->int typ) answers)
+        mx (reduce max (remove nil? numbers))
+        mn (reduce min (remove nil? numbers))
+        s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
+        is (map floor (map #(when % (s %)) numbers))
+        t (scale/linear :domain [0 bins] :range [mn mx])
+        lbounds (->> (range bins) (map t) (map float) distinct)
+        ubounds (conj (mapv #(if (= % (floor %))
+                               (dec %) %) (drop 1 lbounds)) mx)
+        fmt (int->str typ :digits 0)
+        strings (mapv #(range->str [%1 %2] typ) lbounds ubounds)
+        results (map (fn [i] (when i (get strings (int i)))) is)
+        strings (-> strings distinct vec)] ; remove repeats before output
+    (with-meta results
+      {:bins (if (contains? (set answers) nil)
+               (conj strings nil)
+               strings)})))
 
 (defn label-count-pairs
   "Take chart-data from the ona API, returns label->count map.
@@ -179,7 +150,8 @@
                 :or   {data-type "int"}}]
   (let [chart-width 700.0 chart-height 300.0
         margin 33.0 small-margin 2.0 y-lim 8.0 neg-margin -15
-        extracted-data (extract-data-for-histogram chart-data :data-type data-type)
+        extracted-data (extract-data-for-histogram
+                        chart-data :data-type data-type)
         {:keys [nil-count non-nil-count]} (meta chart-data)
         bins (:bins (meta extracted-data))
         x-series (map first extracted-data)
@@ -191,7 +163,7 @@
                               :range [0 chart-width])
         y-scale (scale/linear :domain [0 (apply max y-series)]
                               :range [0 chart-height])
-        bin-width (safe-floor (- (/ chart-width bins) small-margin))
+        bin-width (floor (- (/ chart-width bins) small-margin))
         x-ticks (take-nth 2 (rest x-series))
         fmt (int->str data-type)]
     (if (= 1 (count extracted-data))
@@ -235,15 +207,13 @@
                       (str (format "%.1f" (float (s n))) "%")))
         select-mult? (= field_type "select all that apply")
         bar-div (if select-mult? :div.bars.select-mult :div.bars.select-one)
-        ;; sablono/react.js use col-span
-        colspan #? (:clj :colspan :cljs :col-span)
         tdr :td.t-right]
     [:table#bar-chart.table
      [:thead
       [:tr [:th] [:th] [:th.t-right "Count"] [:th.t-right "Percent"]]]
      [:tfoot
            (if select-mult?
-         [:tr.t-grey [tdr {colspan 4} (response-count-message non-nil-count)]]
+         [:tr.t-grey [tdr {:col-span 4} (response-count-message non-nil-count)]]
          [:tr.t-grey [tdr] [tdr "Total"] [tdr non-nil-count] [tdr "100%"]])
       (when (and (not select-mult?) (pos? nil-count))
         [:tr.t-grey
@@ -252,7 +222,7 @@
       (for [[label val] data]
         [:tr
          [:td {:title label} label]
-         [:td [bar-div (style {:width (percent-s val max-count)})]]
+         [:td [bar-div {:style {:width (percent-s val max-count)}}]]
          [:td.t-right val]
          [:td.t-right (percent-s val non-nil-count)]])]]))
 
@@ -284,10 +254,11 @@
          chart (if (zero? non-nil-count)
                  [:p "No data"]
                  (case data_type
-                   "categorized" (table-chart-h (label-count-pairs chart-data language)
-                                                nil-count
-                                                non-nil-count
-                                                field_type)
+                   "categorized" (table-chart-h
+                                  (label-count-pairs chart-data language)
+                                  nil-count
+                                  non-nil-count
+                                  field_type)
                    "time_based"  (numeric-chart chart-data
                                                 :data-type "date")
                    "numeric"     (numeric-chart chart-data)
