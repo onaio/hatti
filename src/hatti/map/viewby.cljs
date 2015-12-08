@@ -58,15 +58,24 @@
     (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
     (f/select-all? field) (map #(when % (s/split % #" ")) raw-answers)))
 
+(defn get-user-defined-palette
+  "Return the appropriate set of colors for a select_one"
+  [{:keys [children]}]
+  (when (every? :appearance children)
+    (map :appearance children)))
+
 (defn field->colors
   "Returns the appropriate set of colors given the field."
   [field]
   (cond
     ;; if too many options w/in select-one field, fall back to select-all style
-    (f/select-one? field) (if (<= (count (:children field))
-                                  (count qualitative-palette))
-                            qualitative-palette
-                            (repeat "#f30"))
+    (f/select-one? field)
+    (if-let [user-defined-palette (get-user-defined-palette field)]
+      user-defined-palette
+      (if (<= (count (:children field))
+              (count qualitative-palette))
+        qualitative-palette
+        (repeat "#f30")))
     (f/calculate? field)  qualitative-palette
     (f/numeric? field)    sequential-palette
     (f/time-based? field) sequential-palette
