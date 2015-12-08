@@ -83,7 +83,7 @@
       (om/root repeat-view
                {:data repeat-data :repeat-field form}
                {:target c1 :opts {:view :map}})
-      (is (not (sel1 :ol c1)))
+      (is (not (sel1 c1 :ol)))
       (is (= (str (count repeat-data)) (re-find #"[0-9]+" (dommy/text c1))))
       (is (re-find #"Show Repeats" (dommy/text c1))))
     (testing "when uncollapsed, repeat render internal data"

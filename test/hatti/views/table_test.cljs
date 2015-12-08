@@ -10,7 +10,8 @@
             [hatti.test-utils :refer [new-container! texts owner readonly]]
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
-                                              fat-form small-fat-data]]))
+                                       fat-form small-fat-data]]
+            [hatti.utils.om.state :refer [merge-into-app-state!]]))
 
 ;; SLICKGRID HELPER TESTS
 
@@ -78,6 +79,8 @@
 (defn- table-container
   [data form role]
   "Returns a container in which a table has been rendered."
+  (merge-into-app-state! shared/app-state {:dataset-info
+                                           {:num_of_submissions 0}})
   (let [c (new-container!)
         _ (shared/update-app-data! shared/app-state data)
         args {:shared {:flat-form form
@@ -97,7 +100,7 @@
     (testing "empty table shows 'No data'"
       (let [empty-table (table-container no-data thin-form owner)]
         (is (= () no-data))
-        (is (= "No Data" (dommy/text empty-table)))))
+        (is (not= (.indexOf (dommy/text empty-table) "No data") -1))))
 
     (testing "all questions on thin tables are rendered"
       (is (every? (->> table htexts set)

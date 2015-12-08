@@ -121,9 +121,9 @@
                              (for [fld (:children repeat-field)]
                                (format-as-question-answer view fld d lang)))
               tbl (fn [cls & body]
-                      [:tr {:class cls}
-                       [:td.no-pad {:col-span 2}
-                        [:table {:class cls} [:tbody body]]]])]
+                    [:tr {:class cls}
+                     [:td.no-pad {:col-span 2}
+                      [:table {:class cls} [:tbody body]]]])]
           (html
            (if collapsed?
              header

@@ -44,14 +44,9 @@
       (is (= "fa fa-clock-o"
              (-> container (sel1 :ul) (sel :i.fa) first (dommy/attr :class))))
       ;; Rest of the items should be horizontal chart
-      (->> (map #(f/get-icon %) sel1qs)
-           (map (fn [i] (dommy/attr i :class)))
-           rest)
-      (is (=  (->> (map #(f/get-icon %) sel1qs)
-                   (map (fn [i] (dommy/attr i :class)))
-                   rest)
-              (->> (-> container (sel1 :ul) (sel :i.fa) rest)
-                   (map #(dommy/attr % :class))))))
+      (is (= (rest (map #(-> % f/get-icon last :class) sel1qs))
+             (->> (-> container (sel1 :ul) (sel :i.fa) rest)
+                  (map #(dommy/attr % :class))))))
     (testing "string questions are unclickable on the chart menu"
       (let [stringq-texts (map :label stringqs)
             num-stringqs (count stringqs)
