@@ -1,10 +1,10 @@
 (ns hatti.map.viewby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [clojure.string :as s]
+  (:require [clojure.string :refer [split]]
             [hatti.utils :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
-            [hatti.ona.forms :as f]
-            [hatti.map.utils :as mu]))
+            [hatti.ona.forms :as form-utils]
+            [hatti.map.utils :as map-utils]))
 
 ;;;;; MAP
 
@@ -33,8 +33,8 @@
 (defn- marker-styler
   [id-color id-selected?]
   (fn [marker]
-    (let [id (mu/get-id marker)
-          geotype (mu/marker->geotype marker)
+    (let [id (map-utils/get-id marker)
+          geotype (map-utils/marker->geotype marker)
           color-key (if (= :line geotype) :color :fillColor)]
       {color-key (if (id-selected? id) (id-color id) grey)})))
 
@@ -51,12 +51,13 @@
    is a list of list of strings. For other types, a list of strings."
   [field raw-answers]
   (cond
-    (f/select-one? field) raw-answers
-    (f/text? field) raw-answers
-    (f/calculate? field) raw-answers
-    (f/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
-    (f/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
-    (f/select-all? field) (map #(when % (s/split % #" ")) raw-answers)))
+    (form-utils/select-one? field) raw-answers
+    (form-utils/text? field) raw-answers
+    (form-utils/calculate? field) raw-answers
+    (form-utils/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
+    (form-utils/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
+    (form-utils/select-all? field) (->> raw-answers
+                               (map #(when % (split % #" "))))))
 
 (defn get-user-defined-palette
   "Return the appropriate set of colors for a select_one"
@@ -69,18 +70,18 @@
   [field]
   (cond
     ;; if too many options w/in select-one field, fall back to select-all style
-    (f/select-one? field)
+    (form-utils/select-one? field)
     (if-let [user-defined-palette (get-user-defined-palette field)]
       user-defined-palette
       (if (<= (count (:children field))
               (count qualitative-palette))
         qualitative-palette
         (repeat "#f30")))
-    (f/calculate? field)  qualitative-palette
-    (f/numeric? field)    sequential-palette
-    (f/time-based? field) sequential-palette
-    (f/text? field) (repeat "#f30")
-    (f/select-all? field) (repeat "#f30")))
+    (form-utils/calculate? field)  qualitative-palette
+    (form-utils/numeric? field)    sequential-palette
+    (form-utils/time-based? field) sequential-palette
+    (form-utils/text? field) (repeat "#f30")
+    (form-utils/select-all? field) (repeat "#f30")))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
@@ -91,26 +92,26 @@
    eg. a bin for numbers/dates, an option for multiple/single selects."
   [field raw-answers ids]
   (let [fname (:full-name field)
-        ans-s (preprocess-answers field raw-answers)
-        answer->count (frequencies (flatten ans-s))
-        sorted (cond
-                 (or (f/categorical? field)
-                     (f/text? field)
-                     (f/calculate? field))
+        preprocessed-answers (preprocess-answers field raw-answers)
+        answer->count (frequencies (flatten preprocessed-answers))
+        sorted-answers (cond
+                 (or (form-utils/categorical? field)
+                     (form-utils/text? field)
+                     (form-utils/calculate? field))
                  (map first (sort-by second > answer->count))
-                 (or (f/time-based? field) (f/numeric? field))
-                 (-> ans-s meta :bins))
-        sorted-nil-at-end (move-nil-to-end sorted)
+                (or (form-utils/time-based? field) (form-utils/numeric? field))
+                (-> preprocessed-answers meta :bins))
+        sorted-answers-with-nil-at-end (move-nil-to-end sorted-answers)
         colors (field->colors field)
-        defaults {:answers sorted-nil-at-end
-                  :id->answers (zipmap ids ans-s)
+        defaults {:answers sorted-answers-with-nil-at-end
+                  :id->answers (zipmap ids preprocessed-answers)
                   :answer->count answer->count
-                  :answer->selected? (all-but-nil-selected sorted)
-                  :answer->color (zipmap sorted colors)
-                  :visible-answers sorted-nil-at-end
+                  :answer->selected? (all-but-nil-selected sorted-answers)
+                  :answer->color (zipmap sorted-answers colors)
+                  :visible-answers sorted-answers-with-nil-at-end
                   :field field}]
     (cond
-      (f/select-all? field) (merge defaults {:id-color #(first colors)})
+      (form-utils/select-all? field) (merge defaults {:id-color #(first colors)})
       :else                 defaults)))
 
 (defn id-color-selected
@@ -133,8 +134,8 @@
   (let [{:keys [id-selected? id-color]} (id-color-selected view-by-info)
         m->s (marker-styler id-color id-selected?)]
     (doseq [marker markers]
-      (mu/re-style-marker m->s marker)
-      (mu/bring-to-top-if-selected id-selected? marker))))
+      (map-utils/re-style-marker m->s marker)
+      (map-utils/bring-to-top-if-selected id-selected? marker))))
 
 (defn filter-answer-data-structures
   "Given a list of answers + query, returns map from answers to true/false.
@@ -143,7 +144,7 @@
   (let [query-present? (fn [ans]
                          (when ans
                            (re-find (safe-regex query)
-                                    (f/format-answer field ans language))))]
+                                    (form-utils/format-answer field ans language))))]
     {:visible-answers (filter query-present? answers)
      :answer->selected? (zipmap answers (map query-present? answers))}))
 
