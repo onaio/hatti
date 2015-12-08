@@ -59,29 +59,41 @@
     (form-utils/select-all? field) (->> raw-answers
                                (map #(when % (split % #" "))))))
 
-(defn get-user-defined-palette
-  "Return the appropriate set of colors for a select_one"
-  [{:keys [children]}]
-  (when (every? :appearance children)
-    (map :appearance children)))
+(defn- get-color-map
+  [{:keys [name appearance]}]
+  {name appearance})
+
+(defn group-user-defined-colors-by-answer
+  [{:keys [children] :as field}]
+  (->> children
+       (map get-color-map)
+       (into {})))
 
 (defn field->colors
-  "Returns the appropriate set of colors given the field."
+  "Return the appropriate set of colors given the field. For a select_one,
+   returns a mapping of answer to color. Returns a string for all other field
+   types"
   [field]
   (cond
     ;; if too many options w/in select-one field, fall back to select-all style
     (form-utils/select-one? field)
-    (if-let [user-defined-palette (get-user-defined-palette field)]
-      user-defined-palette
-      (if (<= (count (:children field))
-              (count qualitative-palette))
-        qualitative-palette
-        (repeat "#f30")))
+    (if (<= (count (:children field))
+            (count qualitative-palette))
+      qualitative-palette
+      (repeat "#f30"))
     (form-utils/calculate? field)  qualitative-palette
     (form-utils/numeric? field)    sequential-palette
     (form-utils/time-based? field) sequential-palette
     (form-utils/text? field) (repeat "#f30")
     (form-utils/select-all? field) (repeat "#f30")))
+
+(defn answer->color
+  [{:keys [children] :as field} answers]
+  (cond
+   (and (form-utils/select-one? field)
+        (every? :appearance children))
+   (group-user-defined-colors-by-answer field)
+   :else (zipmap answers (field->colors field))))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
@@ -102,17 +114,19 @@
                 (or (form-utils/time-based? field) (form-utils/numeric? field))
                 (-> preprocessed-answers meta :bins))
         sorted-answers-with-nil-at-end (move-nil-to-end sorted-answers)
-        colors (field->colors field)
+        answer->color-map (answer->color field sorted-answers)
         defaults {:answers sorted-answers-with-nil-at-end
                   :id->answers (zipmap ids preprocessed-answers)
                   :answer->count answer->count
                   :answer->selected? (all-but-nil-selected sorted-answers)
-                  :answer->color (zipmap sorted-answers colors)
+                  :answer->color answer->color-map
                   :visible-answers sorted-answers-with-nil-at-end
                   :field field}]
     (cond
-      (form-utils/select-all? field) (merge defaults {:id-color #(first colors)})
-      :else                 defaults)))
+      (form-utils/select-all? field)
+      (merge defaults {:id-color #(first (vals answer->color-map))})
+
+      :else defaults)))
 
 (defn id-color-selected
   "Generates id-color and id-selected? functions based on viewby-info."
