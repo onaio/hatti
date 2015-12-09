@@ -1,7 +1,7 @@
 (defn js-dir
       "Prefix with full JavaScript directory."
       [path]
-      (str "resources/public/js/" path))
+      (str "resources/public/js/lib/" path))
 
 (defproject onaio/hatti "0.1.15-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
@@ -40,17 +40,18 @@
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild {:builds
               {:dev {:source-paths ["src"]
-                     :compiler {:output-to ~(js-dir "lib/main.js")
-                                :output-dir ~(js-dir "lib/out")
+                     :compiler {:output-to ~(js-dir "main.js")
+                                :output-dir ~(js-dir "out")
                                 :optimizations :whitespace
                                 :cache-analysis true
                                 :pretty-print true
-                                :source-map ~(js-dir "lib/main.js.map")}}
+                                :source-map ~(js-dir "main.js.map")}}
                :prod {:source-paths ["src"]
-                      :compiler {:output-to ~(js-dir "lib/hatti.js")
-                                 :output-dir ~(js-dir "lib/out-prod")
+                      :compiler {:output-to ~(js-dir "hatti.js")
+                                 :output-dir ~(js-dir "out-prod")
                                  :optimizations :advanced
-                                 :pretty-print false}}
+                                 :pretty-print false}
+                      :jar true}
                :test {:source-paths ["src" "test"]
                       :notify-command ["phantomjs"
                                        "phantom/unit-test.js"
