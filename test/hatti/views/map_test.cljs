@@ -7,6 +7,7 @@
             [hatti.shared :refer [app-state]]
             [hatti.views :refer [map-viewby-legend map-geofield-chooser]]
             [hatti.views.map]
+            [hatti.map.style :refer [grey]]
             [hatti.map.utils :as mu]
             [hatti.map.viewby :as vb]
             [hatti.test-utils :refer [new-container! texts owner readonly]]
@@ -71,7 +72,7 @@
       (is (re-find #"Two" (apply str (texts option-list)))))
     (testing "viewby-answers render with No Answer at bottom and grey"
       (is (re-find (js/RegExp. f/no-answer) (dommy/text (last option-list))))
-      (is (= (str vb/grey ";") (-> (last option-list)
+      (is (= (str grey ";") (-> (last option-list)
                                 (sel1 :div.small-circle)
                                 (dommy/attr "style")
                                 (clojure.string/split ":")

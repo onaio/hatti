@@ -4,31 +4,10 @@
             [hatti.utils :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as form-utils]
+            [hatti.map.style :refer [answer->color grey]]
             [hatti.map.utils :as map-utils]))
 
 ;;;;; MAP
-
-(def qualitative-palette
-  "Saturated qualitative palette from colorbrewer.
-   Saturated red+brown disabled due to clash with the :clicked color."
-  ["#1f78b4"
-   "#33a02c"
-   "#6a3d9a"
-   "#ffff99"
-   "#b15928"
-   "#a6cee3"
-   "#b2df8a"
-   "#fb9a99"
-   "#fdbf6f"
-   "#cab2d6"])
-
-(def sequential-palette
-  "Color palette of YlGnBl from colorbrewer."
-  ["#ffffcc" "#bdd7e7" "#6baed6" "#3182bd" "#08519c"])
-
-(def grey
-  "A Grey Color for deselected points."
-  "#d9d9d9")
 
 (defn- marker-styler
   [id-color id-selected?]
@@ -58,42 +37,6 @@
     (form-utils/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
     (form-utils/select-all? field) (->> raw-answers
                                (map #(when % (split % #" "))))))
-
-(defn- get-color-map
-  [{:keys [name appearance]}]
-  {name appearance})
-
-(defn group-user-defined-colors-by-answer
-  [{:keys [children] :as field}]
-  (->> children
-       (map get-color-map)
-       (into {})))
-
-(defn field->colors
-  "Return the appropriate set of colors given the field. For a select_one,
-   returns a mapping of answer to color. Returns a string for all other field
-   types"
-  [field]
-  (cond
-    ;; if too many options w/in select-one field, fall back to select-all style
-    (form-utils/select-one? field)
-    (if (<= (count (:children field))
-            (count qualitative-palette))
-      qualitative-palette
-      (repeat "#f30"))
-    (form-utils/calculate? field)  qualitative-palette
-    (form-utils/numeric? field)    sequential-palette
-    (form-utils/time-based? field) sequential-palette
-    (form-utils/text? field) (repeat "#f30")
-    (form-utils/select-all? field) (repeat "#f30")))
-
-(defn answer->color
-  [{:keys [children] :as field} answers]
-  (cond
-   (and (form-utils/select-one? field)
-        (every? :appearance children))
-   (group-user-defined-colors-by-answer field)
-   :else (zipmap answers (field->colors field))))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
