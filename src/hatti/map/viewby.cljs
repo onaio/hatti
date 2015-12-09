@@ -35,7 +35,7 @@
     (form-utils/calculate? field) raw-answers
     (form-utils/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
     (form-utils/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
-    (form-utils/select-all? field) (map #(when % (split % #" " raw-answers)))))
+    (form-utils/select-all? field) (map #(when % (split % #" "))  raw-answers)))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
