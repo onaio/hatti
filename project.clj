@@ -1,3 +1,8 @@
+(defn js-dir
+      "Prefix with full JavaScript directory."
+      [path]
+      (str "resources/public/js/lib/" path))
+
 (defproject onaio/hatti "0.1.15-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
@@ -27,7 +32,6 @@
                  [cljs-http "0.1.17"]
                  ;; For testing
                  [prismatic/dommy "1.1.0"]]
-  :source-paths ["src"]
   :plugins [[lein-bikeshed-ona "0.2.1"]
             [lein-cljsbuild "1.1.0"]
             [lein-kibit "0.1.2"]
@@ -35,18 +39,25 @@
   :profiles {:dev {:dependencies [[midje "1.8.1"]]}}
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild {:builds
-              {:prod {:source-paths ["src"]
-                      :compiler {:output-dir "out"
-                                 :cache-analysis true
-                                 :optimizations :none
-                                 :output-to "out/hatti.js"
-                                 :source-map true}}
-               :test {:source-paths ["src/hatti" "test"]
+              {:dev {:source-paths ["src"]
+                     :compiler {:output-to ~(js-dir "main.js")
+                                :output-dir ~(js-dir "out")
+                                :optimizations :whitespace
+                                :cache-analysis true
+                                :pretty-print true
+                                :source-map ~(js-dir "main.js.map")}}
+               :prod {:source-paths ["src"]
+                      :compiler {:output-to ~(js-dir "hatti.js")
+                                 :output-dir ~(js-dir "out-prod")
+                                 :optimizations :advanced
+                                 :pretty-print false}
+                      :jar true}
+               :test {:source-paths ["src" "test"]
                       :notify-command ["phantomjs"
                                        "phantom/unit-test.js"
                                        "phantom/unit-test.html"
                                        "target/main-test.js"]
-                      :compiler {:optimizations :whitespace,
+                      :compiler {:optimizations :whitespace
                                  :output-to "target/main-test.js"
                                  :pretty-print true}}}
               :test-commands {"unit-test"
