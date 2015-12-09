@@ -1,6 +1,8 @@
 lein: lein2
 language: clojure
 script:
+    - lein2 cljsbuild once dev
+    - lein2 cljsbuild once prod
     - lein2 cljsbuild test
     - lein2 midje
 notifications:
