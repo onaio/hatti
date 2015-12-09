@@ -6,8 +6,9 @@
             [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
-            [hatti.map.viewby :as vb]
+            [hatti.map.style :refer [grey]]
             [hatti.map.utils :as mu]
+            [hatti.map.viewby :as vb]
             [hatti.shared :as shared]
             [hatti.views :as views
              :refer [map-page map-and-markers map-geofield-chooser
@@ -189,8 +190,8 @@
                               :on-click (click-fn #(toggle! answer))})
              [:div
               [:div {:class "small-circle"
-                     :style {:background-color (if selected? col vb/grey)}}]
-              [:div (when-not selected? {:style {:color vb/grey}})
+                     :style {:background-color (if selected? col grey)}}]
+              [:div (when-not selected? {:style {:color grey}})
                (str answer-s " (" acount ")")]]]]))]))))
 
 

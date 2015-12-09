@@ -2,6 +2,7 @@
   (:require-macros [cljs.test :refer (is deftest testing)])
   (:require [cljs.test :as t]
             [hatti.test-utils :refer [remove-nil ordered-diff]]
+            [hatti.map.style :as style]
             [hatti.map.viewby :as vb]
             [hatti.views]))
 
@@ -28,9 +29,9 @@
         vbi-sel1-big (vb/viewby-info sel1-big sel1-answers-big ids)
         vbi-selm (vb/viewby-info selm selm-answers ids)
         vbi-int (vb/viewby-info intf int-answers ids)
-        sel1-colors (set (take 3 vb/qualitative-palette))
+        sel1-colors (set (take 3 style/qualitative-palette))
         selm-colors #{"#f30"}
-        int-colors (set vb/sequential-palette)
+        int-colors (set style/sequential-palette)
         ks [:field :answers :id->answers
             :answer->selected? :answer->color :answer->count]
         map-els #{:answer->color :answer->count :answer->selected?}]
@@ -77,7 +78,7 @@
                ["0 to 19" "20 to 39" "40 to 59" "60 to 79" "80 to 99" nil]))
         ;; answer->color
         (is (= (remove-nil (sort answers)) (sort (keys answer->color))))
-        (is (every? (set vb/sequential-palette)
+        (is (every? (set style/sequential-palette)
                     (remove-nil (map answer->color answers))))
         ;; answer->count
         (is (= (sort answers) (sort (keys answer->count))))
