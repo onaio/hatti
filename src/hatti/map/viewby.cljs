@@ -35,8 +35,7 @@
     (form-utils/calculate? field) raw-answers
     (form-utils/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
     (form-utils/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
-    (form-utils/select-all? field) (->> raw-answers
-                               (map #(when % (split % #" "))))))
+    (form-utils/select-all? field) (map #(when % (split % #" " raw-answers)))))
 
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
@@ -101,7 +100,9 @@
   (let [query-present? (fn [ans]
                          (when ans
                            (re-find (safe-regex query)
-                                    (form-utils/format-answer field ans language))))]
+                                    (form-utils/format-answer field
+                                                              ans
+                                                              language))))]
     {:visible-answers (filter query-present? answers)
      :answer->selected? (zipmap answers (map query-present? answers))}))
 
