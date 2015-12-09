@@ -16,8 +16,9 @@
   [st]
   (let [ans (js/parseInt st)] (when-not (js/isNaN ans) ans)))
 
-(defn str->int [typ]
+(defn str->int
   "Converts string to integer, for typ (int|date)."
+  [typ]
   (case typ
     "int" parse-int
     "date" (fn [date-string]
@@ -27,9 +28,10 @@
                    (/ millis-in-day)
                    floor)))))
 
-(defn int->str [typ &{:keys [digits] :or {digits 1}}]
+(defn int->str
   "Converts integers to strings, for type (int|date).
    Optional digits parameter = number of digits after decimal, default is 1."
+  [typ &{:keys [digits] :or {digits 1}}]
   (let [int-fmt-s (str "%." digits "f")
         d->millis #(* millis-in-day %)
         date->str #(when % (.format (js/moment %) "ll"))]
@@ -37,8 +39,9 @@
       "int"  #(format int-fmt-s (float %))
       "date" #(date->str (d->millis %)))))
 
-(defn range->str [[mn mx] typ]
+(defn range->str
   "Converts a range of typ (int|date) to a string."
+  [[mn mx] typ]
   (let [[mn mx] [(ceil mn) (floor mx)]
         fmt (int->str typ :digits 0)]
     (if (<= mx mn) (fmt mn)
@@ -198,9 +201,9 @@
        (response-count-message non-nil-count)])))
 
 (defn table-chart-h
-  [data nil-count non-nil-count field_type]
   "Create category bar chart out of some data + count data. Data of form:
   {'Label1' 1 'Label2' 2}, etc. where the numbers are counts."
+  [data nil-count non-nil-count field_type]
   (let [max-count (apply max (vals data))
         percent-s (fn [n total]
                     (let [s (scale/linear :domain [0 total] :range [0 100])]
