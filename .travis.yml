@@ -1,8 +1,8 @@
 lein: lein2
 language: clojure
 script:
-    - lein2 midje
     - lein2 cljsbuild test
+    - lein2 midje
 notifications:
   email:
     - tech+travis@ona.io
