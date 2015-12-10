@@ -32,7 +32,9 @@
                  [cljs-http "0.1.17"]
                  ;; For testing
                  [prismatic/dommy "1.1.0"]]
+  :cljfmt {:file-pattern #"[^\.#]*\.clj[s]?$"}
   :plugins [[lein-bikeshed-ona "0.2.1"]
+            [lein-cljfmt "0.3.0"]
             [lein-cljsbuild "1.1.0"]
             [lein-kibit "0.1.2"]
             [lein-midje "3.1.3"]]

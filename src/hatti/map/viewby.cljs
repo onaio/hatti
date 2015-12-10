@@ -49,13 +49,13 @@
         preprocessed-answers (preprocess-answers field raw-answers)
         answer->count (frequencies (flatten preprocessed-answers))
         sorted-answers (cond
-                        (or (form-utils/categorical? field)
-                            (form-utils/text? field)
-                            (form-utils/calculate? field))
-                        (map first (sort-by second > answer->count))
-                        (or (form-utils/time-based? field)
-                            (form-utils/numeric? field))
-                        (-> preprocessed-answers meta :bins))
+                         (or (form-utils/categorical? field)
+                             (form-utils/text? field)
+                             (form-utils/calculate? field))
+                         (map first (sort-by second > answer->count))
+                         (or (form-utils/time-based? field)
+                             (form-utils/numeric? field))
+                         (-> preprocessed-answers meta :bins))
         sorted-answers-with-nil-at-end (move-nil-to-end sorted-answers)
         answer->color-map (answer->color field sorted-answers)
         defaults {:answers sorted-answers-with-nil-at-end
@@ -76,12 +76,12 @@
   [{:keys [field id->answers answer->color answer->selected?]}]
   (case (:type field)
     "select all that apply"
-      {:id-color #(first ["#f30"])
-       :id-selected? (fn [id]
-                       (let [answers (id->answers id)]
-                         (if (nil? answers)
-                           (get answer->selected? answers)
-                           (some identity (map answer->selected? answers)))))}
+    {:id-color #(first ["#f30"])
+     :id-selected? (fn [id]
+                     (let [answers (id->answers id)]
+                       (if (nil? answers)
+                         (get answer->selected? answers)
+                         (some identity (map answer->selected? answers)))))}
     ;; For all other types, answer is a scalar, not a list
     {:id-color #(-> % id->answers answer->color)
      :id-selected? #(-> % id->answers answer->selected?)}))

@@ -18,7 +18,6 @@
                      map-viewby-answer-legend map-viewby-answer-close]]
             [hatti.views.record]))
 
-
 ;;;;; EVENT HANDLERS
 
 (defn handle-viewby-events
@@ -27,23 +26,23 @@
   [app-state {:keys [get-id-marker-map]}]
   (let [event-chan (shared/event-tap)]
     (go
-     (while true
-       (let [e (<! event-chan)
-             {:keys [view-by view-by-closed view-by-filtered]} e
-             markers (vals (get-id-marker-map))]
-         (when view-by
-           (let [{:keys [full-name] :as field} (:field view-by)
-                 ids (map #(get % _id) (-> @app-state :map-page :data))
-                 raw-answers (map #(get % full-name)
-                                  (-> @app-state :map-page :data))
-                 vb-info (vb/viewby-info field raw-answers ids)]
-             (om/update! app-state [:map-page :view-by] vb-info)
-             (vb/view-by! vb-info markers)))
-         (when view-by-filtered
-           (vb/view-by! (get-in @app-state [:map-page :view-by]) markers))
-         (when view-by-closed
-           (om/update! app-state [:map-page :view-by] {})
-           (mu/clear-all-styles markers)))))))
+      (while true
+        (let [e (<! event-chan)
+              {:keys [view-by view-by-closed view-by-filtered]} e
+              markers (vals (get-id-marker-map))]
+          (when view-by
+            (let [{:keys [full-name] :as field} (:field view-by)
+                  ids (map #(get % _id) (-> @app-state :map-page :data))
+                  raw-answers (map #(get % full-name)
+                                   (-> @app-state :map-page :data))
+                  vb-info (vb/viewby-info field raw-answers ids)]
+              (om/update! app-state [:map-page :view-by] vb-info)
+              (vb/view-by! vb-info markers)))
+          (when view-by-filtered
+            (vb/view-by! (get-in @app-state [:map-page :view-by]) markers))
+          (when view-by-closed
+            (om/update! app-state [:map-page :view-by] {})
+            (mu/clear-all-styles markers)))))))
 
 (defn handle-submission-events
   "Listens to sumission events, and change the map-cursor appropriately.
@@ -51,51 +50,51 @@
   [app-state {:keys [get-id-marker-map]}]
   (let [event-chan (shared/event-tap)]
     (go
-     (while true
-       (let [e (<! event-chan)
-             {:keys [mapped-submission-to-rank submission-unclicked]} e
-             prev-marker (get-in @app-state
-                                 [:map-page :submission-clicked :marker])]
-         (when submission-unclicked
-           (om/update! app-state [:map-page :submission-clicked]
-                       {:data nil :prev-marker prev-marker}))
-         (when mapped-submission-to-rank
-           (let [rank mapped-submission-to-rank
-                 new-data (first
-                           (filter
-                            #(= rank (get % _rank))
-                            (get-in @app-state [:map-page :data])))]
-             (om/update! app-state [:map-page :submission-clicked]
-                         {:data new-data
-                          :marker (get (get-id-marker-map)
-                                       (get new-data _id))
-                          :prev-marker prev-marker}))))))))
+      (while true
+        (let [e (<! event-chan)
+              {:keys [mapped-submission-to-rank submission-unclicked]} e
+              prev-marker (get-in @app-state
+                                  [:map-page :submission-clicked :marker])]
+          (when submission-unclicked
+            (om/update! app-state [:map-page :submission-clicked]
+                        {:data nil :prev-marker prev-marker}))
+          (when mapped-submission-to-rank
+            (let [rank mapped-submission-to-rank
+                  new-data (first
+                            (filter
+                             #(= rank (get % _rank))
+                             (get-in @app-state [:map-page :data])))]
+              (om/update! app-state [:map-page :submission-clicked]
+                          {:data new-data
+                           :marker (get (get-id-marker-map)
+                                        (get new-data _id))
+                           :prev-marker prev-marker}))))))))
 
 (defn handle-data-updates
   "Fires events that need to be re-fired when data updates."
   [app-state]
   (let [event-chan (shared/event-tap)]
     (go
-     (while true
-       (let [{:keys [data-updated] :as e} (<! event-chan)]
-         (when data-updated
-           (put! shared/event-chan
-                 {:mapped-submission-to-rank
-                  (get-in @app-state
-                          [:map-page :submission-clicked :data _id])})
-           (put! shared/event-chan
-                 {:view-by (get-in @app-state [:map-page :view-by])})))))))
+      (while true
+        (let [{:keys [data-updated] :as e} (<! event-chan)]
+          (when data-updated
+            (put! shared/event-chan
+                  {:mapped-submission-to-rank
+                   (get-in @app-state
+                           [:map-page :submission-clicked :data _id])})
+            (put! shared/event-chan
+                  {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
 (defn handle-re-render
   "Handles the re-render event"
   [app-state {:keys [re-render!]}]
   (let [event-chan (shared/event-tap)]
     (go
-     (while true
-       (let [{:keys [re-render] :as e} (<! event-chan)]
-         (when (= re-render :map)
-           (go (<! (timeout 16))
-               (re-render!))))))))
+      (while true
+        (let [{:keys [re-render] :as e} (<! event-chan)]
+          (when (= re-render :map)
+            (go (<! (timeout 16))
+                (re-render!))))))))
 
 (defn handle-map-events
   "Creates multiple channels and delegates events to them."
@@ -120,24 +119,24 @@
                                 (f/text? %)
                                 (f/time-based? %)
                                 (f/calculate? %))
-                               (f/non-meta-fields form))]
+                           (f/non-meta-fields form))]
         (html
-        [:div {:class "legend viewby top left"}
-         [:div {:class "drop-hover" :id "viewby-dropdown"}
-          [:a {:class "pure-button" :href "#"} "View By"
-           [:i {:class "fa fa-angle-down"
-                :style {:margin-left ".5em"}}]]
-          [:ul {:class "submenu no-dot" :style {:width "600px"}}
-           (if no-data?
-             [:h4 "No data"]
-             (if (empty? fields)
-               [:h4 "No questions of type select one"]
-               (for [{:keys [name] :as field} fields]
-                 [:li
-                  [:a {:on-click (click-fn #(put! shared/event-chan
-                                                  {:view-by {:field field}}))
-                       :href "#" :data-question-name name}
-                       (get-icon field) (get-label field language)]])))]]])))))
+         [:div {:class "legend viewby top left"}
+          [:div {:class "drop-hover" :id "viewby-dropdown"}
+           [:a {:class "pure-button" :href "#"} "View By"
+            [:i {:class "fa fa-angle-down"
+                 :style {:margin-left ".5em"}}]]
+           [:ul {:class "submenu no-dot" :style {:width "600px"}}
+            (if no-data?
+              [:h4 "No data"]
+              (if (empty? fields)
+                [:h4 "No questions of type select one"]
+                (for [{:keys [name] :as field} fields]
+                  [:li
+                   [:a {:on-click (click-fn #(put! shared/event-chan
+                                                   {:view-by {:field field}}))
+                        :href "#" :data-question-name name}
+                    (get-icon field) (get-label field language)]])))]]])))))
 
 (defmethod map-viewby-answer-close :default
   [_ owner]
@@ -194,7 +193,6 @@
               [:div (when-not selected? {:style {:color grey}})
                (str answer-s " (" acount ")")]]]]))]))))
 
-
 (defmethod map-viewby-answer-legend :default
   [cursor owner]
   (reify
@@ -217,11 +215,11 @@
   (reify
     om/IRenderState
     (render-state [_ state]
-       (html (if (empty? view-by)
-               (om/build map-viewby-menu
-                         dataset-info {:opts opts :init-state state})
-               (om/build map-viewby-answer-legend
-                         view-by {:init-state state}))))))
+      (html (if (empty? view-by)
+              (om/build map-viewby-menu
+                        dataset-info {:opts opts :init-state state})
+              (om/build map-viewby-answer-legend
+                        view-by {:init-state state}))))))
 
 (defmethod map-record-legend :default
   [cursor owner opts]
@@ -303,7 +301,7 @@
       "Render component w/ css + expansion technique from leaflet layer control"
       (when (< 1 (count geofields))
         (let [with-suffix #(if-not (om/get-state owner :expanded) %
-                             (str % " leaflet-control-layers-expanded"))]
+                                   (str % " leaflet-control-layers-expanded"))]
           (html
            [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
             [:div {:class (with-suffix "leaflet-control leaflet-control-layers")

@@ -56,7 +56,7 @@
         (is (= (sort answers) (sort (keys answer->color))))
         (is (every? sel1-colors (map answer->color answers)))
         (is (every? selm-colors (map (:answer->color vbi-sel1-big)
-                                      (:answers vbi-sel1-big))))
+                                     (:answers vbi-sel1-big))))
         ;; answer->count
         (is (= (sort answers) (sort (keys answer->count))))
         (is (= (count ids) (apply + (vals answer->count))))
@@ -132,20 +132,20 @@
         (is (= (map id-selected? ids)
                (for [id ids :let [ans (id->ans id)]]
                  (if (= nil ans) (get sel ans)
-                   (some identity (map sel ans))))))))))
+                     (some identity (map sel ans))))))))))
 
 (deftest test-selection-toggle
   (testing "toggle-answer-selected testing"
-  (let [initial {:a true :b true :c true nil false}
-        all-false (zipmap (keys initial) (repeat false))
-        a (vb/toggle-answer-selected all-false initial :a)
-        a-b (vb/toggle-answer-selected a initial :b)
-        a-b-b (vb/toggle-answer-selected a-b all-false :b)
-        a-b-c-nil (-> a-b
-                      (vb/toggle-answer-selected all-false :c)
-                      (vb/toggle-answer-selected  all-false nil))
-        all-true (zipmap (keys initial) (repeat true))]
-    (is (= a (merge all-false {:a true})))
-    (is (= a-b (merge all-false {:a true :b true})))
-    (is (= a-b-b (merge all-false {:a true})))
-    (is (= a-b-c-nil initial)))))
+    (let [initial {:a true :b true :c true nil false}
+          all-false (zipmap (keys initial) (repeat false))
+          a (vb/toggle-answer-selected all-false initial :a)
+          a-b (vb/toggle-answer-selected a initial :b)
+          a-b-b (vb/toggle-answer-selected a-b all-false :b)
+          a-b-c-nil (-> a-b
+                        (vb/toggle-answer-selected all-false :c)
+                        (vb/toggle-answer-selected  all-false nil))
+          all-true (zipmap (keys initial) (repeat true))]
+      (is (= a (merge all-false {:a true})))
+      (is (= a-b (merge all-false {:a true :b true})))
+      (is (= a-b-b (merge all-false {:a true})))
+      (is (= a-b-c-nil initial)))))

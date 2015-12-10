@@ -16,10 +16,10 @@
 
 (defn update-app-state!
   "Like om/update! but also works on atoms that are not transactable?"
- ([app-state update-val]
-  (transact-app-state! app-state #(-> update-val)))
- ([app-state ks update-val]
-  (transact-app-state! app-state ks #(-> update-val))))
+  ([app-state update-val]
+   (transact-app-state! app-state #(-> update-val)))
+  ([app-state ks update-val]
+   (transact-app-state! app-state ks #(-> update-val))))
 
 (defn merge-into-app-state!
   "Merges provided state into existing app-state, possibly after zoomint into

@@ -133,7 +133,7 @@
   "Gets the label object out of a map with key :label (eg. a field).
    If multiple languages, and none specified, picks out alphabetically first."
   ([labelled-obj] (get-label labelled-obj nil))
-  ([{:keys [label name]} &[language]]
+  ([{:keys [label name]} & [language]]
    (if-not (map? label)
      (or label name)
      (if (contains? (-> label keys set) language)
@@ -148,12 +148,12 @@
   ([field answer language] (format-answer field answer language false))
   ([field answer language compact?]
    (let [which (cond
-                (image? field) :img
-                (osm? field) :osm
-                (repeat? field) :rpt
-                (select-one? field) :sel1
-                (select-all? field) :selm
-                :else :else)]
+                 (image? field) :img
+                 (osm? field) :osm
+                 (repeat? field) :rpt
+                 (select-one? field) :sel1
+                 (select-all? field) :selm
+                 :else :else)]
      (case which
        :sel1 (if-not answer
                no-answer
@@ -174,29 +174,31 @@
                   thumb (or (:small_download_url answer) image)
                   fname (last-url-param (:filename answer))]
               (cond
-               (or (nil? answer)
-                   (string? answer)) answer
-               compact?              (format
-                                      "<a href='%s' target='_blank'>
+                (or (nil? answer)
+                    (string? answer)) answer
+                compact?              (format
+                                       "<a href='%s' target='_blank'>
                                       <i class='fa fa-external-link'></i>
                                       %s </a>" image fname)
-               (nil? thumb)          answer
-               :else                 [:a {:href image :target "_blank"}
-                                      [:img {:width "80px" :src thumb}]]))
+                (nil? thumb)          answer
+                :else                 [:a {:href image :target "_blank"}
+                                       [:img {:width "80px" :src thumb}]]))
        :osm (when answer
               (let [kw->name name ; aliasing before overriding name
                     {:keys [name type osm-id]} answer
                     type-cap (when type (string/capitalize type))
                     title (str "OSM " type-cap ": " name " (" osm-id ")")]
-              (if compact?
-                title
-                [:table.osm-data
-                 [:thead [:th {:col-span 2} title]]
-                 [:tbody
-                  (map (fn [[tk tv]]
-                         (when-not (string/blank? tv)
-                           [:tr [:td.question (kw->name tk)] [:td.answer tv]]))
-                       (:tags answer))]])))
+                (if compact?
+                  title
+                  [:table.osm-data
+                   [:thead [:th {:col-span 2} title]]
+                   [:tbody
+                    (map (fn [[tk tv]]
+                           (when-not (string/blank? tv)
+                             [:tr
+                              [:td.question (kw->name tk)]
+                              [:td.answer tv]]))
+                         (:tags answer))]])))
        :rpt (if (empty? answer)
               ""
               (str "Repeated data with " (count answer) " answers."))
@@ -285,9 +287,9 @@
         geoshapes (filter geoshape? geofields)
         geopoints (filter geopoint? geofields)]
     (cond
-     (seq geoshapes) (first geoshapes)
-     (seq geopoints) (first geopoints)
-     :else (first geofields))))
+      (seq geoshapes) (first geoshapes)
+      (seq geopoints) (first geopoints)
+      :else (first geofields))))
 
 ;; UTILITY: languages
 

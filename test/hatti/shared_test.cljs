@@ -1,14 +1,14 @@
 (ns hatti.shared-test
   (:require-macros [cljs.test :refer (is deftest testing)]
-                    [dommy.core :refer [sel sel1]])
+                   [dommy.core :refer [sel sel1]])
   (:require [cljs.test :as t]
             [dommy.core :as dommy]
             [om.core :as om :include-macros true]
-            #_[ona.api.io :refer [make-url]]
+            [hatti.utils :refer [url]]
             [hatti.test-utils :refer [format new-container!]]
             [hatti.shared :as shared]
             [hatti.ona.post-process :as post-process]
-            #_[ona.dataview.osm-utils-test :refer [osm-xml osm-data osm-form]]))
+            [hatti.ona.urls :refer [base-uri]]))
 
 ;; SAMPLE DATA
 
@@ -21,11 +21,11 @@
 
 (defn data-gen [ncol nrow]
   (let [rf (fn [max] (format "%02d" (inc (rand-int max))))]
-  (for [i (range nrow)]
-    (apply merge {"_id" i
-                  "_rank" (inc i)
-                  "_submission_time" (str "2012-" (rf 12) "-" (rf 30))}
-                 (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
+    (for [i (range nrow)]
+      (apply merge {"_id" i
+                    "_rank" (inc i)
+                    "_submission_time" (str "2012-" (rf 12) "-" (rf 30))}
+             (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
 
 (def thin-form (form-gen 1))
 (def fat-form (form-gen 100))
@@ -74,35 +74,12 @@
       (is (= (-> @test-state :status :loading?) false))
       (is (= (-> @test-state :status :total-records) 200)))))
 
-;; TODO Move test to zerba
-#_(deftest update-data-on!-works
-    (shared/update-app-data! shared/app-state small-thin-data :rerank? true)
-    (testing "update-data-on! :delete works"
-      (let [initial-data @shared/app-state
-            ids (fn [data] (map #(get % "_id")
-                               (get-in data [:map-page :data])))]
-        (shared/update-data-on! :delete {:instance-id 1})
-        (is (contains? (-> initial-data ids set) 1))
-        (is (not (contains? (-> @shared/app-state ids set) 1))))))
-
-;; TODO Move test to zerba
-#_(deftest data-is-extracted-from-osm-properly
-    (shared/update-app-data! osm-data :re-rank? true)
-    (shared/update-app-state-with-osm-data! osm-form osm-xml)
-    (testing "updating data with osm bits works"
-      (let [data (get-in @shared/app-state [:map-page :data])]
-        (is (nil? (-> data (nth 2) (get "osm_building"))))
-        (is (= (-> data first (get "osm_building") keys)
-               (list :osm-id :type :geom :name :tags)))
-      (is (= "way" (-> data first (get "osm_building") :type)))
-      (is (= "Polygon" (-> data first (get "osm_building") :geom :type))))))
-
-#_(deftest integrate-attachments
+(deftest integrate-attachments
   (let [data [{"_attachments"
                [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
                  "id" 287633}
                 {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
-                 "id" 287632 }]
+                 "id" 287632}]
                "historic_photo" "Bhkt36_hist2.jpg"
                "historic_photo2" "Bhkt36_hist.jpg"}]
         form [{:type "photo" :name "historic_photo" :full-name "historic_photo"}
@@ -112,12 +89,16 @@
       (let [integrated-data (post-process/integrate-attachments form data)
             revised-record (first integrated-data)]
         (is (= (-> revised-record (get "historic_photo") :download_url)
-               (make-url
+               (url
+                base-uri
                 "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
-        (is (= (-> revised-record (get "historic_photo") :small_download_url)
-               (make-url
-                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg&su"
-                "ffix=small")))))
+        (is (=
+             (-> revised-record (get "historic_photo") :small_download_url)
+               (url
+                base-uri
+                (str
+                 "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
+                 "&suffix=small"))))))
     (testing "data with no images doesn't get touched"
       (let [form [{:type "string" :name "historic_photo"
                    :full-name "historic_photo"}
@@ -126,14 +107,14 @@
             untouched-data (post-process/integrate-attachments form data)]
         (is (= data untouched-data))))))
 
-#_(deftest integrate-attachments-with-repeats
+(deftest integrate-attachments-with-repeats
   (let [data [{"repeat" [{"repeat/photo1" "Bhkt36_hist2.jpg"
                           "repeat/photo2" "Bhkt36_hist.jpg"}]
                "_attachments"
                [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
                  "id" 287633}
                 {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
-                 "id" 287632 }]}]
+                 "id" 287632}]}]
         form [{:type "repeat" :name "repeat" :full-name "repeat"
                :children [{:type "photo" :name "photo1"
                            :full-name "repeat/photo1"}
@@ -143,16 +124,20 @@
       (let [new-form (assoc-in form [0 :type] "group")]
         (is (= (post-process/integrate-attachments-in-repeats new-form data)
                data))))
+
     (testing "attachments are integrated properly"
       (let [integrated-data
             (post-process/integrate-attachments-in-repeats form data)
             revised-record (first integrated-data)]
-        (is (= (-> revised-record (get "repeat") first (get "repeat/photo1")
-                   :download_url)
-               (make-url
-                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
-        (is (= (-> revised-record (get "repeat") first (get "repeat/photo2")
-                   :download_url)
-               (make-url
-                "files/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg"
-                )))))))
+        (is
+         (= (-> revised-record (get "repeat") first (get "repeat/photo1")
+                :download_url)
+            (url
+             base-uri
+             "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+        (is
+         (= (-> revised-record (get "repeat") first (get "repeat/photo2")
+                :download_url)
+            (url
+             base-uri
+             "files/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))

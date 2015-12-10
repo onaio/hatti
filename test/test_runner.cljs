@@ -40,5 +40,5 @@
         'hatti.views.record-test
         'hatti.views.table-test
         'hatti.shared-test))
-   0
-   1))
+    0
+    1))

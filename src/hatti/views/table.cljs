@@ -22,10 +22,10 @@
 
 ;; FIELDS
 (defn get-extra-fields
-   "Extra fields that will be displayed on the table."
+  "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
   (let [extra-field  [{:full-name _id :label "id" :name _id :type
-                                  "integer"}]]
+                       "integer"}]]
     (if is-filtered-dataview?
       extra-field
       (conj extra-field forms/submission-time-field))))
@@ -126,10 +126,10 @@
 (defn bind-external-sg-grid-dataview-handlers
   [dataview event-handlers]
   (doall
-    (for [[handler-key handler-function] event-handlers
-          :let [handler-name (hyphen->camel-case (name handler-key))
-                event (aget dataview handler-name)]]
-      (.subscribe event handler-function))))
+   (for [[handler-key handler-function] event-handlers
+         :let [handler-name (hyphen->camel-case (name handler-key))
+               event (aget dataview handler-name)]]
+     (.subscribe event handler-function))))
 
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
@@ -137,8 +137,9 @@
    Returns [grid dataview]."
   [data form  current-language is-filtered-dataview?
    {:keys [grid-event-handlers dataview-event-handlers]}]
-  (let [columns (flat-form->sg-columns form true current-language
-                  :is-filtered-dataview? is-filtered-dataview?)
+  (let [columns (flat-form->sg-columns
+                 form true current-language
+                 :is-filtered-dataview? is-filtered-dataview?)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -292,7 +293,7 @@
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
           current-language (:current
-                             (om/observe owner (shared/language-cursor)))
+                            (om/observe owner (shared/language-cursor)))
           [grid dataview] (sg-init data
                                    flat-form
                                    current-language

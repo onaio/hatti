@@ -31,7 +31,7 @@
 (defn int->str
   "Converts integers to strings, for type (int|date).
    Optional digits parameter = number of digits after decimal, default is 1."
-  [typ &{:keys [digits] :or {digits 1}}]
+  [typ & {:keys [digits] :or {digits 1}}]
   (let [int-fmt-s (str "%." digits "f")
         d->millis #(* millis-in-day %)
         date->str #(when % (.format (js/moment %) "ll"))]
@@ -45,7 +45,7 @@
   (let [[mn mx] [(ceil mn) (floor mx)]
         fmt (int->str typ :digits 0)]
     (if (<= mx mn) (fmt mn)
-      (join " to " [(fmt mn) (fmt mx)]))))
+        (join " to " [(fmt mn) (fmt mx)]))))
 
 (defn evenly-spaced-bins
   "Given a list of answers, returns each one as a bin, in string form.
@@ -98,8 +98,8 @@
   Custom algorithm, based on a pleasant range of bins being between
   roughly 7 and 15 (though customizable). Idea is that we try to divide
   n into a number between "
-  [n &{:keys [data-type]
-       :or   {data-type "int"}}]
+  [n & {:keys [data-type]
+        :or   {data-type "int"}}]
   (let [rough-min 7 rough-max 15 real-max 24
         full-range (range rough-min rough-max)
         best-guess (apply max (map (partial gcd n) full-range))]
@@ -110,8 +110,8 @@
 (defn- extract-data-for-histogram
   "Turn numerical / date chart-data from ona API histogram-friendly.
   Return data looks like [(x dx y)] with-meta {:bins num-bins}."
-  [chart-data &{:keys [data-type]
-                :or   {data-type "int"}}]
+  [chart-data & {:keys [data-type]
+                 :or   {data-type "int"}}]
   (let [{:keys [data field_xpath]} chart-data
         retype-fn (str->int data-type)
         qn-key (keyword field_xpath)
@@ -121,7 +121,7 @@
         data-range (- (apply max (map qn-key retyped-data))
                       (apply min (map qn-key retyped-data)))
         bins (if (zero? data-range) 1
-               (num-bins data-range :data-type data-type))
+                 (num-bins data-range :data-type data-type))
         binned-data (histogram retyped-data :value qn-key :bins bins)]
     (with-meta
       (for [data-item binned-data]
@@ -134,14 +134,14 @@
   "Produces a linear mapping [0,max-count] -> [0, max-length], for data which
    is a vector, each element a map with key :count. If total-asmax?, then
    linear map is [0,total-count] -> [0, max-length]."
-  [data max-length &{:keys [total-as-max? datamin-as-min?]
-                     :or [total-as-max? false datamin-as-min? false]}]
-   (let [counts (map :count data)
-         xmax (if total-as-max? (reduce + 0 counts) (reduce max 0 counts))
-         xmin (if datamin-as-min? (reduce min 0 counts) 0)
-         scale (scale/linear :domain [xmin xmax]
-                             :range [0 max-length])]
-     (map scale counts)))
+  [data max-length & {:keys [total-as-max? datamin-as-min?]
+                      :or [total-as-max? false datamin-as-min? false]}]
+  (let [counts (map :count data)
+        xmax (if total-as-max? (reduce + 0 counts) (reduce max 0 counts))
+        xmin (if datamin-as-min? (reduce min 0 counts) 0)
+        scale (scale/linear :domain [xmin xmax]
+                            :range [0 max-length])]
+    (map scale counts)))
 
 (defn- response-count-message
   [response-count]
@@ -149,8 +149,8 @@
 
 (defn numeric-chart
   "Create numeric (or date) chart out of some chart-data from ona API."
-  [chart-data &{:keys [data-type]
-                :or   {data-type "int"}}]
+  [chart-data & {:keys [data-type]
+                 :or   {data-type "int"}}]
   (let [chart-width 700.0 chart-height 300.0
         margin 33.0 small-margin 2.0 y-lim 8.0 neg-margin -15
         extracted-data (extract-data-for-histogram
@@ -215,9 +215,9 @@
      [:thead
       [:tr [:th] [:th] [:th.t-right "Count"] [:th.t-right "Percent"]]]
      [:tfoot
-           (if select-mult?
-         [:tr.t-grey [tdr {:col-span 4} (response-count-message non-nil-count)]]
-         [:tr.t-grey [tdr] [tdr "Total"] [tdr non-nil-count] [tdr "100%"]])
+      (if select-mult?
+        [:tr.t-grey [tdr {:col-span 4} (response-count-message non-nil-count)]]
+        [:tr.t-grey [tdr] [tdr "Total"] [tdr non-nil-count] [tdr "100%"]])
       (when (and (not select-mult?) (pos? nil-count))
         [:tr.t-grey
          [:td] [:td.t-right "No response"] [:td.t-right nil-count] [:td]])]
@@ -267,4 +267,4 @@
                    "numeric"     (numeric-chart chart-data)
                    (not-supported data_type)))]
      {:label field_label :name field_xpath
-      :chart [:div chart ]})))
+      :chart [:div chart]})))

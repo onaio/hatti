@@ -6,25 +6,24 @@
             [hatti.utils :as utils]
             [hatti.ona.forms :as forms]))
 
-
 (defn get-form [which]
   (let [file
-       (case which
-         :single-language (read-file "test/fixtures/mini-form-9-elements.json")
-         :multi-language
-         (read-file "test/fixtures/multi-language-mini-form.json")
-         :geoshape (read-file "test/fixtures/geoshape-form.json")
-         :geopoint (read-file "test/fixtures/geopoint-form.json")
-         :geotrace (read-file "test/fixtures/geotrace-form.json")
-         :groups-in-repeats
-         (read-file "test/fixtures/groups-in-repeats-form.json"))]
+        (case which
+          :single-language (read-file "test/fixtures/mini-form-9-elements.json")
+          :multi-language
+          (read-file "test/fixtures/multi-language-mini-form.json")
+          :geoshape (read-file "test/fixtures/geoshape-form.json")
+          :geopoint (read-file "test/fixtures/geopoint-form.json")
+          :geotrace (read-file "test/fixtures/geotrace-form.json")
+          :groups-in-repeats
+          (read-file "test/fixtures/groups-in-repeats-form.json"))]
     (utils/json->js->cljs file)))
 
 (defn get-data [which]
   (let [file (case which
-                :geoshape (read-file "test/fixtures/geoshape-data.json")
-                :geopoint (read-file "test/fixtures/geopoint-data.json")
-                :geotrace (read-file "test/fixtures/geotrace-data.json"))]
+               :geoshape (read-file "test/fixtures/geoshape-data.json")
+               :geopoint (read-file "test/fixtures/geopoint-data.json")
+               :geotrace (read-file "test/fixtures/geotrace-data.json"))]
     (utils/json->js->cljs file)))
 
 (def single-language-form (get-form :single-language))
