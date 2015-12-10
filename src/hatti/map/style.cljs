@@ -80,7 +80,7 @@
 (defn answer->color
   [{:keys [children] :as field} answers]
   (cond
-   (and (form-utils/select-one? field)
-        (every? :appearance children))
-   (group-user-defined-colors-by-answer field)
-   :else (zipmap answers (field->colors field))))
+    (and (form-utils/select-one? field)
+         (every? :appearance children))
+    (group-user-defined-colors-by-answer field)
+    :else (zipmap answers (field->colors field))))

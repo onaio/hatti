@@ -6,7 +6,6 @@
 (defn round [n] (when n (.round js/Math n)))
 (defn abs [n] (when n (.abs js/Math n)))
 
-
 ;; The following largely from the clojure-only clojure.math.numeric-tower.
 ;; https://github.com/clojure/math.numeric-tower
 (defn gcd "(gcd a b) returns the greatest common divisor of a and b" [a b]
@@ -14,7 +13,7 @@
     (throw (js/IllegalArgumentException. "gcd requires two integers"))
     (loop [a (abs a) b (abs b)]
       (if (zero? b) a,
-	  (recur b (mod a b))))))
+          (recur b (mod a b))))))
 
 (defn lcm
   "(lcm a b) returns the least common multiple of a and b"

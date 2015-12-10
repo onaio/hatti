@@ -21,7 +21,7 @@
   "Convert json string to cljs object.
    Fast, but doesn't preserve keywords."
   [s]
-   (js->clj (json->js s)))
+  (js->clj (json->js s)))
 
 (defn json->js->cljs
   "Convert json string to cljs via js.

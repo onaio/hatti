@@ -63,16 +63,16 @@
             {:keys [num_of_submissions]} dataset-info
             {:keys [loading? total-records]} status]
         (html
-          [:div.right.rec-summary.rec-margin
-           [:div#language-selector
-            (when (f/multilingual? form)
-              (om/build shared/language-selector nil))]
-           [:div#data-status
-            [:span.rec
-             (when loading? [:i.fa.fa-spinner.fa-pulse])
-             (pluralize-number num_of_submissions " Record")]]
-           [:div.divider]
-           (om/build dataview-actions dataset-id)])))))
+         [:div.right.rec-summary.rec-margin
+          [:div#language-selector
+           (when (f/multilingual? form)
+             (om/build shared/language-selector nil))]
+          [:div#data-status
+           [:span.rec
+            (when loading? [:i.fa.fa-spinner.fa-pulse])
+            (pluralize-number num_of_submissions " Record")]]
+          [:div.divider]
+          (om/build dataview-actions dataset-id)])))))
 
 (defn activate-view! [view]
   (let [view (keyword view)

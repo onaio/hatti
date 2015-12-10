@@ -60,9 +60,9 @@
 (deftest all-fields-test
   (let [fields (tv/all-fields fat-form)
         more-fields (tv/all-fields (concat
-                                 [(merge (first fat-form) {:type "note"})
-                                  (merge (second fat-form) {:type "group"})]
-                                 fat-form))]
+                                    [(merge (first fat-form) {:type "note"})
+                                     (merge (second fat-form) {:type "group"})]
+                                    fat-form))]
     (testing "submission time is always added to fields"
       (is (some #(= "_submission_time" (:name %)) fields))
       (is (some #(= "_submission_time" (:name %)) more-fields)))

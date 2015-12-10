@@ -15,22 +15,22 @@
 (defn- handle-chart-events
   [app-state chart-get]
   (let [event-chan (shared/event-tap)]
-  (go
-   (while true
-     (let [e (<! event-chan)
-           {:keys [add-chart remove-chart field]} e
-           field-name (:name field)
-           ks [:chart-page :chart-data field-name]]
-       (when add-chart
-         (om/transact! app-state [:chart-page :visible-charts]
-                       #(vec (distinct (cons field %))))
-         (when-not (get-in ks @app-state)
-           (go (let [data (:body (<! (chart-get field-name)))]
-                 (om/update! app-state ks data)))))
-       (when remove-chart
-         (om/transact! app-state
-                       [:chart-page :visible-charts]
-                       (fn [vcs] (remove #(= field %) vcs)))))))))
+    (go
+      (while true
+        (let [e (<! event-chan)
+              {:keys [add-chart remove-chart field]} e
+              field-name (:name field)
+              ks [:chart-page :chart-data field-name]]
+          (when add-chart
+            (om/transact! app-state [:chart-page :visible-charts]
+                          #(vec (distinct (cons field %))))
+            (when-not (get-in ks @app-state)
+              (go (let [data (:body (<! (chart-get field-name)))]
+                    (om/update! app-state ks data)))))
+          (when remove-chart
+            (om/transact! app-state
+                          [:chart-page :visible-charts]
+                          (fn [vcs] (remove #(= field %) vcs)))))))))
 
 ;; DOM BUILDING HELPERS
 
@@ -91,7 +91,7 @@
            [:div {:class "chart-holder"}
             [:a {:on-click (click-fn
                             #(put! shared/event-chan
-                                  {:field field :remove-chart true}))
+                                   {:field field :remove-chart true}))
                  :class "btn-close right" :href "#"} "×"]
             [:div {:class "chart-content"}
              [:h3 {:class "chart-name"} (forms/get-label field language)]
@@ -127,6 +127,6 @@
     om/IRender
     (render [_]
       (html
-         [:div {:class "charts-ui"}
-          (om/build chart-chooser nil)
-          (om/build list-of-charts (:chart-page cursor))]))))
+       [:div {:class "charts-ui"}
+        (om/build chart-chooser nil)
+        (om/build list-of-charts (:chart-page cursor))]))))

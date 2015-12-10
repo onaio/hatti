@@ -120,11 +120,10 @@
 
 (defn clear-all-styles
   "Sets the default style on a marker."
-  [markers &{:keys [preserve-clicked?] :or {preserve-clicked? true}}]
+  [markers & {:keys [preserve-clicked?] :or {preserve-clicked? true}}]
   (doseq [marker markers]
     (if-not (and preserve-clicked? (is-clicked? marker))
       (.setStyle marker (get-ona-style marker :normal)))))
-
 
 ;; GEOJSON CONVERSION
 
@@ -139,9 +138,9 @@
                   "geoshape" "Polygon"
                   "geotrace" "LineString"} (:type geofield))
         parse (fn [s] (when (and (seq s) (not= s "n/a"))
-                       (for [coord-string (string/split s #";")]
-                         (let [[lat lng _ _ ] (string/split coord-string #" ")]
-                           [(read-string lng) (read-string lat)]))))
+                        (for [coord-string (string/split s #";")]
+                          (let [[lat lng _ _] (string/split coord-string #" ")]
+                            [(read-string lng) (read-string lat)]))))
         coordfn (case geotype
                   "Point" #(first (parse %))
                   "LineString" parse
@@ -159,17 +158,17 @@
   "Given the dataset, and the form schema, get out geojson.
    Optional specification of field will map that field data to the geom."
   ([dataset form]
-    (as-geojson dataset form (f/default-geofield form)))
+   (as-geojson dataset form (f/default-geofield form)))
   ([dataset form geofield]
-     (when geofield
-       {:type "FeatureCollection"
-        :features (for [[idx record] (indexed dataset)
-                        :let [geo (get-as-geom record geofield)]
-                        :when geo]
-                    {:type "Feature"
-                     :properties {(keyword _rank) (inc idx)
-                                  (keyword _id) (record _id)}
-                     :geometry geo})})))
+   (when geofield
+     {:type "FeatureCollection"
+      :features (for [[idx record] (indexed dataset)
+                      :let [geo (get-as-geom record geofield)]
+                      :when geo]
+                  {:type "Feature"
+                   :properties {(keyword _rank) (inc idx)
+                                (keyword _id) (record _id)}
+                   :geometry geo})})))
 
 ;;;;; MAP
 

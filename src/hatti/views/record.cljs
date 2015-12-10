@@ -34,7 +34,7 @@
                      :map :mapped-submission-to-rank
                      :table :submission-to-rank)]
     [:a {:on-click (click-fn
-                     #(put! shared/event-chan {event-key new-rank}))
+                    #(put! shared/event-chan {event-key new-rank}))
          :class "pure-button btn-default" :href "#"} [:i {:class icon}]]))
 
 (defn submission-closer []
@@ -63,13 +63,13 @@
         answer (get data fname)
         alabel (f/format-answer field answer lang)
         {:keys [row-el question-el answer-el]} (qa-elements view)]
-      (when (and alabel (not= alabel f/no-answer))
-        (if (f/repeat? field)
-          (om/build repeat-view
-                    {:data answer :repeat-field field :lang lang}
-                    {:opts {:view view}})
-          [row-el
-           [question-el flabel] [answer-el alabel]]))))
+    (when (and alabel (not= alabel f/no-answer))
+      (if (f/repeat? field)
+        (om/build repeat-view
+                  {:data answer :repeat-field field :lang lang}
+                  {:opts {:view view}})
+        [row-el
+         [question-el flabel] [answer-el alabel]]))))
 
 ;; The whole submission view
 
@@ -87,7 +87,7 @@
                                    [:div.submission
                                     [:table.pure-table.pure-table-bordered
                                      [:thead
-                                       [:tr [:th "Question"] [:th "Response"]]]
+                                      [:tr [:th "Question"] [:th "Response"]]]
                                      [:tbody tbody]]])
            :section-wrap identity
            :show-instance-id true
@@ -150,47 +150,47 @@
 
 (defmethod submission-view :default
   [cursor owner {:keys [view] :as opts}]
-    (reify
-      om/IInitState
-      (init-state [_] {:expand-meta? false})
-      om/IRenderState
-      (render-state [_ {:keys [expand-meta?]}]
-        (let [form (om/get-shared owner [:flat-form])
-              language (:current (om/observe owner (shared/language-cursor)))
-              {:keys [data dataset-info]} cursor
-              cur-rank (get data _rank)
-              instance-id (get data "_id")
-              sdatetime (js/moment (get data "_submission_time"))
-              {:keys [top-level-wrap topbar-wrap header-wrap section-wrap
-                      submission-info-wrap h4-cls]} (submission-elements view)]
-          (html
-           (when data
-             (top-level-wrap
-              (topbar-wrap
-               (submission-arrow :left cur-rank view)
-               (submission-arrow :right cur-rank view)
-               (om/build print-xls-report-btn {:instance-id instance-id
-                                               :dataset-info dataset-info})
-               (submission-closer))
-              (header-wrap
-               [:h4 {:class h4-cls} (str "Submission " cur-rank)
-                (header-note view cursor)]
-               [:p
-                (str "Submitted at " (.format sdatetime "LT")
-                        " on " (.format sdatetime "ll")) [:br]
-                [:span (str "Record ID: " instance-id)]
-                (om/build edit-delete instance-id {:opts opts})
-                [:span {:class "expand-meta right"}
-                 [:a {:href "#"
-                      :on-click (click-fn
-                                 #(om/update-state! owner :expand-meta? not))}
-                  (if expand-meta? "Hide Metadata" "Show Metadata")]]])
+  (reify
+    om/IInitState
+    (init-state [_] {:expand-meta? false})
+    om/IRenderState
+    (render-state [_ {:keys [expand-meta?]}]
+      (let [form (om/get-shared owner [:flat-form])
+            language (:current (om/observe owner (shared/language-cursor)))
+            {:keys [data dataset-info]} cursor
+            cur-rank (get data _rank)
+            instance-id (get data "_id")
+            sdatetime (js/moment (get data "_submission_time"))
+            {:keys [top-level-wrap topbar-wrap header-wrap section-wrap
+                    submission-info-wrap h4-cls]} (submission-elements view)]
+        (html
+         (when data
+           (top-level-wrap
+            (topbar-wrap
+             (submission-arrow :left cur-rank view)
+             (submission-arrow :right cur-rank view)
+             (om/build print-xls-report-btn {:instance-id instance-id
+                                             :dataset-info dataset-info})
+             (submission-closer))
+            (header-wrap
+             [:h4 {:class h4-cls} (str "Submission " cur-rank)
+              (header-note view cursor)]
+             [:p
+              (str "Submitted at " (.format sdatetime "LT")
+                   " on " (.format sdatetime "ll")) [:br]
+              [:span (str "Record ID: " instance-id)]
+              (om/build edit-delete instance-id {:opts opts})
+              [:span {:class "expand-meta right"}
+               [:a {:href "#"
+                    :on-click (click-fn
+                               #(om/update-state! owner :expand-meta? not))}
+                (if expand-meta? "Hide Metadata" "Show Metadata")]]])
               ;; actual submission data, inside a div.info-scroll
-              (submission-info-wrap
-               (when expand-meta?
-                 (section-wrap
-                  (for [q (f/meta-fields form :with-submission-details? true)]
-                    (format-as-question-answer view q data language))))
+            (submission-info-wrap
+             (when expand-meta?
                (section-wrap
-                (for [q (f/non-meta-fields form)]
-                  (format-as-question-answer view q data language)))))))))))
+                (for [q (f/meta-fields form :with-submission-details? true)]
+                  (format-as-question-answer view q data language))))
+             (section-wrap
+              (for [q (f/non-meta-fields form)]
+                (format-as-question-answer view q data language)))))))))))

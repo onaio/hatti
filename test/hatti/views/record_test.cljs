@@ -18,7 +18,6 @@
 (def gps-field {:full-name "gps" :name "gps" :type "gps" :label "GPS"})
 (def gps-form (conj fat-form gps-field))
 
-
 (defn- submission-container
   [map-or-table data form role & [more-args]]
   "Returns a container in which a map component has been rendered.
@@ -51,7 +50,7 @@
                             d (map :name (f/non-meta-fields gps-form))))
         s (submission-container :map d gps-form owner)
         es (submission-container :map d gps-form owner {:init-state
-                                               {:expand-meta? true}})
+                                                        {:expand-meta? true}})
         expand-meta #(sel1 % :.expand-meta)]
     (testing "Submission XX title is present"
       (is (re-matches #".*Submission 1.*" (dommy/text (sel1 s :h4)))))

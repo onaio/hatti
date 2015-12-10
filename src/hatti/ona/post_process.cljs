@@ -22,7 +22,7 @@
                    osmid (and osmdatum (re-find #"[0-9]+" osmdatum))]
                (when osmid
                  {osmid (merge {:field field}
-                             (select-keys datum #{_id _rank}))}))))
+                               (select-keys datum #{_id _rank}))}))))
          flatten
          (into {}))))
 
@@ -119,10 +119,11 @@
         integrate (fn [record rpt-field]
                     (let [key (:full-name rpt-field)]
                       (assoc record key
-                        (integrate-attachments (:children rpt-field)
-                                               (get record key)
-                                               :attachments
-                                               (get record "_attachments")))))]
+                             (integrate-attachments
+                              (:children rpt-field)
+                              (get record key)
+                              :attachments
+                              (get record "_attachments")))))]
     (for [record data]
       (reduce integrate record repeat-fields))))
 

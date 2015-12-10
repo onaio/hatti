@@ -11,12 +11,12 @@
   If there is a parser in message, resume it after a timeout."
   [agg-data-channel callback]
   (go
-   (while true
-     (let [{:keys [data completed? ]} (<! agg-data-channel)]
-       (when data (callback data completed?))
+    (while true
+      (let [{:keys [data completed?]} (<! agg-data-channel)]
+        (when data (callback data completed?))
        ;; Timeout so browser can do some rendering before parsing again.
-       (<! (timeout small-delay))
-       (when completed? (close! agg-data-channel))))))
+        (<! (timeout small-delay))
+        (when completed? (close! agg-data-channel))))))
 
 (defn read-next-chunk!
   "On each step of data, increment read-count atom, and put data in a list agg.

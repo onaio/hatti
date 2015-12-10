@@ -2,7 +2,6 @@
   (:require [dommy.core :as dommy])
   (:require-macros [dommy.core :refer [sel sel1]]))
 
-
 ;;====================
 ;; PERMISSION DEFINITIONS
 ;;====================
@@ -46,11 +45,11 @@
 
 (defn data-gen [ncol nrow]
   (let [rf (fn [max] (format "%02d" (inc (rand-int max))))]
-  (for [i (range nrow)]
-    (apply merge {"_id" i
-                  "_rank" (inc i)
-                  "_submission_time" (str "2012-" (rf 12) "-" (rf 30))}
-                 (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
+    (for [i (range nrow)]
+      (apply merge {"_id" i
+                    "_rank" (inc i)
+                    "_submission_time" (str "2012-" (rf 12) "-" (rf 30))}
+             (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
 
 (def thin-form (form-gen 1))
 (def fat-form (form-gen 100))

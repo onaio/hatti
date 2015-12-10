@@ -1,8 +1,8 @@
 (ns hatti.views.settings
-   (:require-macros [cljs.core.async.macros :refer [go]])
-   (:require [om.core :as om :include-macros true]
-             [sablono.core :as html :refer-macros [html]]
-             [hatti.views :refer [form-details settings-page]]))
+  (:require-macros [cljs.core.async.macros :refer [go]])
+  (:require [om.core :as om :include-macros true]
+            [sablono.core :as html :refer-macros [html]]
+            [hatti.views :refer [form-details settings-page]]))
 
 (defmethod form-details :default
   [form owner]
@@ -10,7 +10,7 @@
   (om/component
    (let [{:keys [title description downloadable id_string editing?]} form]
      (html
-      [:form {:id "settings-form" :class "pure-form pure-form-aligned" }
+      [:form {:id "settings-form" :class "pure-form pure-form-aligned"}
        [:fieldset
         [:div.pure-control-group
          [:label "Name"]

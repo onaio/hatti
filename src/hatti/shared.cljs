@@ -67,8 +67,8 @@
                      :or {current-start-index 0}}]
   (let [add-rank (fn [i v]
                    (assoc v _rank
-                            (+ current-start-index
-                               (inc i))))
+                          (+ current-start-index
+                             (inc i))))
         data (if (and rerank? (seq data))
                (->> data
                     (sort-by #(get % (or sort-field _submission_time)))
@@ -95,23 +95,23 @@
   (om/ref-cursor (:languages (om/root-cursor app-state))))
 
 (defn language-selector
-   "A language selector and a following divider."
-   [_ owner]
-   (reify
-     om/IRender
-     (render [_]
-       (let [{:keys [current all] :as ls} (om/observe owner (language-cursor))
-             update-current #(om/update! ls [:current] %)
-             stringify #(if (keyword? %) (name %) (str %))]
-       (html
-        [:div {:class "language-selector-inner"}
-         [:span {:class "dropdown drop-hover"}
-          [:i {:class "fa fa-globe" :style {:margin-right ".2em"}}]
-          [:span
-           (if (f/english? current) "EN" (stringify current))]
-          [:i {:class "fa fa-angle-down" :style {:margin-left ".5em"}}]
-          [:ul {:class "submenu"}
-           (for [l all]
-             [:li [:a {:href "#" :on-click #(update-current l)}
-                   (stringify l)]])]]
-         [:div {:class "divider"}]])))))
+  "A language selector and a following divider."
+  [_ owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [current all] :as ls} (om/observe owner (language-cursor))
+            update-current #(om/update! ls [:current] %)
+            stringify #(if (keyword? %) (name %) (str %))]
+        (html
+         [:div {:class "language-selector-inner"}
+          [:span {:class "dropdown drop-hover"}
+           [:i {:class "fa fa-globe" :style {:margin-right ".2em"}}]
+           [:span
+            (if (f/english? current) "EN" (stringify current))]
+           [:i {:class "fa fa-angle-down" :style {:margin-left ".5em"}}]
+           [:ul {:class "submenu"}
+            (for [l all]
+              [:li [:a {:href "#" :on-click #(update-current l)}
+                    (stringify l)]])]]
+          [:div {:class "divider"}]])))))
