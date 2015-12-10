@@ -1,6 +1,7 @@
 lein: lein2
 language: clojure
 script:
+    - lein2 cljfmt check
     - lein2 cljsbuild once dev
     - lein2 cljsbuild once prod
     - lein2 cljsbuild test
