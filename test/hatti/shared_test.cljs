@@ -94,11 +94,11 @@
                 "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is (=
              (-> revised-record (get "historic_photo") :small_download_url)
-               (url
-                base-uri
-                (str
-                 "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
-                 "&suffix=small"))))))
+             (url
+              base-uri
+              (str
+               "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
+               "&suffix=small"))))))
     (testing "data with no images doesn't get touched"
       (let [form [{:type "string" :name "historic_photo"
                    :full-name "historic_photo"}
