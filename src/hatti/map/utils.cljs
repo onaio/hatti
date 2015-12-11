@@ -196,7 +196,7 @@
   "Mouse events for markers.
   On click or arrow, mapped-submission-to-rank events are generated.
   On hover, marker is brought to the front and color changed."
-  [feature marker event-chan]
+  [feature marker event-chan & {:keys [custom-handlers]}]
   (.on marker "click"
        #(when-not (is-clicked? marker)
           (put! event-chan {:mapped-submission-to-rank
@@ -206,7 +206,11 @@
           (apply-hover-style marker)))
   (.on marker "mouseout"
        #(when-not (is-clicked? marker)
-          (apply-unclick-style marker))))
+          (apply-unclick-style marker)))
+  (doseq [handler custom-handlers]
+    (.on marker
+         (-> handler keys first)
+         (-> handler vals first))))
 
 (defn- re-render-map!
   "Re-renders map by invalidating leaflet size.
@@ -224,9 +228,13 @@
 
 (defn- load-geo-json
   "Create a map with the given GeoJSON data.
-   Adds mouse events and centers on the geojson features."
-  [m geojson event-chan & {:keys [rezoom?]}]
-  (let [on-events #(register-mouse-events %1 %2 event-chan)
+   Adds mouse events and centers on the geojson features.
+   `map-event-handlers` is a list of maps of the form
+   [{event-type function}{event-type function}]"
+  [m geojson event-chan & {:keys [rezoom? map-event-handlers]}]
+  (let [on-events #(register-mouse-events %1 %2 event-chan
+                                          :custom-handlers
+                                          map-event-handlers)
         geometry-type (-> geojson :features first :geometry :type
                           {"Point" :point "Polygon" :shape "LineString" :line})
         stylefn #(get-ona-style geometry-type :normal)
