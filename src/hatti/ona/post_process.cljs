@@ -74,7 +74,9 @@
             updater (fn [osm-key]
                       (fn [data]
                         (for [datum data]
-                          (update-in datum [osm-key] osm-val->osm-data))))]
+                          (-> datum
+                              (assoc :osm-data-integrated? true)
+                              (update-in [osm-key] osm-val->osm-data)))))]
 
         (doseq [osm-field osm-fields]
           (transact-app-state! app-state app-state-keys
