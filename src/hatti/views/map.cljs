@@ -81,7 +81,7 @@
             (put! shared/event-chan
                   {:mapped-submission-to-rank
                    (get-in @app-state
-                           [:map-page :submission-clicked :data _id])})
+                           [:map-page :submission-clicked :data _rank])})
             (put! shared/event-chan
                   {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
