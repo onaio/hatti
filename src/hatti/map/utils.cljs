@@ -202,7 +202,8 @@
                  :when geom-or-geoms]
              (if (map? geom-or-geoms)
                (make-feature geom-or-geoms (record _id) idx)
-               (map make-feature geom-or-geoms)))]
+               (map #(make-feature % (record _id) idx)
+                    geom-or-geoms)))]
        {:type "FeatureCollection"
         :features (flatten features)}))))
 
