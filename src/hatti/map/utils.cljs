@@ -145,16 +145,14 @@
      :else :default)))
 
 (defmethod get-as-geom :repeat
-  [record {:keys [children] :as field}]
-  (map-indexed
-   #(get-as-geom record
-                 %2
-                 :repeat-index %1
-                 :repeat-group-name (:full-name field))
-   children))
+  [record {:keys [children full-name] :as field}]
+  (do
+    (for [child-record (get record full-name)]
+      (for [child (filter f/geofield? children)]
+        (get-as-geom child-record child)))))
 
 (defmethod get-as-geom :default
-  [record geofield & {:keys [repeat-index repeat-group-name]}]
+  [record geofield]
   (let [geotype ({"geopoint" "Point"
                   "gps" "Point"
                   "geoshape" "Polygon"
@@ -169,21 +167,8 @@
                   "Polygon" #(vector (parse %))
                   identity)
               
-        value
-        (if repeat-group-name
-          (let [children (get record repeat-group-name)]
-            (js/console.log "CHILDREN" children)
-            (-> children
-                (nth repeat-index)
-                (get (:full-name geofield))))
-          (get record (:full-name geofield)))
+        value (get record (:full-name geofield))
         coords (coordfn value)]
-    (js/console.log "GEOTYPE" geotype)
-    (js/console.log "REPEAT-INDEX" repeat-index)
-    (js/console.log "REPEAT-GROUP-NAME" repeat-group-name)
-    (js/console.log "COORDS" coords)
-    (js/console.log "VALUE" value)
-    (js/console.log "RECORD" record)
     (if (f/osm? geofield)
       (:geom value)
       (when-not (or (nil? coords) (some nil? coords))
@@ -203,7 +188,7 @@
              (if (map? geom-or-geoms)
                (make-feature geom-or-geoms (record _id) idx)
                (map #(make-feature % (record _id) idx)
-                    geom-or-geoms)))]
+                    (flatten geom-or-geoms))))]
        {:type "FeatureCollection"
         :features (flatten features)}))))
 
