@@ -90,7 +90,7 @@
     (init-state [_]
       (let [form (om/get-shared owner :flat-form)
             geopoints? (-> app-state :dataset-info :instances_with_geopoints)
-            no-geodata? (not (if (some f/geopoint? form)
+            no-geodata? (not (if (or geopoints? (some f/geopoint? form))
                                geopoints?
                                (some f/geofield? form)))]
         (when (and no-geodata? (= :map (-> app-state :views :selected)))
