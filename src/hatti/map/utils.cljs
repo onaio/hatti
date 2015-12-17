@@ -131,8 +131,30 @@
   [maybe-s]
   (if (string? maybe-s) (read-string maybe-s) maybe-s))
 
-(defn- get-as-geom
-  [record geofield]
+(defn- make-feature
+  [geometry record-id index]
+  {:type "Feature"
+   :properties {(keyword _rank) (inc index)
+                (keyword _id) record-id}
+   :geometry geometry})
+
+(defmulti get-as-geom
+  (fn [record field & [repeat-child-index]]
+    (cond
+     (f/repeat? field) :repeat
+     :else :default)))
+
+(defmethod get-as-geom :repeat
+  [record {:keys [children] :as field}]
+  (map-indexed
+   #(get-as-geom record
+                 %2
+                 :repeat-index %1
+                 :repeat-group-name (:full-name field))
+   children))
+
+(defmethod get-as-geom :default
+  [record geofield & {:keys [repeat-index repeat-group-name]}]
   (let [geotype ({"geopoint" "Point"
                   "gps" "Point"
                   "geoshape" "Polygon"
@@ -146,9 +168,22 @@
                   "LineString" parse
                   "Polygon" #(vector (parse %))
                   identity)
-        key (:full-name geofield)
-        value (get record key)
+              
+        value
+        (if repeat-group-name
+          (let [children (get record repeat-group-name)]
+            (js/console.log "CHILDREN" children)
+            (-> children
+                (nth repeat-index)
+                (get (:full-name geofield))))
+          (get record (:full-name geofield)))
         coords (coordfn value)]
+    (js/console.log "GEOTYPE" geotype)
+    (js/console.log "REPEAT-INDEX" repeat-index)
+    (js/console.log "REPEAT-GROUP-NAME" repeat-group-name)
+    (js/console.log "COORDS" coords)
+    (js/console.log "VALUE" value)
+    (js/console.log "RECORD" record)
     (if (f/osm? geofield)
       (:geom value)
       (when-not (or (nil? coords) (some nil? coords))
@@ -161,14 +196,15 @@
    (as-geojson dataset form (f/default-geofield form)))
   ([dataset form geofield]
    (when geofield
-     {:type "FeatureCollection"
-      :features (for [[idx record] (indexed dataset)
-                      :let [geo (get-as-geom record geofield)]
-                      :when geo]
-                  {:type "Feature"
-                   :properties {(keyword _rank) (inc idx)
-                                (keyword _id) (record _id)}
-                   :geometry geo})})))
+     (let [features
+           (for [[idx record] (indexed dataset)
+                 :let [geom-or-geoms (get-as-geom record geofield)]
+                 :when geom-or-geoms]
+             (if (map? geom-or-geoms)
+               (make-feature geom-or-geoms (record _id) idx)
+               (map make-feature geom-or-geoms)))]
+       {:type "FeatureCollection"
+        :features (flatten features)}))))
 
 ;;;;; MAP
 
