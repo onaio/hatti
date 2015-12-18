@@ -141,8 +141,8 @@
 (defmulti get-as-geom
   (fn [record field & [repeat-child-index]]
     (cond
-     (f/repeat? field) :repeat
-     :else :default)))
+      (f/repeat? field) :repeat
+      :else :default)))
 
 (defmethod get-as-geom :repeat
   [record {:keys [children full-name] :as field}]
