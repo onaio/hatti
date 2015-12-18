@@ -74,11 +74,18 @@
 
 (defn geofield?
   [field]
-  (field-type-in-set? #{"geopoint" "gps" "geoshape" "geotrace" "osm"} field))
+  (or (field-type-in-set? #{"geopoint" "gps" "geoshape" "geotrace" "osm"}
+                          field)
+      (when (repeat? field)
+        (let [{:keys [children]} field]
+          (some geofield? children)))))
 
 (defn geopoint?
   [field]
-  (field-type-in-set? #{"geopoint" "gps"} field))
+  (or (field-type-in-set? #{"geopoint" "gps"} field)
+      (when (repeat? field)
+        (let [{:keys [children]} field]
+          (some geopoint? children)))))
 
 (defn geoshape?
   [field]
@@ -283,7 +290,10 @@
 (defn default-geofield [flat-form]
   "From a list of geofields, get the default one to map.
    Implementation: pick first geoshape if any, else pick first geofield."
-  (let [geofields (geofields flat-form)
+  (let [repeats (->> flat-form
+                     (filter repeat?)
+                     flatten)
+        geofields (geofields (concat flat-form repeats))
         geoshapes (filter geoshape? geofields)
         geopoints (filter geopoint? geofields)]
     (cond

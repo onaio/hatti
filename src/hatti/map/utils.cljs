@@ -131,7 +131,26 @@
   [maybe-s]
   (if (string? maybe-s) (read-string maybe-s) maybe-s))
 
-(defn- get-as-geom
+(defn- make-feature
+  [geometry record-id index]
+  {:type "Feature"
+   :properties {(keyword _rank) (inc index)
+                (keyword _id) record-id}
+   :geometry geometry})
+
+(defmulti get-as-geom
+  (fn [record field & [repeat-child-index]]
+    (cond
+      (f/repeat? field) :repeat
+      :else :default)))
+
+(defmethod get-as-geom :repeat
+  [record {:keys [children full-name] :as field}]
+  (for [child-record (get record full-name)]
+    (for [child (filter f/geofield? children)]
+      (get-as-geom child-record child))))
+
+(defmethod get-as-geom :default
   [record geofield]
   (let [geotype ({"geopoint" "Point"
                   "gps" "Point"
@@ -146,8 +165,8 @@
                   "LineString" parse
                   "Polygon" #(vector (parse %))
                   identity)
-        key (:full-name geofield)
-        value (get record key)
+
+        value (get record (:full-name geofield))
         coords (coordfn value)]
     (if (f/osm? geofield)
       (:geom value)
@@ -161,14 +180,16 @@
    (as-geojson dataset form (f/default-geofield form)))
   ([dataset form geofield]
    (when geofield
-     {:type "FeatureCollection"
-      :features (for [[idx record] (indexed dataset)
-                      :let [geo (get-as-geom record geofield)]
-                      :when geo]
-                  {:type "Feature"
-                   :properties {(keyword _rank) (inc idx)
-                                (keyword _id) (record _id)}
-                   :geometry geo})})))
+     (let [features
+           (for [[idx record] (indexed dataset)
+                 :let [geom-or-geoms (get-as-geom record geofield)]
+                 :when geom-or-geoms]
+             (if (map? geom-or-geoms)
+               (make-feature geom-or-geoms (record _id) idx)
+               (map #(make-feature % (record _id) idx)
+                    (flatten geom-or-geoms))))]
+       {:type "FeatureCollection"
+        :features (flatten features)}))))
 
 ;;;;; MAP
 
