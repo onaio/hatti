@@ -166,7 +166,7 @@
                   "LineString" parse
                   "Polygon" #(vector (parse %))
                   identity)
-              
+
         value (get record (:full-name geofield))
         coords (coordfn value)]
     (if (f/osm? geofield)
