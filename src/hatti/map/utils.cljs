@@ -146,10 +146,9 @@
 
 (defmethod get-as-geom :repeat
   [record {:keys [children full-name] :as field}]
-  (do
-    (for [child-record (get record full-name)]
-      (for [child (filter f/geofield? children)]
-        (get-as-geom child-record child)))))
+  (for [child-record (get record full-name)]
+    (for [child (filter f/geofield? children)]
+      (get-as-geom child-record child))))
 
 (defmethod get-as-geom :default
   [record geofield]
