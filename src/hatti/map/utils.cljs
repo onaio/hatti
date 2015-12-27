@@ -186,8 +186,10 @@
                  :when geom-or-geoms]
              (if (map? geom-or-geoms)
                (make-feature geom-or-geoms (record _id) idx)
-               (map #(make-feature % (record _id) idx)
-                    (flatten geom-or-geoms))))]
+               (->> geom-or-geoms
+                    flatten
+                    (remove nil?)
+                    (map #(make-feature % (record _id) idx)))))]
        {:type "FeatureCollection"
         :features (flatten features)}))))
 
