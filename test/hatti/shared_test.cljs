@@ -96,7 +96,7 @@
         (is (=
              (-> revised-record (get "historic_photo") :small_download_url)
              (url
-               media-url
+              media-url
               (str
                "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
                "&suffix=small"))))))
