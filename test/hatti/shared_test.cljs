@@ -7,8 +7,7 @@
             [hatti.utils :refer [url]]
             [hatti.test-utils :refer [format new-container!]]
             [hatti.shared :as shared]
-            [hatti.ona.post-process :as post-process]
-            [hatti.ona.urls :refer [base-uri]]))
+            [hatti.ona.post-process :as post-process]))
 
 ;; SAMPLE DATA
 
@@ -35,7 +34,7 @@
 (def big-thin-data   (data-gen 1 100))
 (def small-fat-data  (data-gen 100 10))
 (def big-fat-data    (data-gen 100 100))
-(def media-url (str @base-uri "files"))
+(def media-url (str (:api-url @shared/app-state) "files"))
 
 ;; TESTS
 
