@@ -1,7 +1,6 @@
 (ns hatti.ona.urls
-  (:require [hatti.utils :refer [url format]]))
-
-(def base-uri "//api.ona.io/api/v1")
+  (:require [hatti.utils :refer [url format]]
+            [hatti.shared :refer [app-state]]))
 
 (defn media-url [id fname]
-  (url base-uri "files" (format "%s?filename=%s" id fname)))
+  (url (str (:api-url @app-state) "files") (format "%s?filename=%s" id fname)))

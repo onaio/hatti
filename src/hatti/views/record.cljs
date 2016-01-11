@@ -118,8 +118,8 @@
                               :href "#"} "Hide Repeats"])]]
               fname (:full-name repeat-field)
               render-child (fn [d]
-                             (for [fld (:children repeat-field)]
-                               (format-as-question-answer view fld d lang)))
+                             (for [field (:children repeat-field)]
+                               (format-as-question-answer view field d lang)))
               tbl (fn [cls & body]
                     [:tr {:class cls}
                      [:td.no-pad {:col-span 2}

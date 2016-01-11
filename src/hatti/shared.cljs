@@ -45,7 +45,8 @@
     :dataset-info {}
     :data []
     :status {:total-records 0 :loading? true}
-    :languages {:current nil :all []}}))
+    :languages {:current nil :all []}
+    :api-url "//api.ona.io/api/v1/"}))
 
 ;; HATTI global app-state
 ;; You can make replicas using (empty-app-state), but this is the only one

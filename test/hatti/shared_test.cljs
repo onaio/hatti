@@ -7,8 +7,7 @@
             [hatti.utils :refer [url]]
             [hatti.test-utils :refer [format new-container!]]
             [hatti.shared :as shared]
-            [hatti.ona.post-process :as post-process]
-            [hatti.ona.urls :refer [base-uri]]))
+            [hatti.ona.post-process :as post-process]))
 
 ;; SAMPLE DATA
 
@@ -35,6 +34,7 @@
 (def big-thin-data   (data-gen 1 100))
 (def small-fat-data  (data-gen 100 10))
 (def big-fat-data    (data-gen 100 100))
+(def media-url (str (:api-url @shared/app-state) "files"))
 
 ;; TESTS
 
@@ -90,14 +90,14 @@
             revised-record (first integrated-data)]
         (is (= (-> revised-record (get "historic_photo") :download_url)
                (url
-                base-uri
-                "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+                media-url
+                "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is (=
              (-> revised-record (get "historic_photo") :small_download_url)
              (url
-              base-uri
+              media-url
               (str
-               "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
+               "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
                "&suffix=small"))))))
     (testing "data with no images doesn't get touched"
       (let [form [{:type "string" :name "historic_photo"
@@ -133,11 +133,11 @@
          (= (-> revised-record (get "repeat") first (get "repeat/photo1")
                 :download_url)
             (url
-             base-uri
-             "files/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+             media-url
+             "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is
          (= (-> revised-record (get "repeat") first (get "repeat/photo2")
                 :download_url)
             (url
-             base-uri
-             "files/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))
+             media-url
+             "287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))
