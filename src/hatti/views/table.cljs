@@ -113,7 +113,7 @@
        :enableColumnReorder false
        :enableTextSelectionOnCells true
        :rowHeight 40
-       :syncColumnCellResize true})
+       :syncColumnCellResize false})
 
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
