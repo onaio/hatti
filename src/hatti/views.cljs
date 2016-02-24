@@ -51,3 +51,6 @@
 
 ;; PHOTOS PAGE
 (defmulti photos-page view-type-dispatcher)
+
+;; SAVED CHARTS PAGE - temporary
+(defmulti saved-charts-page view-type-dispatcher)

@@ -10,13 +10,14 @@
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
-                                 photos-page overview-page]]
+                                 photos-page overview-page saved-charts-page]]
             [hatti.views.photos]
             [hatti.views.map]
             [hatti.views.table]
             [hatti.views.chart]
             [hatti.views.settings]
             [hatti.views.overview]
+            [hatti.views.saved-charts]
             [hatti.utils :refer [click-fn format pluralize-number]]))
 
 (def dataview-map
@@ -35,6 +36,9 @@
    :chart {:view :chart
            :label "Summary Charts"
            :component chart-page}
+   :saved-charts {:view :saved-charts
+                  :label "Saved Charts"
+                  :component saved-charts-page}
    :settings {:view :settings
               :label "Settings"
               :component settings-page}})
