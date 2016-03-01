@@ -1,3 +1,6 @@
+before_script:
+    - "export JAVA_OPTS=-Xmx512m"
+
 lein: lein2
 language: clojure
 script:
