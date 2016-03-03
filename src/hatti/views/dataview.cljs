@@ -37,7 +37,7 @@
            :label "Summary Charts"
            :component chart-page}
    :saved-charts {:view :saved-charts
-                  :label "Saved Charts"
+                  :label "Dashboard"
                   :component saved-charts-page}
    :settings {:view :settings
               :label "Settings"
