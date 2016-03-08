@@ -102,7 +102,10 @@
     om/IRender
     (render [_]
       (let [{:keys [current all] :as ls} (om/observe owner (language-cursor))
-            update-current #(om/update! ls [:current] %)
+            get-update-handler (fn [language]
+                                 (fn [event]
+                                   (om/update! ls [:current] language)
+                                   (.preventDefault event)))
             stringify #(if (keyword? %) (name %) (str %))]
         (html
          [:div {:class "language-selector-inner"}
@@ -112,7 +115,7 @@
             (if (f/english? current) "EN" (stringify current))]
            [:i {:class "fa fa-angle-down" :style {:margin-left ".5em"}}]
            [:ul {:class "submenu"}
-            (for [l all]
-              [:li [:a {:href "#" :on-click #(update-current l)}
-                    (stringify l)]])]]
+            (for [language all]
+              [:li [:a {:href "#" :on-click (get-update-handler language)}
+                    (stringify language)]])]]
           [:div {:class "divider"}]])))))
