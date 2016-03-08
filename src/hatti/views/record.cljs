@@ -37,6 +37,12 @@
                     #(put! shared/event-chan {event-key new-rank}))
          :class "pure-button btn-default" :href "#"} [:i {:class icon}]]))
 
+(defn submission-revision-history []
+  [:a {:on-click (click-fn
+                   #(put! shared/event-chan {:revision-history true}))
+       :id "revision-history"
+       :class "pure-button btn-transparent" :href "#"} "Revision History"])
+
 (defn submission-closer []
   [:a {:on-click (click-fn
                   #(put! shared/event-chan {:submission-unclicked true}))
@@ -160,6 +166,7 @@
             {:keys [data dataset-info]} cursor
             cur-rank (get data _rank)
             instance-id (get data "_id")
+            has-edits (get data "_editted")
             sdatetime (js/moment (get data "_submission_time"))
             {:keys [top-level-wrap topbar-wrap header-wrap section-wrap
                     submission-info-wrap h4-cls]} (submission-elements view)]
@@ -169,6 +176,9 @@
             (topbar-wrap
              (submission-arrow :left cur-rank view)
              (submission-arrow :right cur-rank view)
+             ;; Only display this button if submission instance has an edit history
+             (when has-edits
+               (submission-revision-history))
              (om/build print-xls-report-btn {:instance-id instance-id
                                              :dataset-info dataset-info})
              (submission-closer))
