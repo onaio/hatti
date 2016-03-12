@@ -34,7 +34,7 @@
            :label "Table"
            :component table-page}
    :chart {:view :chart
-           :label "Summary Charts"
+           :label "Charts"
            :component chart-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
