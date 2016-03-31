@@ -303,6 +303,21 @@
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
+(defn get-table-view-height
+  []
+  (let [body-height (-> "body"
+                        js/document.querySelector
+                        .-clientHeight)
+        main-navigation-height (-> "#dataview-menu"
+                                   js/document.querySelector
+                                   .-clientHeight)
+        tab-navigation-height (-> ".tab-bar"
+                                  js/document.querySelector
+                                  .-clientHeight)]
+    (- body-height
+       (+ main-navigation-height
+          tab-navigation-height))))
+
 (defmethod table-page :default
   [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
