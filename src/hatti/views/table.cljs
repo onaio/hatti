@@ -305,8 +305,7 @@
 
 (defn get-table-view-height
   []
-  (let [body (-> "body"
-                 js/document.querySelector)
+  (let [body (js/document.querySelector "body")
         body-height (.-clientHeight body)
         body-width (.-clientWidth body)
         main-navigation-height (-> "#dataview-menu"
