@@ -318,6 +318,17 @@
        (+ main-navigation-height
           tab-navigation-height))))
 
+(defn set-window-resize-handler
+  [owner]
+  (let [resize-handler (fn [event]
+                         (om/set-state! owner
+                                        :table-view-height
+                                        (get-table-view-height)))]
+    (.addEventListener js/window
+                       "resize"
+                       resize-handler)
+    (om/set-state! owner :resize-handler resize-handler)))
+
 (defmethod table-page :default
   [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
@@ -348,10 +359,17 @@
   (reify
     om/IDidMount
     (did-mount [_]
+      (set-window-resize-handler owner)
       (let [data (get-in app-state [:data])]
         (when-let [[grid dataview]
                    (init-grid! data owner slick-grid-event-handlers)]
           (handle-table-events app-state grid dataview))))
+
+    om/IWillUnmount
+    (will-unmount [_]
+      (.removeEventListener js/window
+                            "resize"
+                            (om/get-state owner :resize-handler)))
 
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
@@ -369,8 +387,8 @@
               (.setItems dataview (clj->js new-data) _id)
               (.render grid))))))
 
-    om/IRender
-    (render [_]
+    om/IRenderState
+    (render-state [_ {:keys [table-view-height]}]
       (let [{:keys [data dataset-info]
              {:keys [prevent-scrolling-in-table-view? submission-clicked]}
              :table-page}
@@ -381,7 +399,8 @@
         (html
          [:div {:class "table-view"
                 :style (when prevent-scrolling-in-table-view?
-                         {:height (get-table-view-height)
+                         {:height (or table-view-height
+                                      (get-table-view-height))
                           :overflow "hidden"})}
           (when (:data submission-clicked)
             (om/build submission-view
