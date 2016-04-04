@@ -1,7 +1,7 @@
-(ns hatti.map.style-test
+(ns hatti.utils.style-test
   (:require-macros [cljs.test :refer [is deftest testing]])
   (:require [clojure.string :refer [join]]
-            [hatti.map.style :refer [customizable-style?
+            [hatti.utils.style :refer [customizable-style?
                                      get-css-rule-map
                                      group-user-defined-colors-by-answer
                                      group-user-defined-styles-by-answer

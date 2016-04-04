@@ -7,7 +7,7 @@
             [hatti.shared :refer [app-state]]
             [hatti.views :refer [map-viewby-legend map-geofield-chooser]]
             [hatti.views.map]
-            [hatti.map.style :refer [grey]]
+            [hatti.utils.style :refer [grey]]
             [hatti.map.utils :as mu]
             [hatti.map.viewby :as vb]
             [hatti.test-utils :refer [new-container! texts owner readonly]]
