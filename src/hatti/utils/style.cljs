@@ -49,8 +49,8 @@
        (apply merge)))
 
 (defn- style-map->color-map
-  [[answer style]]
-  {answer (:color style)})
+  [[answer {:keys [color]}]]
+  {answer color})
 
 (defn group-user-defined-colors-by-answer
   [field]
