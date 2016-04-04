@@ -6,7 +6,7 @@
             [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
-            [hatti.map.style :refer [grey]]
+            [hatti.utils.style :refer [grey]]
             [hatti.map.utils :as mu]
             [hatti.map.viewby :as vb]
             [hatti.shared :as shared]

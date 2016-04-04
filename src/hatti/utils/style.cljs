@@ -1,4 +1,4 @@
-(ns hatti.map.style
+(ns hatti.utils.style
   (:require [clojure.string :refer [join split]]
             [hatti.ona.forms :as form-utils]))
 
