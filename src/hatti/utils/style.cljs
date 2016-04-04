@@ -41,7 +41,7 @@
        (into {})))
 
 (defn group-user-defined-styles-by-answer
-  "Return a map "
+  "Return a map of answer to associated CSS rules"
   [{:keys [children]}]
   (->> children
        (map (fn [{:keys [name appearance]}]
