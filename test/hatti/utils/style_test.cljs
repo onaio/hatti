@@ -2,10 +2,10 @@
   (:require-macros [cljs.test :refer [is deftest testing]])
   (:require [clojure.string :refer [join]]
             [hatti.utils.style :refer [customizable-style?
-                                     get-css-rule-map
-                                     group-user-defined-colors-by-answer
-                                     group-user-defined-styles-by-answer
-                                     user-customizable-styles]]))
+                                       get-css-rule-map
+                                       group-user-defined-colors-by-answer
+                                       group-user-defined-styles-by-answer
+                                       user-customizable-styles]]))
 
 (def customizable-style [(first user-customizable-styles)
                          "style-definition"])
