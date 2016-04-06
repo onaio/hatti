@@ -54,7 +54,8 @@
 (defn- style-map->color-map
   "Returns only the color property of the style map, with the answer as the key"
   [[answer {:keys [color]}]]
-  {answer color})
+  (when color
+    {answer color}))
 
 (defn group-user-defined-colors-by-answer
   "Return a map of answers to their associated colors"
@@ -62,6 +63,9 @@
   (->> field
        group-user-defined-styles-by-answer
        (map style-map->color-map)
+       (remove nil?)
+       seq
+       vec
        (into {})))
 
 (defn field->colors
