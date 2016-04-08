@@ -97,12 +97,12 @@
       (generate-html
        (when value
          [:ul
-          [:li.tooltip
-           [:span.tip-info.right "View"]
+          [:li.tooltip.middle-right
+           [:span.tip-info "View"]
            [:a.view-record
             [:i.fa.fa-clone {:data-id value}]]]
           [:li.tooltip
-           [:span.tip-info.right "Edit"]
+           [:span.tip-info "Edit"]
            [:a.edit-record {:data-id value :target "_blank"
                             :href edit-link}
             [:i.fa.fa-pencil-square-o]]]])))))
@@ -153,13 +153,13 @@
                       :hxl hxl}))]
      (clj->js (conj columns (actions-column owner has-hxl?))))))
 
-(defn- init-sg-pager [grid dataview]
+(defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
     (Pager. dataview
             grid
             (js/jQuery (str "#" pager-id)))))
 
-(defn- resizeColumns [grid]
+(defn resizeColumns [grid]
   (.registerPlugin grid (.AutoColumnSize js/Slick)))
 
 (def sg-options
@@ -390,6 +390,27 @@
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
+(defn get-table-view-height
+  []
+  (- (-> "body"
+         js/document.querySelector
+         .-clientHeight)
+     (-> ".tab-page"
+         js/document.querySelector
+         .getBoundingClientRect
+         .-top)))
+
+(defn set-window-resize-handler
+  [owner]
+  (let [resize-handler (fn [event]
+                         (om/set-state! owner
+                                        :table-view-height
+                                        (get-table-view-height)))]
+    (.addEventListener js/window
+                       "resize"
+                       resize-handler)
+    (om/set-state! owner :resize-handler resize-handler)))
+
 (defmethod table-page :default
   [{{:keys [active]} :views :as app-state}
    owner
@@ -421,21 +442,28 @@
    https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (let [active? (in? active :table)]
     (reify
-      om/IRender
-      (render [_]
-        (let [no-data? (empty? (get-in app-state [:data]))
-              {:keys [num_of_submissions] :as dataset-info}
-              (:dataset-info app-state)
+      om/IRenderState
+      (render-state [_ {:keys [table-view-height]}]
+        (let [{:keys [data dataset-info]
+               {:keys [prevent-scrolling-in-table-view? submission-clicked]}
+               :table-page}
+              app-state
+              {:keys [num_of_submissions]} dataset-info
+              no-data? (empty? data)
               with-info #(merge % {:dataset-info dataset-info})]
           (when active?
             (html
              [:div.table-view
-              (om/build submission-view
-                        (with-info (get-in app-state
-                                           [:table-page :submission-clicked]))
-                        {:opts (merge (select-keys opts
-                                                   #{:delete-record! :role})
-                                      {:view :table})})
+              {:style (when prevent-scrolling-in-table-view?
+                        {:height (or table-view-height
+                                     (get-table-view-height))
+                         :overflow "hidden"})}
+              (when (:data submission-clicked)
+                (om/build submission-view
+                          (with-info submission-clicked)
+                          {:opts (merge
+                                  (select-keys opts #{:delete-record! :role})
+                                  {:view :table})}))
               (om/build table-header app-state)
               [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
@@ -445,10 +473,16 @@
       om/IDidMount
       (did-mount [_]
         (when active?
+          (set-window-resize-handler owner)
           (let [data (get-in app-state [:data])]
             (when-let [[grid dataview]
                        (init-grid! data owner slick-grid-event-handlers)]
               (handle-table-events app-state grid dataview)))))
+      om/IWillUnmount
+      (will-unmount [_]
+        (.removeEventListener js/window
+                              "resize"
+                              (om/get-state owner :resize-handler)))
       om/IWillReceiveProps
       (will-receive-props [_ next-props]
         "Reset SlickGrid data if the table data has changed."

@@ -37,10 +37,22 @@
   "An initial, empty, app-state, which can be modified to change dataviews."
   []
   (atom
-   {:views {:all [:overview :map :table :photos :chart :saved-charts :settings]
+   {:views {:all [:overview
+                  :map
+                  :table
+                  :photos
+                  :chart
+                  :saved-charts
+                  :settings
+                  :dashboard
+                  :report-view
+                  :user-guide]
             :selected :overview
-            :settings {:all [:form-info :settings :basemaps
-                             :integrated-apps :media-files
+            :settings {:all [:form-info
+                             :settings
+                             :basemaps
+                             :integrated-apps
+                             :media-files
                              :xls-reports
                              :service-configuration]
                        :active-tab :form-info

@@ -2,7 +2,9 @@
   (:require [chimera.js-interop :refer [format]]
             [chimera.urls :refer [last-url-param]]
             [clojure.string :as string]
-            [hatti.constants :refer [_submission_time _submitted_by]]))
+            [hatti.constants :refer [_submission_time
+                                     _submitted_by
+                                     _last_edited]]))
 
 ;; CONSTANTS
 (def no-answer "No Answer")
@@ -14,13 +16,24 @@
   {:name _submitted_by :full-name _submitted_by
    :label "Submitted by" :type "text"})
 
-(def extra-submission-details [submission-time-field submitted-by-field])
+(def last_edited
+  {:name _last_edited :full-name _last_edited
+   :label "Last Edited" :type "date"})
+
+(def extra-submission-details [last_edited
+                               submission-time-field
+                               submitted-by-field])
 
 ;; Functions on the FIELD object
 (defn field-type-in-set?
   "Helper function: is the :type of a field among a set of types"
   [types field]
   (contains? types (:type field)))
+
+(defn field-name-in-set?
+  "Helper function: is the :name of a field among a set of names"
+  [names field]
+  (contains? names (:name field)))
 
 (defn group?
   "Checks whether a field in a form (ie, a field) is a group field"
@@ -69,8 +82,18 @@
 
 (defn meta?
   [field]
-  (field-type-in-set? #{"start" "end" "today" "deviceid" "imei" "subscriberid"
-                        "uuid" "instanceID" "simserial" "phonenumber"} field))
+  (or (field-name-in-set? #{"meta" "instanceID"} field)
+      (field-type-in-set? #{"deviceid"
+                            "end"
+                            "imei"
+                            "instanceID"
+                            "phonenumber"
+                            "simserial"
+                            "start"
+                            "subscriberid"
+                            "today"
+                            "uuid"}
+                          field)))
 
 (defn geofield?
   [field]
@@ -118,8 +141,9 @@
   (not (or (note? field) (group? field))))
 
 ;; Formatting helpers
-(defn get-icon [field]
+(defn get-icon
   "Get the icon relevant to the given field (depending on its type)."
+  [field]
   [:i {:class
        (cond
          (text? field)        "fa fa-font"
@@ -176,7 +200,8 @@
                                   (filter #(contains? names (:name %)))
                                   (map #(str "☑ " (get-label % language) " "))
                                   string/join)))
-
+     (time-based? field) (when answer
+                           (-> answer js/moment (.format "LLL")))
      (or (image? field)
          (video? field)) (let [image (:download_url answer)
                                thumb (or (:small_download_url answer) image)
@@ -284,13 +309,15 @@
   [flat-form]
   (remove meta? flat-form))
 
-(defn geofields [flat-form]
+(defn geofields
   "Get just the geofields from the form."
+  [flat-form]
   (filter geofield? flat-form))
 
-(defn default-geofield [flat-form]
+(defn default-geofield
   "From a list of geofields, get the default one to map.
    Implementation: pick first geoshape if any, else pick first geofield."
+  [flat-form]
   (let [repeats (->> flat-form
                      (filter repeat?)
                      flatten)
@@ -305,15 +332,18 @@
 ;; UTILITY: languages
 (defn english? [language] (re-find #"(?i)english" (str language)))
 
-(defn get-languages [form]
+(defn get-languages
   "Get the languages for a given form."
+  [form]
   (:languages (meta form)))
 
-(defn multilingual? [form]
+(defn multilingual?
   "Does this form contain labels in multiple languages?"
+  [form]
   (seq (get-languages form)))
 
-(defn default-lang [languages]
+(defn default-lang
   "Get default language (English or alphabetical first) from within a list."
+  [languages]
   (if-let [eng (first (filter english? languages))]
     eng (first (sort languages))))
