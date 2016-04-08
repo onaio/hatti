@@ -2,7 +2,7 @@
   (:require
    [cljs.test :as test :refer-macros [run-tests] :refer [report]]
    [hatti.test-utils]
-   [hatti.map.style-test]
+   [hatti.utils.style-test]
    [hatti.map.utils-test]
    [hatti.map.viewby-test]
    [hatti.ona.forms-test]
@@ -28,7 +28,7 @@
        (run-tests
         (test/empty-env ::test/default)
         'hatti.test-utils
-        'hatti.map.style-test
+        'hatti.utils.style-test
         'hatti.map.utils-test
         'hatti.map.viewby-test
         'hatti.ona.forms-test

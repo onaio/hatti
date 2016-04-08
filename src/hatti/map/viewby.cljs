@@ -4,7 +4,7 @@
             [hatti.utils :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as form-utils]
-            [hatti.map.style :refer [answer->color grey]]
+            [hatti.utils.style :refer [answer->color grey]]
             [hatti.map.utils :as map-utils]))
 
 ;;;;; MAP

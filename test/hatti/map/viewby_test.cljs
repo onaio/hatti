@@ -2,7 +2,7 @@
   (:require-macros [cljs.test :refer (is deftest testing)])
   (:require [cljs.test :as t]
             [hatti.test-utils :refer [remove-nil ordered-diff]]
-            [hatti.map.style :as style]
+            [hatti.utils.style :as style]
             [hatti.map.viewby :as vb]
             [hatti.views]))
 

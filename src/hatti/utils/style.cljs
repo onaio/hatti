@@ -1,8 +1,10 @@
-(ns hatti.map.style
+(ns hatti.utils.style
   (:require [clojure.string :refer [join split]]
             [hatti.ona.forms :as form-utils]))
 
-(def user-customizable-styles #{"color"})
+(def user-customizable-styles
+  "Set of CSS properties that can be modified by a user"
+  #{"color"})
 
 (def qualitative-palette
   "Saturated qualitative palette from colorbrewer.
@@ -27,6 +29,7 @@
   "#d9d9d9")
 
 (defn customizable-style?
+  "Check if a user can customize a style"
   [[style-name _]]
   (contains? user-customizable-styles style-name))
 
@@ -41,7 +44,7 @@
        (into {})))
 
 (defn group-user-defined-styles-by-answer
-  "Return a map "
+  "Return a map of answer to associated CSS rules"
   [{:keys [children]}]
   (->> children
        (map (fn [{:keys [name appearance]}]
@@ -49,14 +52,20 @@
        (apply merge)))
 
 (defn- style-map->color-map
-  [[answer style]]
-  {answer (:color style)})
+  "Returns only the color property of the style map, with the answer as the key"
+  [[answer {:keys [color]}]]
+  (when color
+    {answer color}))
 
 (defn group-user-defined-colors-by-answer
+  "Return a map of answers to their associated colors"
   [field]
   (->> field
        group-user-defined-styles-by-answer
        (map style-map->color-map)
+       (remove nil?)
+       seq
+       vec
        (into {})))
 
 (defn field->colors
@@ -78,9 +87,11 @@
     (form-utils/select-all? field) (repeat "#f30")))
 
 (defn answer->color
+  "Given a field and set of answers, return a mapping of answer to color
+   defaulting to an inbuilt palette if the field is not a select-one or
+   any of the choices lack an appearance attribute"
   [{:keys [children] :as field} answers]
-  (cond
-    (and (form-utils/select-one? field)
-         (every? :appearance children))
+  (if (and (form-utils/select-one? field)
+           (every? :appearance children))
     (group-user-defined-colors-by-answer field)
-    :else (zipmap answers (field->colors field))))
+    (zipmap answers (field->colors field))))
