@@ -1,6 +1,8 @@
 (ns hatti.views.table
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
+                   [dommy.core :refer [sel]])
   (:require [cljs.core.async :refer [<! chan put! timeout]]
+            [dommy.core :as dommy]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
@@ -82,21 +84,41 @@
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
+(defn button-formatter
+  [row cell value columnDef dataContext]
+  (let [_ (.log js/console value)]
+    (str
+    "<a id='' data-id=" value " title='View' class='view-record'>"
+    "<i class='fa fa-clone'></i></a>"
+    "&nbsp;&nbsp;"
+    "<a id='edit" value "' data-id=" value " "
+    "target='_blank' title='Edit'href='/webform'>"
+    "<i class='fa fa-pencil-square-o'></i></a>")))
+
+(def actions-column
+  {:id "actions" :field _id :type "text"
+   :name "" :toolTip "" :sortable false
+   :formatter button-formatter
+   :headerCssClass ""
+   :cssClass "record-actions"
+   :minWidth 50})
+
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
   ([form get-label? language & {:keys [is-filtered-dataview?]}]
-   (clj->js
-    (for [field (all-fields form :is-filtered-dataview? is-filtered-dataview?)]
-      (let [{:keys [name type full-name]} field
-            label (if get-label? (get-label field language) name)]
-        {:id name :field full-name :type type
-         :name label :toolTip label :sortable true
-         :formatter (partial formatter field language)
-         :headerCssClass (get-column-class field)
-         :cssClass (get-column-class field)
-         :minWidth 50})))))
+   (let [columns (for [field (all-fields form :is-filtered-dataview?
+                                         is-filtered-dataview?)]
+                   (let [{:keys [name type full-name]} field
+                         label (if get-label? (get-label field language) name)]
+                     {:id name :field full-name :type type
+                      :name label :toolTip label :sortable true
+                      :formatter (partial formatter field language)
+                      :headerCssClass (get-column-class field)
+                      :cssClass (get-column-class field)
+                      :minWidth 50}))]
+     (clj->js (conj columns actions-column)))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -217,7 +239,14 @@
                 (.invalidateAllRows grid)
                 (resizeColumns grid)
                 (.render grid)
-                (init-sg-pager grid dataview))))))))
+                (init-sg-pager grid dataview)
+                (doseq [elem (sel :.view-record)]
+                  (dommy/listen! elem :click (fn [e]
+                                               (.preventDefault e)
+                                               (js/alert
+                                                 (.getAttribute
+                                                   (.-target e)
+                                                   "data-id"))))))))))))
 
 (defn- render-options
   [options owner colset!]
