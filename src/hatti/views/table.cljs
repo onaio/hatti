@@ -13,7 +13,8 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
+            [hatti.utils :refer [click-fn hyphen->camel-case
+                                 last-url-param safe-regex url]]
             [cljsjs.slickgrid-with-deps]))
 
 (def default-num-displayed-records 25)
@@ -86,7 +87,13 @@
 
 (defn button-formatter
   [row cell value columnDef dataContext]
-  (let [edit-link "/webform"]
+  (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
+        form-owner (last-url-param owner)
+        project-id (last-url-param project)
+        edit-link (str "/"
+                       (url form-owner project-id formid
+                            "webform?instance-id=")
+                        value)]
     (str
       "<a title='View'>"
       "<i class='fa fa-clone' data-id="value"></i></a>"
