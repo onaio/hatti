@@ -86,14 +86,13 @@
 
 (defn button-formatter
   [row cell value columnDef dataContext]
-  (let [_ (.log js/console value)]
+  (let [edit-link "/webform"]
     (str
-    "<a id='' data-id=" value " title='View' class='view-record'>"
-    "<i class='fa fa-clone'></i></a>"
-    "&nbsp;&nbsp;"
-    "<a id='edit" value "' data-id=" value " "
-    "target='_blank' title='Edit'href='/webform'>"
-    "<i class='fa fa-pencil-square-o'></i></a>")))
+      "<a title='View'>"
+      "<i class='fa fa-clone' data-id="value"></i></a>"
+      "&nbsp;&nbsp;"
+      "<a title='Edit' data-id="value" target='_blank' href='"edit-link"'>"
+      "<i class='fa fa-pencil-square-o'></i></a>")))
 
 (def actions-column
   {:id "actions" :field _id :type "text"
@@ -187,6 +186,19 @@
                                    _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
 
+    (.subscribe (.-onClick grid)
+                (fn [e args]
+                  (let [elem (.-target e)
+                        row (.getItem dataview (aget args "row"))
+                        elem-data-id (.getAttribute elem "data-id")
+                        data-id (when elem-data-id
+                                  (js/parseInt (.getAttribute elem "data-id")))
+                        id  (aget row _id)
+                        rank (aget row _rank)]
+                    (when (= id data-id)
+                      (put! shared/event-chan
+                            {:submission-to-rank rank})))))
+
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
@@ -239,14 +251,7 @@
                 (.invalidateAllRows grid)
                 (resizeColumns grid)
                 (.render grid)
-                (init-sg-pager grid dataview)
-                (doseq [elem (sel :.view-record)]
-                  (dommy/listen! elem :click (fn [e]
-                                               (.preventDefault e)
-                                               (js/alert
-                                                 (.getAttribute
-                                                   (.-target e)
-                                                   "data-id"))))))))))))
+                (init-sg-pager grid dataview))))))))
 
 (defn- render-options
   [options owner colset!]
