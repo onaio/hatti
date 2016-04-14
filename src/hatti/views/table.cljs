@@ -1,8 +1,6 @@
 (ns hatti.views.table
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
-                   [dommy.core :refer [sel]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan put! timeout]]
-            [dommy.core :as dommy]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
@@ -93,13 +91,13 @@
         edit-link (str "/"
                        (url form-owner project-id formid
                             "webform?instance-id=")
-                        value)]
+                       value)]
     (str
-      "<a title='View'>"
-      "<i class='fa fa-clone' data-id="value"></i></a>"
-      "&nbsp;&nbsp;"
-      "<a title='Edit' data-id="value" target='_blank' href='"edit-link"'>"
-      "<i class='fa fa-pencil-square-o'></i></a>")))
+     "<a title='View'>"
+     "<i class='fa fa-clone' data-id=" value "></i></a>"
+     "&nbsp;&nbsp;"
+     "<a title='Edit' data-id=" value " target='_blank' href='" edit-link "'>"
+     "<i class='fa fa-pencil-square-o'></i></a>")))
 
 (def actions-column
   {:id "actions" :field _id :type "text"
