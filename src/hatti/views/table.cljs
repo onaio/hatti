@@ -141,6 +141,23 @@
        :rowHeight 40
        :syncColumnCellResize false})
 
+(defn freeze-action-column!
+  "Fixes the first column on slick table on horizontal scroll"
+  []
+  (let [actions (.getElementsByClassName js/document "record-actions")
+        sg-viewport (first (.getElementsByClassName js/document
+                                                    "slick-viewport"))]
+
+    (doseq [action actions]
+      (let [leftOffset (js/parseInt (.-offsetLeft action))]
+        (.addEventListener sg-viewport "scroll"
+                           (fn []
+                             (set! (.-left (.-style action))
+
+                                   (str (+ (.-scrollLeft  sg-viewport)
+                                           leftOffset)
+                                        "px"))))))))
+
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
   (doall
@@ -340,6 +357,7 @@
                                    slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
+      (freeze-action-column!)
       [grid dataview])))
 
 (defmethod table-page :default
