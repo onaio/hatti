@@ -89,16 +89,15 @@
       (let [integrated-data (post-process/integrate-attachments form data)
             revised-record (first integrated-data)]
         (is (= (-> revised-record (get "historic_photo") :download_url)
-               (url
+               (str
                 media-url
-                "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+                "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is (=
              (-> revised-record (get "historic_photo") :small_download_url)
-             (url
+             (str
               media-url
-              (str
-               "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
-               "&suffix=small"))))))
+              "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
+              "&suffix=small")))))
     (testing "data with no images doesn't get touched"
       (let [form [{:type "string" :name "historic_photo"
                    :full-name "historic_photo"}
@@ -132,12 +131,12 @@
         (is
          (= (-> revised-record (get "repeat") first (get "repeat/photo1")
                 :download_url)
-            (url
+            (str
              media-url
-             "287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+             "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
         (is
          (= (-> revised-record (get "repeat") first (get "repeat/photo2")
                 :download_url)
-            (url
+            (str
              media-url
-             "287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))
+             "/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))

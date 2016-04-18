@@ -102,10 +102,9 @@
                           (:dataset-info @shared/app-state)
                           form-owner (last-url-param owner)
                           project-id (last-url-param project)
-                          edit-link (str "/"
-                                         (url form-owner project-id formid
-                                              "webform?instance-id=")
-                                         (get d "_id"))]
+                          edit-link (url form-owner project-id formid
+                                         (str "webform?instance-id="
+                                              (get d "_id")))]
                       edit-link))]
 
     (testing "empty table shows 'No data'"
@@ -121,7 +120,7 @@
       (is (= (htexts table) (htitles table))))
 
     (testing "actions column is rendered"
-      (is (= (count (sel table :.record-actions))
+      (is (= (-> (sel table :.record-actions) count dec)
              (count small-thin-data)))
       ;; view submission icons are rendered with correct data-id
       (is (every? (set (map #(get % "_id") small-thin-data))

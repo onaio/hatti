@@ -88,10 +88,8 @@
   (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
         form-owner (last-url-param owner)
         project-id (last-url-param project)
-        edit-link (str "/"
-                       (url form-owner project-id formid
-                            "webform?instance-id=")
-                       value)]
+        edit-link (url form-owner project-id formid
+                       (str "webform?instance-id=" value))]
     (str
      "<a title='View' class='view-record'>"
      "<i class='fa fa-clone' data-id=" value "></i></a>"
