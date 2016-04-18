@@ -93,10 +93,11 @@
                             "webform?instance-id=")
                        value)]
     (str
-     "<a title='View'>"
+     "<a title='View' class='view-record'>"
      "<i class='fa fa-clone' data-id=" value "></i></a>"
      "&nbsp;&nbsp;"
-     "<a title='Edit' data-id=" value " target='_blank' href='" edit-link "'>"
+     "<a title='Edit' class='edit-record' data-id=" value " target='_blank'
+     href='" edit-link "'>"
      "<i class='fa fa-pencil-square-o'></i></a>")))
 
 (def actions-column

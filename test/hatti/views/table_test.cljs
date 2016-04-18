@@ -11,6 +11,7 @@
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
                                        fat-form small-fat-data]]
+            [hatti.utils :refer [last-url-param url]]
             [hatti.utils.om.state :refer [merge-into-app-state!]]))
 
 ;; SLICKGRID HELPER TESTS
@@ -95,7 +96,17 @@
         ;; get title attributes and texts out of the header row
         ths #(sel (sel1 % :.slick-header-columns) :.slick-header-column)
         htexts (fn [table] (->> table ths (map dommy/text)))
-        htitles (fn [table] (->> table ths (map #(dommy/attr % :title))))]
+        htitles (fn [table] (->> table ths (map #(dommy/attr % :title))))
+        edit-urls (fn [d]
+                    (let [{:keys [owner project formid]}
+                          (:dataset-info @shared/app-state)
+                          form-owner (last-url-param owner)
+                          project-id (last-url-param project)
+                          edit-link (str "/"
+                                         (url form-owner project-id formid
+                                              "webform?instance-id=")
+                                         (get d "_id"))]
+                      edit-link))]
 
     (testing "empty table shows 'No data'"
       (let [empty-table (table-container no-data thin-form owner)]
@@ -107,4 +118,16 @@
                   (->> thin-form (map :label)))))
 
     (testing "all table headers have title attributes"
-      (is (= (htexts table) (htitles table))))))
+      (is (= (htexts table) (htitles table))))
+
+    (testing "actions column is rendered"
+      (is (= (count (sel table :.record-actions))
+             (count small-thin-data)))
+      ;; view submission icons are rendered with correct data-id
+      (is (every? (set (map #(get % "_id") small-thin-data))
+                  (map #(int (dommy/attr % :data-id))
+                       (sel table [:.record-actions :.view-record :i]))))
+      ;; edit submission urls are rendered correctly
+      (is (every? (set (map edit-urls small-thin-data))
+                  (map #(dommy/attr % :href)
+                       (sel table [:.record-actions :.edit-record])))))))
