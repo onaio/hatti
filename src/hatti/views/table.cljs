@@ -104,7 +104,7 @@
   {:id "actions" :field _id :type "text"
    :name "" :toolTip "" :sortable false
    :formatter button-formatter
-   :headerCssClass ""
+   :headerCssClass "record-actions header"
    :cssClass "record-actions"
    :minWidth 50})
 
@@ -358,7 +358,6 @@
                                    slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
-      (freeze-action-column!)
       [grid dataview])))
 
 (defmethod table-page :default
@@ -428,4 +427,5 @@
             (do ; data has changed
               (.invalidateAllRows grid)
               (.setItems dataview (clj->js new-data) _id)
-              (.render grid))))))))
+              (.render grid))))
+        (freeze-action-column!)))))
