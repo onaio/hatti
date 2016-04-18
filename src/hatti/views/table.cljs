@@ -11,7 +11,7 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn hyphen->camel-case
+            [hatti.utils :refer [click-fn generate-html hyphen->camel-case
                                  last-url-param safe-regex url]]
             [cljsjs.slickgrid-with-deps]))
 
@@ -90,13 +90,13 @@
         project-id (last-url-param project)
         edit-link (url form-owner project-id formid
                        (str "webform?instance-id=" value))]
-    (str
-     "<a title='View' class='view-record'>"
-     "<i class='fa fa-clone' data-id=" value "></i></a>"
+    (generate-html
+     [:a.view-record {:title "View"}
+      [:i.fa.fa-clone {:data-id value}]]
      "&nbsp;&nbsp;"
-     "<a title='Edit' class='edit-record' data-id=" value " target='_blank'
-     href='" edit-link "'>"
-     "<i class='fa fa-pencil-square-o'></i></a>")))
+     [:a.edit-record {:data-id value :target "_blank" :title "Edit"
+                      :href edit-link}
+      [:i.fa.fa-pencil-square-o]])))
 
 (def actions-column
   {:id "actions" :field _id :type "text"
@@ -146,13 +146,11 @@
   (let [actions (.getElementsByClassName js/document "record-actions")
         sg-viewport (first (.getElementsByClassName js/document
                                                     "slick-viewport"))]
-
     (doseq [action actions]
       (let [leftOffset (js/parseInt (.-offsetLeft action))]
         (.addEventListener sg-viewport "scroll"
                            (fn []
                              (set! (.-left (.-style action))
-
                                    (str (+ (.-scrollLeft  sg-viewport)
                                            leftOffset)
                                         "px"))))))))
