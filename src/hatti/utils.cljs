@@ -2,7 +2,8 @@
   (:require [clojure.string :refer [join lower-case split upper-case replace]]
             [goog.string.format]
             [goog.string]
-            [inflections.core :refer [plural]]))
+            [inflections.core :refer [plural]]
+            [sablono.core :as html :refer-macros [html]]))
 
 (defn url [& args] (str "/" (join "/" (remove nil? args))))
 
@@ -76,3 +77,21 @@
            #"(-)(.)"
            #(let [[_ _ letter-to-uppercase] %]
               (upper-case letter-to-uppercase))))
+
+(defn- generate-component
+  [element-definition-vector]
+  (html element-definition-vector))
+
+(defn generate-html
+  "This function generates HTML from hiccup-style vectors, and concatenates
+  the resulting markup. Strings are returned unaffected."
+  [& element-definition-vectors]
+  (let [components (map generate-component element-definition-vectors)
+        components-as-static-markup (map
+                                     (fn
+                                       [component]
+                                       (if (string? component)
+                                         component
+                                         (html/render-static component)))
+                                     components)]
+    (join components-as-static-markup)))
