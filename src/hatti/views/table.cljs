@@ -370,6 +370,21 @@
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
+(defn get-table-view-height
+  []
+  (let [body-height (-> "body"
+                        js/document.querySelector
+                        .-clientHeight)
+        main-navigation-height (-> "#dataview-menu"
+                                   js/document.querySelector
+                                   .-clientHeight)
+        tab-navigation-height (-> ".tab-bar"
+                                  js/document.querySelector
+                                  .-clientHeight)]
+    (- body-height
+       (+ main-navigation-height
+          tab-navigation-height))))
+
 (defmethod table-page :default
   [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
@@ -398,19 +413,25 @@
    in the SlickGrid documentation for event handlers.
    https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (reify
-    om/IRenderState
-    (render-state [_ _]
-      (let [no-data? (empty? (get-in app-state [:data]))
-            {:keys [num_of_submissions] :as dataset-info}
-            (:dataset-info app-state)
+    om/IRender
+    (render [_]
+      (let [{:keys [data dataset-info]
+             {:keys [prevent-scrolling-in-table-view? submission-clicked]}
+             :table-page}
+            app-state
+            {:keys [num_of_submissions]} dataset-info
+            no-data? (empty? data)
             with-info #(merge % {:dataset-info dataset-info})]
         (html
-         [:div.table-view
-          (om/build submission-view
-                    (with-info (get-in app-state
-                                       [:table-page :submission-clicked]))
-                    {:opts (merge (select-keys opts #{:delete-record! :role})
-                                  {:view :table})})
+         [:div {:class "table-view"
+                :style (when prevent-scrolling-in-table-view?
+                         {:height (get-table-view-height)
+                          :overflow "hidden"})}
+          (when (:data submission-clicked)
+            (om/build submission-view
+                      (with-info submission-clicked)
+                      {:opts (merge (select-keys opts #{:delete-record! :role})
+                                    {:view :table})}))
           (om/build table-header app-state)
           [:div {:id table-id :class "slickgrid"}
            (if (and no-data? (zero? num_of_submissions))
