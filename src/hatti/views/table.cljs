@@ -204,7 +204,6 @@
                   (let [rank (aget (.getItem dataview (aget args "row"))
                                    _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
-
     (.subscribe (.-onClick grid)
                 (fn [e args]
                   (let [elem (.-target e)
@@ -217,6 +216,9 @@
                     (when (= id data-id)
                       (put! shared/event-chan
                             {:submission-to-rank rank})))))
+    (.subscribe (.-onColumnsResized grid)
+                (fn [e args]
+                  (freeze-action-column!)))
 
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
