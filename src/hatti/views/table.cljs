@@ -112,7 +112,7 @@
    :formatter (action-buttons owner)
    :headerCssClass "record-actions header"
    :cssClass "record-actions"
-   :minWidth 50})
+   :maxWidth 70})
 
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
