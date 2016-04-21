@@ -83,7 +83,7 @@
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
-(defn button-formatter
+(defn action-buttons
   [row cell value columnDef dataContext]
   (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
         form-owner (last-url-param owner)
@@ -91,17 +91,22 @@
         edit-link (url form-owner project-id formid
                        (str "webform?instance-id=" value))]
     (generate-html
-     [:a.view-record {:title "View"}
-      [:i.fa.fa-clone {:data-id value}]]
-     "&nbsp;&nbsp;"
-     [:a.edit-record {:data-id value :target "_blank" :title "Edit"
-                      :href edit-link}
-      [:i.fa.fa-pencil-square-o]])))
+     (when value
+       [:ul
+        [:li.tooltip
+         [:span.tip-info "View"]
+         [:a.view-record
+          [:i.fa.fa-clone {:data-id value}]]]
+        [:li.tooltip
+         [:span.tip-info "Edit"]
+         [:a.edit-record {:data-id value :target "_blank"
+                          :href edit-link}
+          [:i.fa.fa-pencil-square-o]]]]))))
 
 (def actions-column
   {:id "actions" :field _id :type "text"
    :name "" :toolTip "" :sortable false
-   :formatter button-formatter
+   :formatter action-buttons
    :headerCssClass "record-actions header"
    :cssClass "record-actions"
    :minWidth 50})
@@ -150,10 +155,15 @@
       (let [leftOffset (js/parseInt (.-offsetLeft action))]
         (.addEventListener sg-viewport "scroll"
                            (fn []
-                             (set! (.-left (.-style action))
-                                   (str (+ (.-scrollLeft  sg-viewport)
-                                           leftOffset)
-                                        "px"))))))))
+                             (let [sl (.-scrollLeft  sg-viewport)
+                                   set-border! #(set!
+                                                 (.-borderRight
+                                                  (.-style action)) %)]
+                               (if (zero? sl)
+                                 (set-border! "1px dotted #ededed")
+                                 (set-border! "1px solid silver"))
+                               (set! (.-left (.-style action))
+                                     (str (+ sl leftOffset) "px")))))))))
 
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
