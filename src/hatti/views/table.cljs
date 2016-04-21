@@ -7,7 +7,8 @@
             [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as forms
              :refer [get-label format-answer get-column-class]]
-            [hatti.views :refer [table-page table-header table-search
+            [hatti.views :refer [action-buttons
+                                 table-page table-header table-search
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
@@ -83,30 +84,32 @@
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
-(defn action-buttons
-  [row cell value columnDef dataContext]
-  (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
-        form-owner (last-url-param owner)
-        project-id (last-url-param project)
-        edit-link (url form-owner project-id formid
-                       (str "webform?instance-id=" value))]
-    (generate-html
-     (when value
-       [:ul
-        [:li.tooltip
-         [:span.tip-info "View"]
-         [:a.view-record
-          [:i.fa.fa-clone {:data-id value}]]]
-        [:li.tooltip
-         [:span.tip-info "Edit"]
-         [:a.edit-record {:data-id value :target "_blank"
-                          :href edit-link}
-          [:i.fa.fa-pencil-square-o]]]]))))
+(defmethod action-buttons :default
+  [owner]
+  (fn [row cell value columnDef dataContext]
+    (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
+          form-owner (last-url-param owner)
+          project-id (last-url-param project)
+          edit-link (url form-owner project-id formid
+                         (str "webform?instance-id=" value))]
+      (generate-html
+       (when value
+         [:ul
+          [:li.tooltip
+           [:span.tip-info "View"]
+           [:a.view-record
+            [:i.fa.fa-clone {:data-id value}]]]
+          [:li.tooltip
+           [:span.tip-info "Edit"]
+           [:a.edit-record {:data-id value :target "_blank"
+                            :href edit-link}
+            [:i.fa.fa-pencil-square-o]]]])))))
 
-(def actions-column
+(defn actions-column
+  [owner]
   {:id "actions" :field _id :type "text"
    :name "" :toolTip "" :sortable false
-   :formatter action-buttons
+   :formatter (action-buttons owner)
    :headerCssClass "record-actions header"
    :cssClass "record-actions"
    :minWidth 50})
@@ -115,7 +118,7 @@
   "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language & {:keys [is-filtered-dataview?]}]
+  ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
    (let [columns (for [field (all-fields form :is-filtered-dataview?
                                          is-filtered-dataview?)]
                    (let [{:keys [name type full-name]} field
@@ -126,7 +129,7 @@
                       :headerCssClass (get-column-class field)
                       :cssClass (get-column-class field)
                       :minWidth 50}))]
-     (clj->js (conj columns actions-column)))))
+     (clj->js (conj columns (actions-column owner))))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -185,11 +188,12 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form  current-language is-filtered-dataview?
+  [data form current-language is-filtered-dataview? owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
   (let [columns (flat-form->sg-columns
                  form true current-language
-                 :is-filtered-dataview? is-filtered-dataview?)
+                 :is-filtered-dataview? is-filtered-dataview?
+                 :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -363,6 +367,7 @@
                                    flat-form
                                    current-language
                                    is-filtered-dataview?
+                                   owner
                                    slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)
