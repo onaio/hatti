@@ -230,9 +230,6 @@
                     (when (= id data-id)
                       (put! shared/event-chan
                             {:submission-to-rank rank})))))
-    (.subscribe (.-onColumnsResized grid)
-                (fn [e args]
-                  (freeze-action-column!)))
 
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
@@ -440,5 +437,4 @@
             (do ; data has changed
               (.invalidateAllRows grid)
               (.setItems dataview (clj->js new-data) _id)
-              (.render grid))))
-        (freeze-action-column!)))))
+              (.render grid))))))))
