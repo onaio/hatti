@@ -19,13 +19,21 @@
 (deftest slickgrid-helpers-work
   (let [flat-form (-> fat-form)
         slickgrid-cols (-> flat-form tv/all-fields tv/flat-form->sg-columns
-                           (js->clj :keywordize-keys true))]
+                           (js->clj :keywordize-keys true))
+        first-col (first slickgrid-cols)]
     (testing "slickgrid columns have the right types"
-      (doseq [col slickgrid-cols]
+      (doseq [col (rest slickgrid-cols)]
         (is (every? #{:id :name :field :sortable :toolTip :type :formatter
                       :headerCssClass :minWidth :cssClass}
                     (set (keys col))))
         (is (= (:name col) (:toolTip col)))))
+
+    (testing "slickgrid action column has the right types"
+      (is (every? #{:id :name :field :sortable :toolTip :type :formatter
+                    :headerCssClass :maxWidth :cssClass}
+                  (set (keys first-col)))
+
+          (is (= (:name first-col) (:toolTip first-col)))))
     (testing "compfn works on submission-time"
       (let [submission-col (->> slickgrid-cols
                                 (filter #(= (:id %) "_submission_time"))
