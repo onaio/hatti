@@ -10,7 +10,8 @@
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
-                                 photos-page overview-page saved-charts-page]]
+                                 photos-page overview-page saved-charts-page
+                                 user-guide-page]]
             [hatti.views.photos]
             [hatti.views.map]
             [hatti.views.table]
@@ -18,6 +19,7 @@
             [hatti.views.settings]
             [hatti.views.overview]
             [hatti.views.saved-charts]
+            [hatti.views.user-guide]
             [hatti.utils :refer [click-fn format pluralize-number]]))
 
 (def dataview-map
@@ -41,7 +43,10 @@
                   :component saved-charts-page}
    :settings {:view :settings
               :label "Settings"
-              :component settings-page}})
+              :component settings-page}
+   :user-guide {:view :user-guide
+                :label "User Guide"
+                :component user-guide-page}})
 
 (defmethod dataview-actions :default
   [cursor owner]
