@@ -54,3 +54,6 @@
 
 ;; SAVED CHARTS PAGE - temporary
 (defmulti saved-charts-page view-type-dispatcher)
+
+;; USER GUIDE PAGE
+(defmulti user-guide-page view-type-dispatcher)
