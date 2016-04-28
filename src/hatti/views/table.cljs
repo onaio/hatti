@@ -96,11 +96,11 @@
        (when value
          [:ul
           [:li.tooltip
-           [:span.tip-info "View"]
+           [:span.tip-info.right "View"]
            [:a.view-record
             [:i.fa.fa-clone {:data-id value}]]]
           [:li.tooltip
-           [:span.tip-info "Edit"]
+           [:span.tip-info.right "Edit"]
            [:a.edit-record {:data-id value :target "_blank"
                             :href edit-link}
             [:i.fa.fa-pencil-square-o]]]])))))
