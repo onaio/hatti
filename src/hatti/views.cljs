@@ -34,6 +34,9 @@
 (defmulti label-changer view-type-dispatcher)
 (defmulti action-buttons view-type-fn-dispatcher)
 
+;; MAP TABLE
+(defmulti map-table-page view-type-dispatcher)
+
 ;; CHART
 (defmulti chart-page view-type-dispatcher)
 (defmulti chart-chooser view-type-dispatcher)
