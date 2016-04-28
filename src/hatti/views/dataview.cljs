@@ -40,7 +40,7 @@
            :label "Charts"
            :component chart-page}
    :map-table {:view :map-table
-               :label "Field Monitoring Report"
+               :label "Reports"
                :component map-table-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
