@@ -372,31 +372,13 @@
 
 (defn get-table-view-height
   []
-  (let [body (js/document.querySelector "body")
-        body-height (.-clientHeight body)
-        body-width (.-clientWidth body)
-        main-navigation-height (-> "#dataview-menu"
-                                   js/document.querySelector
-                                   .-clientHeight)
-        tab-navigation-height (-> ".tab-bar a.clicked"
-                                  js/document.querySelector
-                                  .-clientHeight)
-        record-summary-container-height
-        (-> ".tab-bar .rec-summary"
-            js/document.querySelector
-            .-clientHeight)
-        tablet-width 1024
-        phablet-width 704
-        submission-view-y-top-offset 2]
-    (- body-height
-       (+ main-navigation-height
-          tab-navigation-height
-          (if (> body-width phablet-width)
-            0
-            tab-navigation-height)
-          (if (> body-width tablet-width)
-            0
-            submission-view-y-top-offset)))))
+  (- (-> "body"
+         js/document.querySelector
+         .-clientHeight)
+     (-> ".tab-page"
+         js/document.querySelector
+         .getBoundingClientRect
+         .-top)))
 
 (defn set-window-resize-handler
   [owner]
