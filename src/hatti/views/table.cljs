@@ -7,11 +7,13 @@
             [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as forms
              :refer [get-label format-answer get-column-class]]
-            [hatti.views :refer [table-page table-header table-search
+            [hatti.views :refer [action-buttons
+                                 table-page table-header table-search
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn hyphen->camel-case safe-regex]]
+            [hatti.utils :refer [click-fn generate-html hyphen->camel-case
+                                 last-url-param safe-regex url]]
             [cljsjs.slickgrid-with-deps]))
 
 (def default-num-displayed-records 25)
@@ -82,21 +84,52 @@
   (let [clj-value (js->clj value :keywordize-keys true)]
     (forms/format-answer field clj-value language true)))
 
+(defmethod action-buttons :default
+  [owner]
+  (fn [row cell value columnDef dataContext]
+    (let [{:keys [owner project formid]} (:dataset-info @shared/app-state)
+          form-owner (last-url-param owner)
+          project-id (last-url-param project)
+          edit-link (url form-owner project-id formid
+                         (str "webform?instance-id=" value))]
+      (generate-html
+       (when value
+         [:ul
+          [:li.tooltip
+           [:span.tip-info.right "View"]
+           [:a.view-record
+            [:i.fa.fa-clone {:data-id value}]]]
+          [:li.tooltip
+           [:span.tip-info.right "Edit"]
+           [:a.edit-record {:data-id value :target "_blank"
+                            :href edit-link}
+            [:i.fa.fa-pencil-square-o]]]])))))
+
+(defn actions-column
+  [owner]
+  {:id "actions" :field _id :type "text"
+   :name "" :toolTip "" :sortable false
+   :formatter (action-buttons owner)
+   :headerCssClass "record-actions header"
+   :cssClass "record-actions"
+   :maxWidth 70})
+
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language & {:keys [is-filtered-dataview?]}]
-   (clj->js
-    (for [field (all-fields form :is-filtered-dataview? is-filtered-dataview?)]
-      (let [{:keys [name type full-name]} field
-            label (if get-label? (get-label field language) name)]
-        {:id name :field full-name :type type
-         :name label :toolTip label :sortable true
-         :formatter (partial formatter field language)
-         :headerCssClass (get-column-class field)
-         :cssClass (get-column-class field)
-         :minWidth 50})))))
+  ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
+   (let [columns (for [field (all-fields form :is-filtered-dataview?
+                                         is-filtered-dataview?)]
+                   (let [{:keys [name type full-name]} field
+                         label (if get-label? (get-label field language) name)]
+                     {:id name :field full-name :type type
+                      :name label :toolTip label :sortable true
+                      :formatter (partial formatter field language)
+                      :headerCssClass (get-column-class field)
+                      :cssClass (get-column-class field)
+                      :minWidth 50}))]
+     (clj->js (conj columns (actions-column owner))))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -114,6 +147,26 @@
        :enableTextSelectionOnCells true
        :rowHeight 40
        :syncColumnCellResize false})
+
+(defn freeze-action-column!
+  "Fixes the first column on slick table on horizontal scroll"
+  []
+  (let [actions (.getElementsByClassName js/document "record-actions")
+        sg-viewport (first (.getElementsByClassName js/document
+                                                    "slick-viewport"))]
+    (doseq [action actions]
+      (let [leftOffset (js/parseInt (.-offsetLeft action))]
+        (.addEventListener sg-viewport "scroll"
+                           (fn []
+                             (let [sl (.-scrollLeft  sg-viewport)
+                                   set-border! #(set!
+                                                 (.-borderRight
+                                                  (.-style action)) %)]
+                               (if (zero? sl)
+                                 (set-border! "1px dotted #ededed")
+                                 (set-border! "1px solid silver"))
+                               (set! (.-left (.-style action))
+                                     (str (+ sl leftOffset) "px")))))))))
 
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
@@ -135,11 +188,12 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form  current-language is-filtered-dataview?
+  [data form current-language is-filtered-dataview? owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
   (let [columns (flat-form->sg-columns
                  form true current-language
-                 :is-filtered-dataview? is-filtered-dataview?)
+                 :is-filtered-dataview? is-filtered-dataview?
+                 :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
@@ -164,6 +218,18 @@
                   (let [rank (aget (.getItem dataview (aget args "row"))
                                    _rank)]
                     (put! shared/event-chan {:submission-to-rank rank}))))
+    (.subscribe (.-onClick grid)
+                (fn [e args]
+                  (let [elem (.-target e)
+                        row (.getItem dataview (aget args "row"))
+                        elem-data-id (.getAttribute elem "data-id")
+                        data-id (when elem-data-id
+                                  (js/parseInt (.getAttribute elem "data-id")))
+                        id  (aget row _id)
+                        rank (aget row _rank)]
+                    (when (= id data-id)
+                      (put! shared/event-chan
+                            {:submission-to-rank rank})))))
 
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
@@ -298,6 +364,7 @@
                                    flat-form
                                    current-language
                                    is-filtered-dataview?
+                                   owner
                                    slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
       (om/set-state! owner :dataview dataview)

@@ -11,6 +11,7 @@
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
                                        fat-form small-fat-data]]
+            [hatti.utils :refer [last-url-param url]]
             [hatti.utils.om.state :refer [merge-into-app-state!]]))
 
 ;; SLICKGRID HELPER TESTS
@@ -18,13 +19,21 @@
 (deftest slickgrid-helpers-work
   (let [flat-form (-> fat-form)
         slickgrid-cols (-> flat-form tv/all-fields tv/flat-form->sg-columns
-                           (js->clj :keywordize-keys true))]
+                           (js->clj :keywordize-keys true))
+        first-col (first slickgrid-cols)]
     (testing "slickgrid columns have the right types"
-      (doseq [col slickgrid-cols]
+      (doseq [col (rest slickgrid-cols)]
         (is (every? #{:id :name :field :sortable :toolTip :type :formatter
                       :headerCssClass :minWidth :cssClass}
                     (set (keys col))))
         (is (= (:name col) (:toolTip col)))))
+
+    (testing "slickgrid action column has the right types"
+      (is (every? #{:id :name :field :sortable :toolTip :type :formatter
+                    :headerCssClass :maxWidth :cssClass}
+                  (set (keys first-col)))
+
+          (is (= (:name first-col) (:toolTip first-col)))))
     (testing "compfn works on submission-time"
       (let [submission-col (->> slickgrid-cols
                                 (filter #(= (:id %) "_submission_time"))
@@ -95,7 +104,16 @@
         ;; get title attributes and texts out of the header row
         ths #(sel (sel1 % :.slick-header-columns) :.slick-header-column)
         htexts (fn [table] (->> table ths (map dommy/text)))
-        htitles (fn [table] (->> table ths (map #(dommy/attr % :title))))]
+        htitles (fn [table] (->> table ths (map #(dommy/attr % :title))))
+        edit-urls (fn [d]
+                    (let [{:keys [owner project formid]}
+                          (:dataset-info @shared/app-state)
+                          form-owner (last-url-param owner)
+                          project-id (last-url-param project)
+                          edit-link (url form-owner project-id formid
+                                         (str "webform?instance-id="
+                                              (get d "_id")))]
+                      edit-link))]
 
     (testing "empty table shows 'No data'"
       (let [empty-table (table-container no-data thin-form owner)]
@@ -107,4 +125,16 @@
                   (->> thin-form (map :label)))))
 
     (testing "all table headers have title attributes"
-      (is (= (htexts table) (htitles table))))))
+      (is (= (htexts table) (htitles table))))
+
+    (testing "actions column is rendered"
+      (is (= (-> (sel table :.record-actions) count dec)
+             (count small-thin-data)))
+      ;; view submission icons are rendered with correct data-id
+      (is (every? (set (map #(get % "_id") small-thin-data))
+                  (map #(int (dommy/attr % :data-id))
+                       (sel table [:.record-actions :.view-record :i]))))
+      ;; edit submission urls are rendered correctly
+      (is (every? (set (map edit-urls small-thin-data))
+                  (map #(dommy/attr % :href)
+                       (sel table [:.record-actions :.edit-record])))))))

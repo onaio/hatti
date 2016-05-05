@@ -3,4 +3,4 @@
             [hatti.shared :refer [app-state]]))
 
 (defn media-url [id fname]
-  (url (str (:api-url @app-state) "files") (format "%s?filename=%s" id fname)))
+  (str (:api-url @app-state) "files" (url (format "%s?filename=%s" id fname))))

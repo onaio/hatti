@@ -5,6 +5,9 @@
 (def view-type-dispatcher
   (fn [_ owner & args] (om/get-shared owner :view-type)))
 
+(def view-type-fn-dispatcher
+  (fn [owner] (om/get-shared owner :view-type)))
+
 ;; TABBED DATAVIEW
 (defmulti tabbed-dataview view-type-dispatcher)
 (defmulti dataview-infobar view-type-dispatcher)
@@ -29,6 +32,7 @@
 (defmulti table-header view-type-dispatcher)
 (defmulti table-search view-type-dispatcher)
 (defmulti label-changer view-type-dispatcher)
+(defmulti action-buttons view-type-fn-dispatcher)
 
 ;; CHART
 (defmulti chart-page view-type-dispatcher)
