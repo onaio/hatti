@@ -37,6 +37,9 @@
 ;; MAP TABLE
 (defmulti map-table-page view-type-dispatcher)
 
+;; MAP TABLE
+(defmulti map-table-page view-type-dispatcher)
+
 ;; CHART
 (defmulti chart-page view-type-dispatcher)
 (defmulti chart-chooser view-type-dispatcher)

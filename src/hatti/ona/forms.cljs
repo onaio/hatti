@@ -1,6 +1,8 @@
 (ns hatti.ona.forms
   (:require [clojure.string :as string]
-            [hatti.constants :refer [_submission_time _submitted_by]]
+            [hatti.constants :refer [_submission_time
+                                     _submitted_by
+                                     _last_edited]]
             [hatti.utils :refer [format last-url-param]]))
 
 ;; CONSTANTS
@@ -13,7 +15,13 @@
   {:name _submitted_by :full-name _submitted_by
    :label "Submitted by" :type "text"})
 
-(def extra-submission-details [submission-time-field submitted-by-field])
+(def last_edited
+  {:name _last_edited :full-name _last_edited
+   :label "Last Edited" :type "date"})
+
+(def extra-submission-details [last_edited
+                               submission-time-field
+                               submitted-by-field])
 
 ;; Functions on the FIELD object
 
