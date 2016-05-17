@@ -17,7 +17,6 @@
 (def extra-submission-details [submission-time-field submitted-by-field])
 
 ;; Functions on the FIELD object
-
 (defn field-type-in-set?
   "Helper function: is the :type of a field among a set of types"
   [types field]
@@ -111,7 +110,6 @@
   (not (or (note? field) (group? field))))
 
 ;; Formatting helpers
-
 (defn get-icon [field]
   "Get the icon relevant to the given field (depending on its type)."
   [:i {:class
@@ -235,7 +233,6 @@
     (if (:label field) field (assoc field :label label))))
 
 ;; UTILITY: Form Flattening
-
 (defn flatten-form
   "Input: map derived from form.json. Output: a flattened vector;
    each element is a field; a field is a {:name .. :label .. :type ..} map.
@@ -264,7 +261,6 @@
       (with-meta nodes {:languages (remove nil? langs)}))))
 
 ;; FUNCTIONS on the flat-form
-
 (defn meta-fields
   "Get just the meta fields out of the form.
    Options to re-label meta fields, or include submission time in meta list."
@@ -303,7 +299,6 @@
       :else (first geofields))))
 
 ;; UTILITY: languages
-
 (defn english? [language] (re-find #"(?i)english" (str language)))
 
 (defn get-languages [form]

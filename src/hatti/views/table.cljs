@@ -46,7 +46,6 @@
        (distinct)))
 
 ;; SLICKGRID HELPER FUNCTIONS
-
 (defn compfn
   "Comparator function for the slickgrid dataview.
    args.sortCol is the column being sorted, a and b are rows to compare.
@@ -122,14 +121,19 @@
   ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
    (let [columns (for [field (all-fields form :is-filtered-dataview?
                                          is-filtered-dataview?)]
-                   (let [{:keys [name type full-name]} field
+                   (let [{:keys [name type full-name], {:keys [hxl]} :instance} field
                          label (if get-label? (get-label field language) name)]
-                     {:id name :field full-name :type type
-                      :name label :toolTip label :sortable true
+                     {:id name
+                      :field full-name
+                      :type type
+                      :name (if hxl (str label "<div class=\"hxl-row\">" hxl "</div>") label)
+                      :toolTip label
+                      :sortable true
                       :formatter (partial formatter field language)
                       :headerCssClass (get-column-class field)
                       :cssClass (get-column-class field)
-                      :minWidth 50}))]
+                      :minWidth 50
+                      :hxl hxl}))]
      (clj->js (conj columns (actions-column owner))))))
 
 (defn- init-sg-pager [grid dataview]
@@ -244,7 +248,6 @@
     [grid dataview]))
 
 ;; EVENT LOOPS
-
 (defn handle-table-events
   "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
@@ -294,7 +297,6 @@
       [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
 ;; OM COMPONENTS
-
 (defmethod label-changer :default
   [_ owner]
   (reify
