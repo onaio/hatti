@@ -9,15 +9,18 @@
             [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
-                                 map-page table-page chart-page settings-page
-                                 photos-page overview-page saved-charts-page]]
+                                 map-page map-table-page table-page chart-page 
+                                 settings-page photos-page overview-page
+                                 saved-charts-page user-guide-page]]
             [hatti.views.photos]
             [hatti.views.map]
+            [hatti.views.map-table]
             [hatti.views.table]
             [hatti.views.chart]
             [hatti.views.settings]
             [hatti.views.overview]
             [hatti.views.saved-charts]
+            [hatti.views.user-guide]
             [hatti.utils :refer [click-fn format pluralize-number]]))
 
 (def dataview-map
@@ -36,12 +39,18 @@
    :chart {:view :chart
            :label "Charts"
            :component chart-page}
+   :map-table {:view :map-table
+               :label "Reports"
+               :component map-table-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
                   :component saved-charts-page}
    :settings {:view :settings
               :label "Settings"
-              :component settings-page}})
+              :component settings-page}
+   :user-guide {:view :user-guide
+                :label "User Guide"
+                :component user-guide-page}})
 
 (defmethod dataview-actions :default
   [cursor owner]

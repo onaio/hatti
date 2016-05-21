@@ -34,6 +34,12 @@
 (defmulti label-changer view-type-dispatcher)
 (defmulti action-buttons view-type-fn-dispatcher)
 
+;; MAP TABLE
+(defmulti map-table-page view-type-dispatcher)
+
+;; MAP TABLE
+(defmulti map-table-page view-type-dispatcher)
+
 ;; CHART
 (defmulti chart-page view-type-dispatcher)
 (defmulti chart-chooser view-type-dispatcher)
@@ -58,3 +64,6 @@
 
 ;; SAVED CHARTS PAGE - temporary
 (defmulti saved-charts-page view-type-dispatcher)
+
+;; USER GUIDE PAGE
+(defmulti user-guide-page view-type-dispatcher)
