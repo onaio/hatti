@@ -1,12 +1,13 @@
 (ns hatti.views.dataview
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [put!]]
+  (:require [chimera.js-interop :refer [format]]
+            [chimera.om.state :refer [merge-into-app-state!]]
+            [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :refer [mapping-threshold]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
-            [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
                                  map-page table-page chart-page settings-page
@@ -18,7 +19,7 @@
             [hatti.views.settings]
             [hatti.views.overview]
             [hatti.views.saved-charts]
-            [hatti.utils :refer [click-fn format pluralize-number]]))
+            [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataview-map
   {:overview {:view :overview

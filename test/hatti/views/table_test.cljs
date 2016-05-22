@@ -1,7 +1,8 @@
 (ns hatti.views.table-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.core :refer [sel sel1]])
-  (:require [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
+  (:require [chimera.urls :refer [last-url-param url]]
+            [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]
             [hatti.shared :as shared]
@@ -11,8 +12,7 @@
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
                                        fat-form small-fat-data]]
-            [hatti.utils :refer [last-url-param url]]
-            [hatti.utils.om.state :refer [merge-into-app-state!]]))
+            [chimera.om.state :refer [merge-into-app-state!]]))
 
 ;; SLICKGRID HELPER TESTS
 

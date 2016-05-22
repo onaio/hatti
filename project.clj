@@ -3,7 +3,7 @@
       [path]
       (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.1.22"
+(defproject onaio/hatti "0.1.23-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
@@ -15,6 +15,7 @@
                  [org.omcljs/om "0.8.8"]
                  [inflections "0.9.7"]
                  [secretary "1.2.3"]
+                 [onaio/chimera "0.0.1-SNAPSHOT"]
                  ;; For charts
                  [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
                  [org.clojure/math.numeric-tower "0.0.4"]

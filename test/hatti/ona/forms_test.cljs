@@ -1,7 +1,8 @@
 (ns hatti.ona.forms-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [hatti.macros :refer [read-file]])
-  (:require [cljs.core.async :refer [chan]]
+  (:require [chimera.js-interop :refer [json->js->cljs json->cljs]]
+            [cljs.core.async :refer [chan]]
             [clojure.string :as string]
             [hatti.utils :as utils]
             [hatti.ona.forms :as forms]))
@@ -17,14 +18,14 @@
           :geotrace (read-file "test/fixtures/geotrace-form.json")
           :groups-in-repeats
           (read-file "test/fixtures/groups-in-repeats-form.json"))]
-    (utils/json->js->cljs file)))
+    (json->js->cljs file)))
 
 (defn get-data [which]
   (let [file (case which
                :geoshape (read-file "test/fixtures/geoshape-data.json")
                :geopoint (read-file "test/fixtures/geopoint-data.json")
                :geotrace (read-file "test/fixtures/geotrace-data.json"))]
-    (utils/json->js->cljs file)))
+    (json->js->cljs file)))
 
 (def single-language-form (get-form :single-language))
 (def multi-language-form (get-form :multi-language))

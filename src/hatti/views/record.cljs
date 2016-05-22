@@ -1,6 +1,8 @@
 (ns hatti.views.record
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [clojure.string :as string]
+  (:require [chimera.js-interop :refer [format]]
+            [chimera.urls :refer [last-url-param]]
+            [clojure.string :as string]
             [cljs.core.async :refer [<! chan put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
@@ -10,8 +12,7 @@
                                  edit-delete print-xls-report-btn]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn format last-url-param
-                                 pluralize-number]]))
+            [hatti.utils :refer [click-fn pluralize-number]]))
 
 ;; Helper functions to easily create sablono / hiccup vectors
 

@@ -1,12 +1,14 @@
 (ns hatti.shared
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<! chan mult tap]]
+  (:require [chimera.js-interop :refer [format json->cljs]]
+            [chimera.om.state :refer [merge-into-app-state! transact!]]
+            [chimera.urls :refer [last-url-param]]
+            [cljs.core.async :refer [<! chan mult tap]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
             [hatti.constants :refer [_rank _submission_time]]
             [hatti.ona.forms :as f]
-            [hatti.utils :refer [json->cljs format last-url-param]]
-            [hatti.utils.om.state :as state]))
+            [hatti.utils.om.state :refer [update-app-state!]]))
 
 ;; (SHARED) EVENT CHANNELS
 
@@ -59,7 +61,7 @@
 (defn transact-app-data!
   "Given a function over data, run a transact on data inside app-state."
   [app-state transact-fn]
-  (state/transact-app-state! app-state [:data] transact-fn))
+  (transact! app-state [:data] transact-fn))
 
 (defn update-app-data!
   "Given `data` received from the server, update the app-state.
@@ -78,9 +80,9 @@
                     (map-indexed add-rank) vec))
         total-records (count data)]
     (transact-app-data! app-state (fn [_] data))
-    (state/merge-into-app-state! app-state [:status]
-                                 {:total-records total-records
-                                  :loading? (not completed?)})))
+    (merge-into-app-state! app-state [:status]
+                           {:total-records total-records
+                            :loading? (not completed?)})))
 
 (defn add-to-app-data!
   "Add to app data."
@@ -88,7 +90,7 @@
   (let [old-data (:data @app-state)]
     ;; only re-rank if loading is completed
     (update-app-data! app-state (concat old-data data) :rerank? completed?)
-    (state/update-app-state! app-state [:status :loading?] (not completed?))))
+    (update-app-state! app-state [:status :loading?] (not completed?))))
 
 ;; LANGUAGE
 

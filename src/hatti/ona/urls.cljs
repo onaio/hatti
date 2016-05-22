@@ -1,5 +1,6 @@
 (ns hatti.ona.urls
-  (:require [hatti.utils :refer [url format]]
+  (:require [chimera.js-interop :refer [format]]
+            [chimera.urls :refer [url last-url-param]]
             [hatti.shared :refer [app-state]]))
 
 (defn media-url [id fname]

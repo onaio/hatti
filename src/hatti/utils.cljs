@@ -5,47 +5,10 @@
             [inflections.core :refer [plural]]
             [sablono.core :as html :refer-macros [html]]))
 
-(defn url [& args] (str "/" (join "/" (remove nil? args))))
-
-(defn last-url-param
-  "Get last parameter form url"
-  [url]
-  (let [last-param (-> url str (split #"/") last)]
-    (-> last-param str (split #".json") first)))
-
 (defn json->js
   "Convert json to js using JSON.parse"
   [s]
   (.parse js/JSON s))
-
-(defn json->cljs
-  "Convert json string to cljs object.
-   Fast, but doesn't preserve keywords."
-  [s]
-  (js->clj (json->js s)))
-
-(defn json->js->cljs
-  "Convert json string to cljs via js.
-   Slow method, but preserves keywords, and appropriate for small json."
-  [s]
-  (js->clj (json->js s) :keywordize-keys true))
-
-(defn format
-  "Formats a string using goog.string.format, so we can use format in cljx."
-  [fmt & args]
-  (apply goog.string/format fmt args))
-
-(defn safe-regex
-  "Create a safe (escaped) js regex out of a string.
-   By default, creates regex with ignore case option."
-  [s & {:keys [:ignore-case?]
-        :or {:ignore-case? true}}]
-  (let [s (.replace s
-                    #"/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/"
-                    "\\$&")] ;; See http://stackoverflow.com/a/6969486
-    (if :ignore-case?
-      (js/RegExp. s "i")
-      (js/RegExp. s))))
 
 (defn indexed
   "Given a seq, produces a two-el seq. [a b c] => [[0 a] [1 b] [2 c]]."

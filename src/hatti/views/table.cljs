@@ -1,6 +1,8 @@
 (ns hatti.views.table
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [cljs.core.async :refer [<! chan put! timeout]]
+  (:require [chimera.js-interop :refer [safe-regex]]
+            [chimera.urls :refer [last-url-param url]]
+            [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [sablono.core :as html :refer-macros [html]]
@@ -12,8 +14,7 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn generate-html hyphen->camel-case
-                                 last-url-param safe-regex url]]
+            [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
             [cljsjs.slickgrid-with-deps]))
 
 (def default-num-displayed-records 25)
