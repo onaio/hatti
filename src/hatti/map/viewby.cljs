@@ -1,7 +1,7 @@
 (ns hatti.map.viewby
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :refer [split]]
-            [hatti.utils :refer [safe-regex]]
+            [chimera.js-interop :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.ona.forms :as form-utils]
             [hatti.utils.style :refer [answer->color grey]]

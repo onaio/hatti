@@ -1,10 +1,11 @@
 (ns hatti.ona.post-process
-  (:require [hatti.constants :refer [_id _rank]]
-            [hatti.utils :refer [url last-url-param format]]
+  (:require [chimera.js-interop :refer [format]]
+            [chimera.om.state :refer [transact!]]
+            [chimera.urls :refer [url last-url-param]]
+            [hatti.constants :refer [_id _rank]]
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [hatti.shared :as shared]
-            [hatti.utils.om.state :refer [transact-app-state!]]
             [cljsjs.jquery]
             [osmtogeojson]))
 
@@ -77,8 +78,8 @@
                           (update-in datum [osm-key] osm-val->osm-data))))]
 
         (doseq [osm-field osm-fields]
-          (transact-app-state! app-state app-state-keys
-                               (updater (:full-name osm-field))))))))
+          (transact! app-state app-state-keys
+                     (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
 (defn url-obj
@@ -131,9 +132,8 @@
   "Inlines data from within _atatchments into each record within app-state."
   [app-state flat-form & {:keys [app-data-keys]
                           :or {app-data-keys [:data]}}]
-  (transact-app-state!
-   app-state
-   app-data-keys
-   #(->> %
-         (integrate-attachments flat-form)
-         (integrate-attachments-in-repeats flat-form))))
+  (transact! app-state
+             app-data-keys
+             #(->> %
+                   (integrate-attachments flat-form)
+                   (integrate-attachments-in-repeats flat-form))))

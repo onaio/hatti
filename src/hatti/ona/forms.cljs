@@ -1,7 +1,8 @@
 (ns hatti.ona.forms
-  (:require [clojure.string :as string]
-            [hatti.constants :refer [_submission_time _submitted_by]]
-            [hatti.utils :refer [format last-url-param]]))
+  (:require [chimera.js-interop :refer [format]]
+            [chimera.urls :refer [last-url-param]]
+            [clojure.string :as string]
+            [hatti.constants :refer [_submission_time _submitted_by]]))
 
 ;; CONSTANTS
 (def no-answer "No Answer")

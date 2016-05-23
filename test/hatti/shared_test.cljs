@@ -1,10 +1,10 @@
 (ns hatti.shared-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.core :refer [sel sel1]])
-  (:require [cljs.test :as t]
+  (:require [chimera.urls :refer [url]]
+            [cljs.test :as t]
             [dommy.core :as dommy]
             [om.core :as om :include-macros true]
-            [hatti.utils :refer [url]]
             [hatti.test-utils :refer [format new-container!]]
             [hatti.shared :as shared]
             [hatti.ona.post-process :as post-process]))

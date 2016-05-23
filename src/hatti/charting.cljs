@@ -5,7 +5,7 @@
             [cljs-time.format :as tf]
             [cljs-time.coerce :as tc]
             [hatti.maths :refer [gcd lcm floor ceil abs]]
-            [hatti.utils :refer [format]]
+            [chimera.js-interop :refer [format]]
             [hatti.ona.forms :as f]
             [clojure.string :refer [join blank?]]))
 
