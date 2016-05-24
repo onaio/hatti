@@ -1,4 +1,4 @@
-var system = require('system');
+var system = require('system');// jshint ignore:line
 var page = require("webpage").create();
 var url = system.args[1];
 
@@ -27,11 +27,10 @@ page.open(url, function (status) {
     });
 
     if (failures === 0) {
-        console.log("Tests succeeded.")
+        console.log("Tests succeeded.");
     }
     else {
         console.log("*** Tests failed! ***");
     }
-    
     phantom.exit(failures?100:0);
 });
