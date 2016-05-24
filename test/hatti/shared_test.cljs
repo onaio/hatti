@@ -10,13 +10,13 @@
             [hatti.ona.post-process :as post-process]))
 
 ;; SAMPLE DATA
-
 (defn form-gen [n]
   (for [i (range n)]
     {:type (rand-nth ["string" "select one" "integer" "decimal" "calculate"])
      :full-name (str "hello" i)
      :name (str "hello" i)
-     :label (str "Hello: " i)}))
+     :label (str "Hello: " i)
+     :instance {:hxl "#trap"}}))
 
 (defn data-gen [ncol nrow]
   (let [rf (fn [max] (format "%02d" (inc (rand-int max))))]
@@ -37,7 +37,6 @@
 (def media-url (str (:api-url @shared/app-state) "files"))
 
 ;; TESTS
-
 (deftest language-selector-tests
   (let [c (new-container!)
         langs [:Nepali :English :French :Swahili]

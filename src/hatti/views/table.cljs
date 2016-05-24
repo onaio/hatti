@@ -114,7 +114,8 @@
    :toolTip ""
    :sortable false
    :formatter (action-buttons owner)
-   :headerCssClass (str (when has-hxl? "hxl-min-height ") "record-actions header")
+   :headerCssClass (str (when has-hxl? "hxl-min-height ")
+                        "record-actions header")
    :cssClass "record-actions"
    :maxWidth 70})
 
@@ -126,20 +127,24 @@
    (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
          columns (for [field (all-fields form :is-filtered-dataview?
                                          is-filtered-dataview?)]
-                   (let [{:keys [name type full-name], {:keys [hxl]} :instance} field
+                   (let [{:keys [name type full-name]
+                          {:keys [hxl]} :instance} field
                          label (if get-label? (get-label field language) name)
                          column-class (get-column-class field)]
                      {:id name
                       :field full-name
                       :type type
-                      :name (str "<div class=\""column-class"\">"  label "</div>"
-                                 (when hxl (str "<div class=\"hxl-row\">" hxl "</div>")))
+                      :name
+                      (str "<div class=\"" column-class "\">" label "</div>"
+                           (when hxl
+                             (str "<div class=\"hxl-row\">" hxl "</div>")))
                       :toolTip label
                       :sortable true
                       :formatter (partial formatter field language)
                       :headerCssClass (when has-hxl? "hxl-min-height")
                       :cssClass column-class
-                      :minWidth 50}))]
+                      :minWidth 50
+                      :hxl hxl}))]
      (clj->js (conj columns (actions-column owner has-hxl?))))))
 
 (defn- init-sg-pager [grid dataview]
