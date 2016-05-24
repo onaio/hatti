@@ -16,7 +16,7 @@
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
             [cljsjs.slickgrid-with-deps]))
-
+(enable-console-print!)
 (def default-num-displayed-records 25)
 
 ;; DIVS
@@ -106,11 +106,15 @@
             [:i.fa.fa-pencil-square-o]]]])))))
 
 (defn actions-column
-  [owner]
-  {:id "actions" :field _id :type "text"
-   :name "" :toolTip "" :sortable false
+  [owner has-hxl?]
+  {:id "actions"
+   :field _id
+   :type "text"
+   :name ""
+   :toolTip ""
+   :sortable false
    :formatter (action-buttons owner)
-   :headerCssClass "record-actions header"
+   :headerCssClass (str (when has-hxl? "hxl-min-height ") "record-actions header")
    :cssClass "record-actions"
    :maxWidth 70})
 
@@ -119,22 +123,24 @@
   ([form] (flat-form->sg-columns form true))
   ([form get-label?] (flat-form->sg-columns form get-label? nil))
   ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
-   (let [columns (for [field (all-fields form :is-filtered-dataview?
+   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
+         columns (for [field (all-fields form :is-filtered-dataview?
                                          is-filtered-dataview?)]
                    (let [{:keys [name type full-name], {:keys [hxl]} :instance} field
-                         label (if get-label? (get-label field language) name)]
+                         label (if get-label? (get-label field language) name)
+                         column-class (get-column-class field)]
                      {:id name
                       :field full-name
                       :type type
-                      :name (if hxl (str label "<div class=\"hxl-row\">" hxl "</div>") label)
+                      :name (str "<div class=\""column-class"\">"  label "</div>"
+                                 (when hxl (str "<div class=\"hxl-row\">" hxl "</div>")))
                       :toolTip label
                       :sortable true
                       :formatter (partial formatter field language)
-                      :headerCssClass (get-column-class field)
-                      :cssClass (get-column-class field)
-                      :minWidth 50
-                      :hxl hxl}))]
-     (clj->js (conj columns (actions-column owner))))))
+                      :headerCssClass (when has-hxl? "hxl-min-height")
+                      :cssClass column-class
+                      :minWidth 50}))]
+     (clj->js (conj columns (actions-column owner has-hxl?))))))
 
 (defn- init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
