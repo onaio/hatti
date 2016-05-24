@@ -1,4 +1,4 @@
-var system = require('system');// jshint ignore:line
+var system = require("system"); // jshint ignore:line
 var page = require("webpage").create();
 var url = system.args[1];
 

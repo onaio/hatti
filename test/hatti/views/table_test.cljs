@@ -1,20 +1,20 @@
 (ns hatti.views.table-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.core :refer [sel sel1]])
-  (:require [chimera.urls :refer [last-url-param url]]
+  (:require [chimera.core :refer [not-nil?]]
+            [chimera.om.state :refer [merge-into-app-state!]]
+            [chimera.urls :refer [last-url-param url]]
             [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]
-            [clojure.string :as cstring]
+            [clojure.string :as string]
             [hatti.shared :as shared]
             [hatti.views :refer [table-page]]
             [hatti.views.table :as tv]
             [hatti.test-utils :refer [new-container! texts owner readonly]]
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
-                                       fat-form small-fat-data]]
-            [chimera.om.state :refer [merge-into-app-state!]]
-            [chimera.core :refer [not-nil?]]))
+                                       fat-form small-fat-data]]))
 
 ;; SLICKGRID HELPER TESTS
 
@@ -132,13 +132,13 @@
     (testing "all questions on thin tables are rendered"
       (is (every? (->> table htexts set)
                   (list
-                   (cstring/join
+                   (string/join
                     (concat (->> thin-form (map :label))
                             (->> thin-form (map :instance) (map :hxl))))))))
 
     (testing "all table headers contain title attributes"
-      (not-nil? (re-matches (re-pattern  (cstring/join (htitles table)))
-                            (cstring/join (htexts table)))))
+      (not-nil? (re-matches (re-pattern  (string/join (htitles table)))
+                            (string/join (htexts table)))))
 
     (testing "actions column is rendered"
       (is (= (-> (sel table :.record-actions) count dec)
