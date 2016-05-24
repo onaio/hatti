@@ -15,8 +15,9 @@
             [hatti.views.record]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
+            [chimera.core :refer [any?]]
             [cljsjs.slickgrid-with-deps]))
-(enable-console-print!)
+
 (def default-num-displayed-records 25)
 
 ;; DIVS
@@ -105,6 +106,13 @@
                             :href edit-link}
             [:i.fa.fa-pencil-square-o]]]])))))
 
+(defn column-name-html-string
+  "The html needed for a column name as a string.
+   String, String, Bool -> String"
+  [column-class label hxl]
+  (str "<div class=\"" column-class "\">" label "</div>"
+       (when hxl (str "<div class=\"hxl-row\">" hxl "</div>"))))
+
 (defn actions-column
   [owner has-hxl?]
   {:id "actions"
@@ -134,10 +142,7 @@
                      {:id name
                       :field full-name
                       :type type
-                      :name
-                      (str "<div class=\"" column-class "\">" label "</div>"
-                           (when hxl
-                             (str "<div class=\"hxl-row\">" hxl "</div>")))
+                      :name (column-name-html-string column-class label hxl)
                       :toolTip label
                       :sortable true
                       :formatter (partial formatter field language)

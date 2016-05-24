@@ -13,7 +13,8 @@
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
                                        fat-form small-fat-data]]
-            [chimera.om.state :refer [merge-into-app-state!]]))
+            [chimera.om.state :refer [merge-into-app-state!]]
+            [chimera.core :refer [not-nil?]]))
 
 ;; SLICKGRID HELPER TESTS
 
