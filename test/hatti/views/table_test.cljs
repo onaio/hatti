@@ -1,18 +1,20 @@
 (ns hatti.views.table-test
   (:require-macros [cljs.test :refer (is deftest testing)]
                    [dommy.core :refer [sel sel1]])
-  (:require [chimera.urls :refer [last-url-param url]]
+  (:require [chimera.core :refer [not-nil?]]
+            [chimera.om.state :refer [merge-into-app-state!]]
+            [chimera.urls :refer [last-url-param url]]
             [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]
+            [clojure.string :as string]
             [hatti.shared :as shared]
             [hatti.views :refer [table-page]]
             [hatti.views.table :as tv]
             [hatti.test-utils :refer [new-container! texts owner readonly]]
             [om.core :as om :include-macros true]
             [hatti.shared-test :refer [thin-form small-thin-data no-data
-                                       fat-form small-fat-data]]
-            [chimera.om.state :refer [merge-into-app-state!]]))
+                                       fat-form small-fat-data]]))
 
 ;; SLICKGRID HELPER TESTS
 
@@ -21,12 +23,20 @@
         slickgrid-cols (-> flat-form tv/all-fields tv/flat-form->sg-columns
                            (js->clj :keywordize-keys true))
         first-col (first slickgrid-cols)]
+
     (testing "slickgrid columns have the right types"
       (doseq [col (rest slickgrid-cols)]
         (is (every? #{:id :name :field :sortable :toolTip :type :formatter
-                      :headerCssClass :minWidth :cssClass}
+                      :headerCssClass :minWidth :cssClass :hxl}
                     (set (keys col))))
-        (is (= (:name col) (:toolTip col)))))
+        (not-nil? (re-matches (re-pattern (:toolTip col)) (:name col)))))
+
+    (testing "Has the HXL row"
+      (doseq [col (rest slickgrid-cols)]
+        (is (every? #{:id :name :field :sortable :toolTip :type :formatter
+                      :headerCssClass :minWidth :cssClass :hxl}
+                    (set (keys col))))
+        (not-nil? (re-matches (re-pattern (str (:hxl col))) (:name col)))))
 
     (testing "slickgrid action column has the right types"
       (is (every? #{:id :name :field :sortable :toolTip :type :formatter
@@ -84,7 +94,6 @@
       (is (not (->> more-fields (map :type) (contains? #{"note" "group"})))))))
 
 ;; TABLE COMPONENT TESTS
-
 (defn- table-container
   [data form role]
   "Returns a container in which a table has been rendered."
@@ -122,10 +131,14 @@
 
     (testing "all questions on thin tables are rendered"
       (is (every? (->> table htexts set)
-                  (->> thin-form (map :label)))))
+                  (list
+                   (string/join
+                    (concat (->> thin-form (map :label))
+                            (->> thin-form (map :instance) (map :hxl))))))))
 
-    (testing "all table headers have title attributes"
-      (is (= (htexts table) (htitles table))))
+    (testing "all table headers contain title attributes"
+      (not-nil? (re-matches (re-pattern  (string/join (htitles table)))
+                            (string/join (htexts table)))))
 
     (testing "actions column is rendered"
       (is (= (-> (sel table :.record-actions) count dec)
