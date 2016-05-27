@@ -131,13 +131,13 @@
                       :minWidth 50}))]
      (clj->js (conj columns (actions-column owner))))))
 
-(defn- init-sg-pager [grid dataview]
+(defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
     (Pager. dataview
             grid
             (js/jQuery (str "#" pager-id)))))
 
-(defn- resizeColumns [grid]
+(defn resizeColumns [grid]
   (.registerPlugin grid (.AutoColumnSize js/Slick)))
 
 (def sg-options
