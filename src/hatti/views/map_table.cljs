@@ -7,6 +7,6 @@
   [{:keys [dataset-info]} owner]
   "Om component for the Map Table Page."
   (om/component
-    (html
-      [:div.container
-       [:p "This is the default map table page."]])))
+   (html
+    [:div.container
+     [:p "This is the default map table page."]])))

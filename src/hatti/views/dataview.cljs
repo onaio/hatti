@@ -9,7 +9,7 @@
             [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
-                                 map-page map-table-page table-page chart-page 
+                                 map-page map-table-page table-page chart-page
                                  settings-page photos-page overview-page
                                  saved-charts-page user-guide-page]]
             [hatti.views.photos]
@@ -51,6 +51,13 @@
    :user-guide {:view :user-guide
                 :label "User Guide"
                 :component user-guide-page}})
+
+(defn default-dataviews
+  "Initial Dataview State"
+  []
+  (atom dataview-map))
+
+(def view-state (default-dataviews))
 
 (defmethod dataview-actions :default
   [cursor owner]
@@ -115,7 +122,7 @@
             view->display #(if (= active-view %) "block" "none")
             view->cls #(when (= active-view %) "clicked")
             dataviews (->> app-state :views :all
-                           (map dataview-map) (remove nil?))
+                           (map @view-state) (remove nil?))
             dv->link (fn [{:keys [view label]}]
                        (let [active? (some #(= view %) (-> app-state
                                                            :views :active))]
