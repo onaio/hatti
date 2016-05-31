@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [chimera.js-interop :refer [safe-regex]]
             [chimera.urls :refer [last-url-param url]]
+            [chimera.seq :refer [in?]]
             [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -390,7 +391,9 @@
       [grid dataview])))
 
 (defmethod table-page :default
-  [app-state owner {:keys [slick-grid-event-handlers] :as opts}]
+  [{{:keys [active]} :views :as app-state}
+   owner
+   {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
    Renders empty divs via om, hooks up slickgrid to these divs on did-mount.
    slick-grid-event-handlers is a map containing any of the following keys
@@ -416,44 +419,51 @@
    each of whose value is a function of the form (fn [event args]) as described
    in the SlickGrid documentation for event handlers.
    https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
-  (reify
-    om/IRenderState
-    (render-state [_ _]
-      (let [no-data? (empty? (get-in app-state [:data]))
-            {:keys [num_of_submissions] :as dataset-info}
-            (:dataset-info app-state)
-            with-info #(merge % {:dataset-info dataset-info})]
-        (html
-         [:div.table-view
-          (om/build submission-view
-                    (with-info (get-in app-state
-                                       [:table-page :submission-clicked]))
-                    {:opts (merge (select-keys opts #{:delete-record! :role})
-                                  {:view :table})})
-          (om/build table-header app-state)
-          [:div {:id table-id :class "slickgrid"}
-           (if (and no-data? (zero? num_of_submissions))
-             [:span {:class "empty-state"} "No data"]
-             [:span
-              [:i.fa.fa-spinner.fa-pulse] "Loading..."])]])))
-    om/IDidMount
-    (did-mount [_]
-      (let [data (get-in app-state [:data])]
-        (when-let [[grid dataview]
-                   (init-grid! data owner slick-grid-event-handlers)]
-          (handle-table-events app-state grid dataview))))
-    om/IWillReceiveProps
-    (will-receive-props [_ next-props]
-      "will-recieve-props resets slickgrid data if the table data has changed."
-      (let [old-data (get-in (om/get-props owner) [:data])
-            new-data (get-in next-props [:data])
-            {:keys [grid dataview]} (om/get-state owner)]
-        (when (not= old-data new-data)
-          (if (empty? old-data)
+  (let [active? (in? active :table)]
+    (reify
+      om/IRender
+      (render [_]
+        (let [no-data? (empty? (get-in app-state [:data]))
+              {:keys [num_of_submissions] :as dataset-info}
+              (:dataset-info app-state)
+              with-info #(merge % {:dataset-info dataset-info})]
+          (when active?
+            (html
+             [:div.table-view
+              (om/build submission-view
+                        (with-info (get-in app-state
+                                           [:table-page :submission-clicked]))
+                        {:opts (merge (select-keys opts
+                                                   #{:delete-record! :role})
+                                      {:view :table})})
+              (om/build table-header app-state)
+              [:div {:id table-id :class "slickgrid"}
+               (if (and no-data? (zero? num_of_submissions))
+                 [:span {:class "empty-state"} "No data"]
+                 [:span
+                  [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
+      om/IDidMount
+      (did-mount [_]
+        (when active?
+          (let [data (get-in app-state [:data])]
             (when-let [[grid dataview]
-                       (init-grid! new-data owner slick-grid-event-handlers)]
-              (handle-table-events app-state grid dataview))
-            (do ; data has changed
-              (.invalidateAllRows grid)
-              (.setItems dataview (clj->js new-data) _id)
-              (.render grid))))))))
+                       (init-grid! data owner slick-grid-event-handlers)]
+              (handle-table-events app-state grid dataview)))))
+      om/IWillReceiveProps
+      (will-receive-props [_ next-props]
+        "Reset SlickGrid data if the table data has changed."
+        (when active?
+          (let [old-data (get-in (om/get-props owner) [:data])
+                new-data (get-in next-props [:data])
+                {:keys [grid dataview]} (om/get-state owner)]
+            (when (not= old-data new-data)
+              (if (empty? old-data)
+                (when-let [[grid dataview]
+                           (init-grid! new-data
+                                       owner
+                                       slick-grid-event-handlers)]
+                  (handle-table-events app-state grid dataview))
+                (do ; data has changed
+                  (.invalidateAllRows grid)
+                  (.setItems dataview (clj->js new-data) _id)
+                  (.render grid))))))))))
