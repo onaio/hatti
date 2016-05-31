@@ -39,7 +39,8 @@
   (atom
    {:views {:all [:overview :map :table :chart :saved-charts :settings]
             :selected :overview
-            :settings {:all [:form-info :settings :basemaps :integrated-apps :media-files :xls-reports]
+            :settings {:all [:form-info :settings :basemaps
+                             :integrated-apps :media-files :xls-reports]
                        :active-tab :form-info
                        :integrated-apps {:active-section :apps-list
                                          :add? false}}}

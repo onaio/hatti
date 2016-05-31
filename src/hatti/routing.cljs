@@ -18,9 +18,8 @@
   "Show the specific settings view"
   (activate-settings-view! view settings-section))
 
-(defroute "/:view/:integrated-apps-section/:app-type" {:keys [view
-                                                              integrated-apps-section
-                                                              app-type]}
+(defroute "/:view/:integrated-apps-section/:app-type"
+  {:keys [view integrated-apps-section app-type]}
   (activate-integrated-apps-view! view integrated-apps-section app-type))
 
 (defn enable-dataview-routing! []
