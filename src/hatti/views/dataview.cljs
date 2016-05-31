@@ -88,6 +88,42 @@
                              {:selected view})
       (put! shared/event-chan {:re-render view}))))
 
+(defn activate-settings-view! [view settings-section]
+  (let [view (keyword view)
+        settings-section (keyword settings-section)
+        views (-> @shared/app-state :views :all)
+        settings-views (-> @shared/app-state :views :settings :all)]
+    (when (contains? (set settings-views) settings-section)
+      (merge-into-app-state! shared/app-state
+                             [:views]
+                             {:selected view})
+      (merge-into-app-state! shared/app-state
+                             [:views :settings]
+                             {:active-tab settings-section})
+      (put! shared/event-chan {:re-render view}))))
+
+(defn activate-integrated-apps-view! [view settings-section app-type]
+   (let [view (keyword view)
+         active-section (keyword app-type)
+         settings-section (keyword settings-section)
+         views (-> @shared/app-state :views :all)
+         settings-views (-> @shared/app-state :views :settings :all)]
+    (when (contains? (set settings-views) settings-section)
+      (merge-into-app-state! shared/app-state
+                             [:views]
+                             {:selected view})
+      (merge-into-app-state! shared/app-state
+                             [:views :settings]
+                             {:active-tab settings-section})
+      (merge-into-app-state! shared/app-state
+                             [:views :settings :integrated-apps]
+                             {:active-section active-section})
+      (if (= app-type "google_sheets")
+        (merge-into-app-state! shared/app-state
+                               [:views :settings :integrated-apps]
+                               {:add? true}))
+      (put! shared/event-chan {:re-render view}))))
+
 (defmethod tabbed-dataview :default
   [app-state owner opts]
   (reify
