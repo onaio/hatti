@@ -95,12 +95,12 @@
       (generate-html
        (when value
          [:ul
-          [:li.tooltip
-           [:span.tip-info.right "View"]
+          [:li.tooltip.middle-right
+           [:span.tip-info "View"]
            [:a.view-record
             [:i.fa.fa-clone {:data-id value}]]]
           [:li.tooltip
-           [:span.tip-info.right "Edit"]
+           [:span.tip-info "Edit"]
            [:a.edit-record {:data-id value :target "_blank"
                             :href edit-link}
             [:i.fa.fa-pencil-square-o]]]])))))
