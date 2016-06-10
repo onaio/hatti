@@ -129,7 +129,7 @@
                       :headerCssClass (get-column-class field)
                       :cssClass (get-column-class field)
                       :minWidth 50}))]
-     (clj->js (conj columns (actions-column owner))))))
+     (clj->js columns))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
