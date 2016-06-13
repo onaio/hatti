@@ -104,9 +104,7 @@
 
 (defn activate-integrated-apps-view! [view settings-section app-type]
   (let [view (keyword view)
-        active-section (keyword app-type)
         settings-section (keyword settings-section)
-        views (-> @shared/app-state :views :all)
         settings-views (-> @shared/app-state :views :settings :all)]
     (when (contains? (set settings-views) settings-section)
       (transact!
@@ -116,7 +114,7 @@
              (assoc-in [:views] {:selected view})
              (assoc-in [:views :settings] {:active-tab settings-section})
              (assoc-in [:views :settings :integrated-apps]
-                       {:active-section active-section}))))
+                       {:active-section app-type}))))
       (if (= app-type "google_sheets")
         (merge-into-app-state! shared/app-state
                                [:views :settings :integrated-apps]
