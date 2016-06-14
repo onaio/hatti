@@ -5,7 +5,7 @@
             [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :refer [mapping-threshold]]
+            [hatti.constants :refer [mapping-threshold google-sheets]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.views :refer [tabbed-dataview
@@ -115,7 +115,7 @@
              (assoc-in [:views :settings] {:active-tab settings-section})
              (assoc-in [:views :settings :integrated-apps]
                        {:active-section app-type}))))
-      (if (= app-type "google_sheets")
+      (if (= app-type google-sheets)
         (merge-into-app-state! shared/app-state
                                [:views :settings :integrated-apps]
                                {:add? true}))
