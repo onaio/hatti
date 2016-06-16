@@ -35,7 +35,7 @@
 (defmulti action-buttons view-type-fn-dispatcher)
 
 ;; MAP TABLE
-(defmulti map-table-page view-type-dispatcher)
+(defmulti report-view-page view-type-dispatcher)
 
 ;; CHART
 (defmulti chart-page view-type-dispatcher)

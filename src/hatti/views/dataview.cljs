@@ -9,12 +9,12 @@
             [hatti.utils.om.state :refer [merge-into-app-state!]]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
-                                 map-page map-table-page table-page chart-page
+                                 map-page report-view-page table-page chart-page
                                  settings-page photos-page overview-page
                                  saved-charts-page user-guide-page]]
             [hatti.views.photos]
             [hatti.views.map]
-            [hatti.views.map-table]
+            [hatti.views.report-view]
             [hatti.views.table]
             [hatti.views.chart]
             [hatti.views.settings]
@@ -39,9 +39,9 @@
    :chart {:view :chart
            :label "Charts"
            :component chart-page}
-   :map-table {:view :map-table
+   :report-view {:view :report-view
                :label "Reports"
-               :component map-table-page}
+               :component report-view-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
                   :component saved-charts-page}
