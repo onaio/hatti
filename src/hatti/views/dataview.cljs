@@ -40,8 +40,8 @@
            :label "Charts"
            :component chart-page}
    :report-view {:view :report-view
-               :label "Reports"
-               :component report-view-page}
+                 :label "Reports"
+                 :component report-view-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
                   :component saved-charts-page}
