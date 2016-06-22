@@ -26,7 +26,7 @@
 (defn get-extra-fields
   "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name _id :label "id" :name _id :type
+  (let [extra-field  [{:full-name _id :label "ID" :name _id :type
                        "integer"}]]
     (if is-filtered-dataview?
       extra-field
