@@ -168,6 +168,7 @@
                  (repeat? field) :rpt
                  (select-one? field) :sel1
                  (select-all? field) :selm
+                 (time-based? field) :date
                  :else :else)]
      (case which
        :sel1 (if-not answer
@@ -217,6 +218,9 @@
        :rpt (if (empty? answer)
               ""
               (str "Repeated data with " (count answer) " answers."))
+       :date (when answer
+               (-> (js/moment answer)
+                   (.format "LLL")))
        :else answer))))
 
 (defn relabel-meta-field
