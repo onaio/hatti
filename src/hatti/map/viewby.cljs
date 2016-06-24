@@ -3,6 +3,7 @@
   (:require [clojure.string :refer [split]]
             [chimera.js-interop :refer [safe-regex]]
             [hatti.charting :refer [evenly-spaced-bins]]
+            [hatti.constants :refer [_id]]
             [hatti.ona.forms :as form-utils]
             [hatti.utils.style :refer [answer->color grey]]
             [hatti.map.utils :as map-utils]))
@@ -37,6 +38,10 @@
     (form-utils/time-based? field) (evenly-spaced-bins raw-answers 5 "date")
     (form-utils/select-all? field) (map #(when % (split % #" "))  raw-answers)))
 
+(defn has-geolocation?
+  [{[lattitude longitude] "_geolocation"}]
+  (and lattitude lattitude))
+
 (defn viewby-info
   "Produces a set of data structures / functions for view-by.
    answers are a list of answers, sorted by count;
@@ -44,10 +49,19 @@
    answer->count, answer->selected?, answer->color are maps from answer;
    used for the legend rendering. An 'answer' is mapped from a data element,
    eg. a bin for numbers/dates, an option for multiple/single selects."
-  [field raw-answers ids]
-  (let [fname (:full-name field)
+  [{:keys [full-name] :as field} data]
+  (let [ids (map #(get % _id) data)
+        raw-answers (map #(get % full-name) data)
+        submissions-with-geolocation (filterv has-geolocation? data)
+        raw-answers-with-geolocation (map #(get % full-name)
+                                          submissions-with-geolocation)
         preprocessed-answers (preprocess-answers field raw-answers)
         answer->count (frequencies (flatten preprocessed-answers))
+        answer->count-with-geolocations
+        (->> raw-answers-with-geolocation
+             (preprocess-answers field)
+             flatten
+             frequencies)
         sorted-answers (cond
                          (or (form-utils/categorical? field)
                              (form-utils/text? field)
@@ -61,6 +75,8 @@
         defaults {:answers sorted-answers-with-nil-at-end
                   :id->answers (zipmap ids preprocessed-answers)
                   :answer->count answer->count
+                  :answer->count-with-geolocations
+                  answer->count-with-geolocations
                   :answer->selected? (all-but-nil-selected sorted-answers)
                   :answer->color answer->color-map
                   :visible-answers sorted-answers-with-nil-at-end

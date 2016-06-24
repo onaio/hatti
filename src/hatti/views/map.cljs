@@ -32,10 +32,10 @@
               markers (vals (get-id-marker-map))]
           (when view-by
             (let [{:keys [full-name] :as field} (:field view-by)
-                  ids (map #(get % _id) (-> @app-state :map-page :data))
-                  raw-answers (map #(get % full-name)
-                                   (-> @app-state :map-page :data))
-                  vb-info (vb/viewby-info field raw-answers ids)]
+                  vb-info (->> @app-state
+                               :map-page
+                               :data
+                               (vb/viewby-info field))]
               (om/update! app-state [:map-page :view-by] vb-info)
               (vb/view-by! vb-info markers)))
           (when view-by-filtered
@@ -167,8 +167,9 @@
 (defmethod viewby-answer-list :default
   [cursor owner]
   (om/component
-   (let [{:keys [answer->color answer->count answer->selected?
-                 answers field visible-answers]} cursor
+   (let [{:keys [answer->color answer->count answer->count-with-geolocations
+                 answer->selected? answers field visible-answers]}
+         cursor
          language (:current (om/observe owner (shared/language-cursor)))
          toggle! (fn [ans]
                    (om/transact! cursor :answer->selected?
@@ -182,16 +183,28 @@
        (for [answer visible-answers]
          (let [selected? (answer->selected? answer)
                col (answer->color answer)
-               acount (or (answer->count answer) 0)
-               answer-s (format-answer field answer language)]
+               answer-count (or (answer->count answer) 0)
+               answer-count-with-geolocations
+               (or (answer->count-with-geolocations answer) 0)
+               answer-string (format-answer field answer language)
+               title (str answer-count-with-geolocations " of "
+                          answer-count " submissions have geo data")
+               disabled? (<= answer-count-with-geolocations
+                             0)]
            [:li
             [:a (when answer {:href "#"
-                              :on-click (click-fn #(toggle! answer))})
+                              :title title
+                              :class (when disabled? "is-disabled")
+                              :on-click (click-fn
+                                         #(when-not disabled?
+                                            (toggle! answer)))})
              [:div
               [:div {:class "small-circle"
                      :style {:background-color (if selected? col grey)}}]
               [:div (when-not selected? {:style {:color grey}})
-               (str answer-s " (" acount ")")]]]]))]))))
+               (str answer-string " ["
+                    answer-count-with-geolocations "/"
+                    answer-count "]")]]]]))]))))
 
 (defmethod map-viewby-answer-legend :default
   [cursor owner]
