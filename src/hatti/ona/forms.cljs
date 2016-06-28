@@ -30,6 +30,11 @@
   [types field]
   (contains? types (:type field)))
 
+(defn field-name-in-set?
+  "Helper function: is the :name of a field among a set of names"
+  [names field]
+  (contains? names (:name field)))
+
 (defn group?
   "Checks whether a field in a form (ie, a field) is a group field"
   [field]
@@ -77,8 +82,12 @@
 
 (defn meta?
   [field]
-  (field-type-in-set? #{"start" "end" "today" "deviceid" "imei" "subscriberid"
-                        "uuid" "instanceID" "simserial" "phonenumber"} field))
+  (or (field-name-in-set? #{"meta" "instanceID"} field)
+      (field-type-in-set? #{"start" "end" "today" "deviceid"
+                            "imei" "subscriberid" "uuid"
+                            "instanceID" "simserial"
+                            "phonenumber"}
+                          field)))
 
 (defn geofield?
   [field]
