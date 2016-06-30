@@ -111,10 +111,10 @@
        shared/app-state
        (fn [app-state]
          (-> app-state
-             (assoc-in [:views: :selected] view)
-             (assoc-in [:views :settings] {:active-tab settings-section})
-             (assoc-in [:views :settings :integrated-apps]
-                       {:active-section app-type}))))
+             (assoc-in [:views :selected] view)
+             (assoc-in [:views :settings :active-tab] settings-section)
+             (assoc-in [:views :settings :integrated-apps :active-section]
+                       app-type))))
       (if (= app-type google-sheets)
         (merge-into-app-state! shared/app-state
                                [:views :settings :integrated-apps]
