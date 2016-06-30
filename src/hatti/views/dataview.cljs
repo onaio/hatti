@@ -1,11 +1,11 @@
 (ns hatti.views.dataview
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [chimera.js-interop :refer [format]]
-            [chimera.om.state :refer [merge-into-app-state!]]
+            [chimera.om.state :refer [transact! merge-into-app-state!]]
             [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :refer [mapping-threshold]]
+            [hatti.constants :refer [mapping-threshold google-sheets]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.views :refer [tabbed-dataview
@@ -86,6 +86,39 @@
       (merge-into-app-state! shared/app-state
                              [:views]
                              {:selected view})
+      (put! shared/event-chan {:re-render view}))))
+
+(defn activate-settings-view! [view settings-section]
+  (let [view (keyword view)
+        settings-section (keyword settings-section)
+        views (-> @shared/app-state :views :all)
+        settings-views (-> @shared/app-state :views :settings :all)]
+    (when (contains? (set settings-views) settings-section)
+      (merge-into-app-state! shared/app-state
+                             [:views]
+                             {:selected view})
+      (merge-into-app-state! shared/app-state
+                             [:views :settings]
+                             {:active-tab settings-section})
+      (put! shared/event-chan {:re-render view}))))
+
+(defn activate-integrated-apps-view! [view settings-section app-type]
+  (let [view (keyword view)
+        settings-section (keyword settings-section)
+        settings-views (-> @shared/app-state :views :settings :all)]
+    (when (contains? (set settings-views) settings-section)
+      (transact!
+       shared/app-state
+       (fn [app-state]
+         (-> app-state
+             (assoc-in [:views :selected] view)
+             (assoc-in [:views :settings :active-tab] settings-section)
+             (assoc-in [:views :settings :integrated-apps :active-section]
+                       app-type))))
+      (if (= app-type google-sheets)
+        (merge-into-app-state! shared/app-state
+                               [:views :settings :integrated-apps]
+                               {:add? true}))
       (put! shared/event-chan {:re-render view}))))
 
 (defmethod tabbed-dataview :default
