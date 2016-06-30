@@ -111,7 +111,7 @@
        shared/app-state
        (fn [app-state]
          (-> app-state
-             (assoc-in [:views] {:selected view})
+             (assoc-in [:views: :selected] view)
              (assoc-in [:views :settings] {:active-tab settings-section})
              (assoc-in [:views :settings :integrated-apps]
                        {:active-section app-type}))))
