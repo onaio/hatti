@@ -7,3 +7,6 @@
 (def mapping-threshold 20000)
 ;; Google Sheets app-type.
 (def google-sheets "google_sheets")
+
+(def mapboxgl-access-token
+  "pk.eyJ1Ijoib25hIiwiYSI6IlVYbkdyclkifQ.0Bz-QOOXZZK01dq4MuMImQ")

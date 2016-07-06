@@ -3,7 +3,7 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.constants :refer [_id _rank]]
+            [hatti.constants :refer [_id _rank mapboxgl-access-token]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -214,6 +214,16 @@
      m)
     (.setView m #js [0 0] 1)
     m))
+
+(defn create-mapboxgl-map
+  "Creates a mapboxgl map, rendering it to the dom element with given id."
+  [id]
+  (set! (.-accessToken js/mapboxgl) mapboxgl-access-token)
+  (let [Map (.-Map js/mapboxgl)
+        Navigation (.-Navigation js/mapboxgl)
+        m (Map. #js {:container id
+                     :style "mapbox://styles/mapbox/streets-v9"})]
+    (.addControl m (Navigation. #js {:position "bottom-left"}))))
 
 (defn- register-mouse-events
   "Mouse events for markers.

@@ -260,6 +260,15 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
+(defn- load-mapboxgl-helper
+  "Helper for map-and-markers component (see below);
+   If map doesn't exists in local-state, creates it and puts it there."
+  [owner]
+  (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
+                         (mu/create-mapboxgl-map
+                          (om/get-node owner)))]
+    (om/set-state! owner :mapboxgl-map mapboxgl-map)))
+
 (defmethod map-and-markers :default [app-state owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
@@ -276,28 +285,29 @@
             geojson (mu/as-geojson data form)
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
                                           (om/get-state owner :feature-layer))]
-        (load-geojson-helper owner geojson)
-        (handle-map-events app-state
-                           {:re-render! rerender!
-                            :get-id-marker-map
-                            #(om/get-state owner :id-marker-map)})))
-    om/IWillReceiveProps
-    (will-receive-props [_ next-props]
-      "will-recieve-props resets leaflet geojson if the map data has changed."
-      (let [{{old-data :data} :map-page} (om/get-props owner)
-            {{new-data :data} :map-page} next-props
-            old-field (get-in (om/get-props owner) [:map-page :geofield])
-            new-field (get-in next-props [:map-page :geofield])]
-        (when (or (not= old-field new-field)
-                  (not= (count old-data) (count new-data))
-                  (not= old-data new-data))
-          (let [{:keys [flat-form]} (om/get-shared owner)
-                {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
-                new-geojson (mu/as-geojson new-data flat-form new-field)]
-            (when (not= geojson new-geojson)
-              (when leaflet-map (.removeLayer leaflet-map feature-layer))
-              (load-geojson-helper owner new-geojson)
-              (put! shared/event-chan {:data-updated true}))))))))
+        (load-mapboxgl-helper owner)
+        #_(handle-map-events app-state
+                             {:re-render! rerender!
+                              :get-id-marker-map
+                              #(om/get-state owner :id-marker-map)})))
+    ;om/IWillReceiveProps
+    ;(will-receive-props [_ next-props]
+    ;  "will-recieve-props resets leaflet geojson if the map data has changed."
+    ;  (let [{{old-data :data} :map-page} (om/get-props owner)
+    ;        {{new-data :data} :map-page} next-props
+    ;        old-field (get-in (om/get-props owner) [:map-page :geofield])
+    ;        new-field (get-in next-props [:map-page :geofield])]
+    ;    (when (or (not= old-field new-field)
+    ;              (not= (count old-data) (count new-data))
+    ;              (not= old-data new-data))
+    ;      (let [{:keys [flat-form]} (om/get-shared owner)
+    ;            {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
+    ;            new-geojson (mu/as-geojson new-data flat-form new-field)]
+    ;        (when (not= geojson new-geojson)
+    ;          (when leaflet-map (.removeLayer leaflet-map feature-layer))
+    ;          (load-geojson-helper owner new-geojson)
+    ;          (put! shared/event-chan {:data-updated true}))))))
+))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
