@@ -277,3 +277,23 @@
     {:feature-layer feature-layer
      :markers markers
      :id->marker (zipmap ids markers)}))
+
+
+(defn- register-map-mouse-events
+  [map]
+  (.on map "mousemove"
+       (fn [e]
+         (let [features
+               (.queryRenderedFeatures
+                 map (.-point e) (clj->js {:layers ["point-data"]}))]
+           (set! (.-cursor (.-style (.getCanvas map)))
+                 (if (pos? (.-length features)) "pointer" "")))))
+
+  (.on map "click"
+       (fn [e]
+         (let [features
+               (.queryRenderedFeatures
+                 map (.-point e) (clj->js {:layers ["point-data"]}))]
+           (if (pos? (.-length features))
+             (.log js/console (clj->js features))
+             "")))))
