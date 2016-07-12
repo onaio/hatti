@@ -33,6 +33,7 @@
         new-rank ((case dir :left dec :right inc) cur-rank)
         event-key  (condp = view
                      :map :mapped-submission-to-rank
+                     :map :mapped-submisison-to-id
                      :table :submission-to-rank)]
     [:a {:on-click (click-fn
                     #(put! shared/event-chan {event-key new-rank}))

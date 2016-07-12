@@ -278,14 +278,13 @@
      :markers markers
      :id->marker (zipmap ids markers)}))
 
-
-(defn- register-map-mouse-events
-  [map]
+(defn register-map-mouse-events
+  [map event-chan]
   (.on map "mousemove"
        (fn [e]
          (let [features
                (.queryRenderedFeatures
-                 map (.-point e) (clj->js {:layers ["point-data"]}))]
+                map (.-point e) (clj->js {:layers ["point-data"]}))]
            (set! (.-cursor (.-style (.getCanvas map)))
                  (if (pos? (.-length features)) "pointer" "")))))
 
@@ -293,7 +292,11 @@
        (fn [e]
          (let [features
                (.queryRenderedFeatures
-                 map (.-point e) (clj->js {:layers ["point-data"]}))]
-           (if (pos? (.-length features))
-             (.log js/console (clj->js features))
-             "")))))
+                map (.-point e) (clj->js {:layers ["point-data"]}))
+               no-of-features (.-length features)]
+           (when (pos? no-of-features)
+             (when (= no-of-features 1)
+               (put! event-chan {:mapped-submission-to-id
+                                 (-> (first features)
+                                     (aget "properties")
+                                     (aget "id"))})))))))

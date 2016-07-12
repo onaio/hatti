@@ -52,7 +52,8 @@
     (go
       (while true
         (let [e (<! event-chan)
-              {:keys [mapped-submission-to-rank submission-unclicked]} e
+              {:keys [mapped-submission-to-rank submission-unclicked
+                      mapped-submission-to-id]} e
               prev-marker (get-in @app-state
                                   [:map-page :submission-clicked :marker])]
           (when submission-unclicked
@@ -63,6 +64,17 @@
                   new-data (first
                             (filter
                              #(= rank (get % _rank))
+                             (get-in @app-state [:map-page :data])))]
+              (om/update! app-state [:map-page :submission-clicked]
+                          {:data new-data
+                           :marker (get (get-id-marker-map)
+                                        (get new-data _id))
+                           :prev-marker prev-marker})))
+          (when mapped-submission-to-id
+            (let [id mapped-submission-to-id
+                  new-data (first
+                            (filter
+                             #(= id (get % _id))
                              (get-in @app-state [:map-page :data])))]
               (om/update! app-state [:map-page :submission-clicked]
                           {:data new-data
@@ -266,8 +278,9 @@
   [owner]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map
-                           (om/get-node owner)))
-        tiles #js ["http://localhost:3001/services/postgis/oloitoktok_bike_trip/geom/vector-tiles/{z}/{x}/{y}.pbf"]
+                          (om/get-node owner)))
+        tiles #js
+               ["http://localhost:3001/services/postgis/oloitoktok_bike_trip/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=uuid,id"]
         source #js {:type "vector" :tiles tiles}
         layer  (clj->js {:id "point-data"
                          :type "circle"
@@ -279,7 +292,7 @@
         onLoad (fn []
                  (.addSource mapboxgl-map "point-data" source)
                  (.addLayer mapboxgl-map layer)
-                 (mu/register-map-mouse-events mapboxgl-map))]
+                 (mu/register-map-mouse-events mapboxgl-map shared/event-chan))]
     (.on mapboxgl-map "load" onLoad)
     (om/set-state! owner :mapboxgl-map mapboxgl-map)))
 
@@ -300,10 +313,10 @@
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
                                           (om/get-state owner :feature-layer))]
         (load-mapboxgl-helper owner)
-        #_(handle-map-events app-state
-                             {:re-render! rerender!
-                              :get-id-marker-map
-                              #(om/get-state owner :id-marker-map)})))
+        (handle-map-events app-state
+                           {:re-render! rerender!
+                            :get-id-marker-map
+                            #(om/get-state owner :id-marker-map)})))
     ;om/IWillReceiveProps
     ;(will-receive-props [_ next-props]
     ;  "will-recieve-props resets leaflet geojson if the map data has changed."
