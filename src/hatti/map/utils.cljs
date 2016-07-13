@@ -215,16 +215,6 @@
     (.setView m #js [0 0] 1)
     m))
 
-(defn create-mapboxgl-map
-  "Creates a mapboxgl map, rendering it to the dom element with given id."
-  [id]
-  (set! (.-accessToken js/mapboxgl) mapboxgl-access-token)
-  (let [Map (.-Map js/mapboxgl)
-        Navigation (.-Navigation js/mapboxgl)
-        m (Map. #js {:container id
-                     :style "mapbox://styles/mapbox/streets-v9"})]
-    (.addControl m (Navigation. #js {:position "bottom-left"}))))
-
 (defn- register-mouse-events
   "Mouse events for markers.
   On click or arrow, mapped-submission-to-rank events are generated.
@@ -278,13 +268,42 @@
      :markers markers
      :id->marker (zipmap ids markers)}))
 
-(defn register-map-mouse-events
+;;MAPBOX GL
+(defn create-mapboxgl-map
+  "Creates a mapboxgl map, rendering it to the dom element with given id."
+  [id]
+  (set! (.-accessToken js/mapboxgl) mapboxgl-access-token)
+  (let [Map (.-Map js/mapboxgl)
+        Navigation (.-Navigation js/mapboxgl)
+        m (Map. #js {:container id
+                     :style "mapbox://styles/mapbox/streets-v9"})]
+    (.addControl m (Navigation. #js {:position "bottom-left"}))))
+
+(defn add-mapboxgl-source
+  "Add map source."
+  [map]
+  (let [tiles #js ["http://localhost:3001/services/postgis/oloitoktok_bike_trip/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=uuid,id"]
+        source #js {:type "vector" :tiles tiles}]
+    (.addSource map "xform_id_string" source)))
+
+(defn add-mapboxgl-layer
+  "Add map layer."
+  [map]
+  (let [layer (clj->js {:id "points"
+                        :type "circle"
+                        :source "xform_id_string"
+                        :source-layer "oloitoktok_bike_trip_geom"
+                        :paint {:circle-radius 6 :circle-color "red"}})]
+    (.addLayer map layer)))
+
+(defn register-mapboxgl-mouse-events
+  "Register map mouse events."
   [map event-chan]
   (.on map "mousemove"
        (fn [e]
          (let [features
                (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers ["point-data"]}))]
+                map (.-point e) (clj->js {:layers ["points"]}))]
            (set! (.-cursor (.-style (.getCanvas map)))
                  (if (pos? (.-length features)) "pointer" "")))))
 
@@ -292,7 +311,7 @@
        (fn [e]
          (let [features
                (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers ["point-data"]}))
+                map (.-point e) (clj->js {:layers ["points"]}))
                no-of-features (.-length features)]
            (when (pos? no-of-features)
              (when (= no-of-features 1)
@@ -300,3 +319,10 @@
                                  (-> (first features)
                                      (aget "properties")
                                      (aget "id"))})))))))
+
+(defn map-on-load
+  "Functions that are called after map is loaded in DOM."
+  [map event-chan]
+  (add-mapboxgl-source map)
+  (add-mapboxgl-layer map)
+  (register-mapboxgl-mouse-events map event-chan))

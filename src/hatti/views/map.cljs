@@ -278,22 +278,8 @@
   [owner]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map
-                          (om/get-node owner)))
-        tiles #js
-               ["http://localhost:3001/services/postgis/oloitoktok_bike_trip/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=uuid,id"]
-        source #js {:type "vector" :tiles tiles}
-        layer  (clj->js {:id "point-data"
-                         :type "circle"
-                         :source "point-data"
-                         :source-layer "oloitoktok_bike_trip_geom"
-                         :layout {:visibility "visible"}
-                         :paint {:circle-radius 6
-                                 :circle-color "red"}})
-        onLoad (fn []
-                 (.addSource mapboxgl-map "point-data" source)
-                 (.addLayer mapboxgl-map layer)
-                 (mu/register-map-mouse-events mapboxgl-map shared/event-chan))]
-    (.on mapboxgl-map "load" onLoad)
+                          (om/get-node owner)))]
+    (.on mapboxgl-map "load" #(mu/map-on-load mapboxgl-map shared/event-chan))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)))
 
 (defmethod map-and-markers :default [app-state owner]
