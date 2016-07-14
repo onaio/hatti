@@ -298,29 +298,48 @@
             geojson (mu/as-geojson data form)
             rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
                                           (om/get-state owner :feature-layer))]
-        (load-mapboxgl-helper owner)
+        (load-geojson-helper owner geojson)
         (handle-map-events app-state
                            {:re-render! rerender!
                             :get-id-marker-map
                             #(om/get-state owner :id-marker-map)})))
-    ;om/IWillReceiveProps
-    ;(will-receive-props [_ next-props]
-    ;  "will-recieve-props resets leaflet geojson if the map data has changed."
-    ;  (let [{{old-data :data} :map-page} (om/get-props owner)
-    ;        {{new-data :data} :map-page} next-props
-    ;        old-field (get-in (om/get-props owner) [:map-page :geofield])
-    ;        new-field (get-in next-props [:map-page :geofield])]
-    ;    (when (or (not= old-field new-field)
-    ;              (not= (count old-data) (count new-data))
-    ;              (not= old-data new-data))
-    ;      (let [{:keys [flat-form]} (om/get-shared owner)
-    ;            {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
-    ;            new-geojson (mu/as-geojson new-data flat-form new-field)]
-    ;        (when (not= geojson new-geojson)
-    ;          (when leaflet-map (.removeLayer leaflet-map feature-layer))
-    ;          (load-geojson-helper owner new-geojson)
-    ;          (put! shared/event-chan {:data-updated true}))))))
-))
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
+      "will-recieve-props resets leaflet geojson if the map data has changed."
+      (let [{{old-data :data} :map-page} (om/get-props owner)
+            {{new-data :data} :map-page} next-props
+            old-field (get-in (om/get-props owner) [:map-page :geofield])
+            new-field (get-in next-props [:map-page :geofield])]
+        (when (or (not= old-field new-field)
+                  (not= (count old-data) (count new-data))
+                  (not= old-data new-data))
+          (let [{:keys [flat-form]} (om/get-shared owner)
+                {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
+                new-geojson (mu/as-geojson new-data flat-form new-field)]
+            (when (not= geojson new-geojson)
+              (when leaflet-map (.removeLayer leaflet-map feature-layer))
+              (load-geojson-helper owner new-geojson)
+              (put! shared/event-chan {:data-updated true}))))))))
+
+(defn mapboxgl-map
+  [app-state owner]
+  "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
+   Cursor is at :map-page"
+  (reify
+    om/IRenderState
+    (render-state [_ _]
+      "render-state simply renders an emtpy div that mapboxgl will render
+      into."
+      (html [:div {:id "map"}]))
+    om/IDidMount
+    (did-mount [_]
+      "did-mount loads geojson on map, and starts the event handling loop."
+      (let [re-render! #(identity "")]
+        (load-mapboxgl-helper owner)
+        (handle-map-events
+          app-state
+          {:re-render! re-render!
+           :get-id-marker-map  #(om/get-state owner :id-marker-map)})))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
@@ -363,7 +382,7 @@
       (let [form (om/get-shared owner [:flat-form])]
         (html
          [:div {:id "map-holder"}
-          (om/build map-and-markers
+          (om/build mapboxgl-map
                     cursor
                     {:opts opts})
           (om/build map-geofield-chooser

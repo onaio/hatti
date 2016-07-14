@@ -298,7 +298,7 @@
 (defn generate-stops
   [selected-id selected-color]
   [[0 "#f30"]
-   [selected-id "#ad2300"]])
+   [selected-id selected-color]])
 
 (defn get-styles
   [& [selected-id]]
