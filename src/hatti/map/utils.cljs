@@ -288,41 +288,89 @@
 
 (defn add-mapboxgl-layer
   "Add map layer."
-  [map]
-  (let [layer (clj->js {:id "points"
-                        :type "circle"
+  [map layer-id layer-type]
+  (let [layer (clj->js {:id layer-id
+                        :type layer-type
                         :source "xform_id_string"
-                        :source-layer "oloitoktok_bike_trip_geom"
-                        :paint {:circle-radius 6 :circle-color "red"}})]
+                        :source-layer "oloitoktok_bike_trip_geom"})]
     (.addLayer map layer)))
+
+(defn generate-stops
+  [selected-id selected-color]
+  [[0 "#f30"]
+   [selected-id "#ad2300"]])
+
+(defn get-styles
+  [& [selected-id]]
+  {:point {:normal [["circle-color" (clj->js
+                                     {:property "id"
+                                      :type "categorical"
+                                      :stops [[0 "#f30"]]})]
+                    ["circle-radius" 6]]
+           :hover [["circle-color" (clj->js
+                                    {:property "id"
+                                     :type "categorical"
+                                     :stops (generate-stops
+                                             selected-id "#631400")})]]
+           :clicked ["circle-color" (clj->js
+                                     {:property "id"
+                                      :type "categorical"
+                                      :stops (generate-stops
+                                              selected-id "#ad2300")})]}})
+
+(defn get-style-properties
+  [layer-type style-type & [selected-id]]
+  (-> (get-styles selected-id) layer-type style-type))
+
+(defn set-mapboxgl-paint-property
+  "Sets maps paint properties given layer-id and list of properties to set.
+  properties should be a list of properties that contains the propery name
+  and value in a vector. e.g. [[property1 value1] [property2 value2]"
+  [map layer-id properties]
+  (doseq [[p v] properties] (.setPaintProperty map layer-id p v)))
 
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
   [map event-chan]
   (.on map "mousemove"
        (fn [e]
-         (let [features
+         (let [layer-id "points"
+               features
                (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers ["points"]}))]
+                map (.-point e) (clj->js {:layers [layer-id]}))
+               no-of-features (.-length features)]
            (set! (.-cursor (.-style (.getCanvas map)))
-                 (if (pos? (.-length features)) "pointer" "")))))
-
+                 (if (pos? (.-length features)) "pointer" ""))
+           (if (= no-of-features 1)
+             (set-mapboxgl-paint-property
+              map layer-id (get-style-properties :point :hover
+                                                 (-> (first features)
+                                                     (aget "properties")
+                                                     (aget "id"))))))))
   (.on map "click"
        (fn [e]
-         (let [features
+         (let [layer-id "points"
+               features
                (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers ["points"]}))
+                map (.-point e) (clj->js {:layers [layer-id]}))
                no-of-features (.-length features)]
            (when (pos? no-of-features)
              (when (= no-of-features 1)
                (put! event-chan {:mapped-submission-to-id
                                  (-> (first features)
                                      (aget "properties")
-                                     (aget "id"))})))))))
+                                     (aget "id"))})
+               (set-mapboxgl-paint-property
+                map layer-id (get-style-properties :point :selected
+                                                   (-> (first features)
+                                                       (aget "properties")
+                                                       (aget "id"))))))))))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
   [map event-chan]
   (add-mapboxgl-source map)
-  (add-mapboxgl-layer map)
-  (register-mapboxgl-mouse-events map event-chan))
+  (add-mapboxgl-layer map "points" "circle")
+  (register-mapboxgl-mouse-events map event-chan)
+  (set-mapboxgl-paint-property
+   map "points" (get-style-properties :point :normal)))
