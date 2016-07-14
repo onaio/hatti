@@ -23,7 +23,7 @@
 (defn handle-viewby-events
   "Listens to view-by events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
-  [app-state {:keys [get-id-marker-map]}]
+  [app-state {:keys [get-id-marker-map owner]}]
   (let [event-chan (shared/event-tap)]
     (go
       (while true
@@ -37,9 +37,10 @@
                                :data
                                (vb/viewby-info field))]
               (om/update! app-state [:map-page :view-by] vb-info)
-              (vb/view-by! vb-info markers)))
+              (vb/view-by! vb-info markers owner)))
           (when view-by-filtered
-            (vb/view-by! (get-in @app-state [:map-page :view-by]) markers))
+            (vb/view-by! (get-in @app-state [:map-page :view-by]) markers
+                         owner))
           (when view-by-closed
             (om/update! app-state [:map-page :view-by] {})
             (mu/clear-all-styles markers)))))))
@@ -338,7 +339,8 @@
         (load-mapboxgl-helper owner)
         (handle-map-events
           app-state
-          {:re-render! re-render!
+          {:owner owner
+           :re-render! re-render!
            :get-id-marker-map  #(om/get-state owner :id-marker-map)})))))
 
 (defmethod map-geofield-chooser :default

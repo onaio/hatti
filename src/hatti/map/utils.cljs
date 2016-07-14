@@ -301,11 +301,13 @@
    [selected-id selected-color]])
 
 (defn get-styles
-  [& [selected-id]]
+  [& [selected-id stops]]
   {:point {:normal [["circle-color" (clj->js
                                      {:property "id"
                                       :type "categorical"
-                                      :stops [[0 "#f30"]]})]
+                                      :stops (if stops
+                                               stops
+                                               [[0 "#f30"]])})]
                     ["circle-radius" 6]]
            :hover [["circle-color" (clj->js
                                     {:property "id"
@@ -319,8 +321,8 @@
                                               selected-id "#ad2300")})]}})
 
 (defn get-style-properties
-  [layer-type style-type & [selected-id]]
-  (-> (get-styles selected-id) layer-type style-type))
+  [layer-type style-type & [selected-id stops]]
+  (-> (get-styles selected-id stops) layer-type style-type))
 
 (defn set-mapboxgl-paint-property
   "Sets maps paint properties given layer-id and list of properties to set.

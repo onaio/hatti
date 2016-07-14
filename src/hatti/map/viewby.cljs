@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :refer [split]]
             [chimera.js-interop :refer [safe-regex]]
+            [om.core :as om :include-macros true]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.constants :refer [_id]]
             [hatti.ona.forms :as form-utils]
@@ -103,10 +104,18 @@
      :id-selected? #(-> % id->answers answer->selected?)}))
 
 (defn view-by!
-  [view-by-info markers]
+  [view-by-info markers & [owner]]
   (let [{:keys [id-selected? id-color]} (id-color-selected view-by-info)
-        m->s (marker-styler id-color id-selected?)]
-    (doseq [marker markers]
+        m->s (marker-styler id-color id-selected?)
+        idan (:id->answers view-by-info)
+        ids (sort (keys idan))
+        stops (mapv #(if (id-selected? %)
+                      [% (id-color %)]
+                      [% grey]) ids)]
+    (map-utils/set-mapboxgl-paint-property
+      (om/get-state owner :mapboxgl-map)
+      "points" (map-utils/get-style-properties :point :normal nil stops))
+    #_(doseq [marker markers]
       (map-utils/re-style-marker m->s marker)
       (map-utils/bring-to-top-if-selected id-selected? marker))))
 
