@@ -276,11 +276,13 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [owner]
+  [{:keys [dataset-info]} owner]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map
                           (om/get-node owner)))]
-    (.on mapboxgl-map "load" #(mu/map-on-load mapboxgl-map shared/event-chan))
+    (.on mapboxgl-map "load" #(mu/map-on-load mapboxgl-map
+                                              shared/event-chan
+                                              dataset-info))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)))
 
 (defmethod map-and-markers :default [app-state owner]
@@ -336,7 +338,7 @@
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
       (let [re-render! #(identity "")]
-        (load-mapboxgl-helper owner)
+        (load-mapboxgl-helper app-state owner)
         (handle-map-events
           app-state
           {:owner owner

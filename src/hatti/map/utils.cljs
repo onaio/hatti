@@ -3,7 +3,9 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.constants :refer [_id _rank mapboxgl-access-token]]
+            [hatti.constants :refer [_id _rank
+                                     mapboxgl-access-token
+                                     tile-sever]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -279,20 +281,25 @@
                      :style "mapbox://styles/mapbox/streets-v9"})]
     (.addControl m (Navigation. #js {:position "bottom-left"}))))
 
+(defn get-tiles-endpoint
+  [id_string]
+  (str tile-sever "/services/postgis/" id_string
+       "/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=id"))
+
 (defn add-mapboxgl-source
   "Add map source."
-  [map]
-  (let [tiles #js ["http://localhost:3001/services/postgis/oloitoktok_bike_trip/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=uuid,id"]
+  [map id_string]
+  (let [tiles #js [(get-tiles-endpoint id_string)]
         source #js {:type "vector" :tiles tiles}]
-    (.addSource map "xform_id_string" source)))
+    (.addSource map id_string source)))
 
 (defn add-mapboxgl-layer
   "Add map layer."
-  [map layer-id layer-type]
-  (let [layer (clj->js {:id layer-id
+  [map layer-type id_string]
+  (let [layer (clj->js {:id id_string
                         :type layer-type
-                        :source "xform_id_string"
-                        :source-layer "oloitoktok_bike_trip_geom"})]
+                        :source id_string
+                        :source-layer (str id_string "_geom")})]
     (.addLayer map layer)))
 
 (defn generate-stops
@@ -333,10 +340,10 @@
 
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
-  [map event-chan]
+  [map event-chan id_string]
   (.on map "mousemove"
        (fn [e]
-         (let [layer-id "points"
+         (let [layer-id id_string
                features
                (.queryRenderedFeatures
                 map (.-point e) (clj->js {:layers [layer-id]}))
@@ -351,7 +358,7 @@
                                                      (aget "id"))))))))
   (.on map "click"
        (fn [e]
-         (let [layer-id "points"
+         (let [layer-id id_string
                features
                (.queryRenderedFeatures
                 map (.-point e) (clj->js {:layers [layer-id]}))
@@ -370,9 +377,9 @@
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan]
-  (add-mapboxgl-source map)
-  (add-mapboxgl-layer map "points" "circle")
-  (register-mapboxgl-mouse-events map event-chan)
+  [map event-chan {:keys [id_string]}]
+  (add-mapboxgl-source map id_string)
+  (add-mapboxgl-layer map "circle" id_string)
+  (register-mapboxgl-mouse-events map event-chan id_string)
   (set-mapboxgl-paint-property
-   map "points" (get-style-properties :point :normal)))
+    map id_string (get-style-properties :point :normal)))

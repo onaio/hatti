@@ -114,7 +114,8 @@
                       [% grey]) ids)]
     (map-utils/set-mapboxgl-paint-property
       (om/get-state owner :mapboxgl-map)
-      "points" (map-utils/get-style-properties :point :normal nil stops))
+      "" (map-utils/get-style-properties :point :normal nil
+                                               [[0 (str "#f" (rand-int "100"))]]))
     #_(doseq [marker markers]
       (map-utils/re-style-marker m->s marker)
       (map-utils/bring-to-top-if-selected id-selected? marker))))
