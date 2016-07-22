@@ -307,15 +307,28 @@
   [[0 "#f30"]
    [selected-id selected-color]])
 
+(defn generate-size-stops
+  [selected-id selected-color]
+  [[0 4]
+   [selected-id selected-color]])
+
 (defn get-styles
-  [& [selected-id stops]]
+  [& [selected-id stops size-stops]]
   {:point {:normal [["circle-color" (clj->js
                                      {:property "id"
                                       :type "categorical"
                                       :stops (if stops
                                                stops
                                                [[0 "#f30"]])})]
-                    ["circle-radius" 6]]
+                    #_["circle-radius" (clj->js
+                                       {:property "id"
+                                        :type "categorical"
+                                        :stops (if size-stops
+                                                 size-stops
+                                                 [[0 6]])})]
+                    #_["circle-opacity" (clj->js
+                                        {:stops
+                                         [[3, 0.2][15, 0.8]]})]]
            :hover [["circle-color" (clj->js
                                     {:property "id"
                                      :type "categorical"
@@ -328,7 +341,7 @@
                                               selected-id "#ad2300")})]}})
 
 (defn get-style-properties
-  [layer-type style-type & [selected-id stops]]
+  [layer-type style-type & [selected-id stops size-stops]]
   (-> (get-styles selected-id stops) layer-type style-type))
 
 (defn set-mapboxgl-paint-property
