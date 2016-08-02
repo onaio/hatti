@@ -110,19 +110,19 @@
         idan (:id->answers view-by-info)
         ids (sort (keys idan))
         size-stops (mapv #(if (id-selected? %)
-                      [% (rand-int 30)]
-                      [% 4]) ids)
+                            [% (rand-int 30)]
+                            [% 4]) ids)
         stops (mapv #(if (id-selected? %)
-                      [% (id-color %)]
-                      [% grey]) ids)
+                       [% (id-color %)]
+                       [% grey]) ids)
         id_string (om/get-props owner [:dataset-info :id_string])]
     (when-not (empty? stops)
       (map-utils/set-mapboxgl-paint-property
-      (om/get-state owner :mapboxgl-map) id_string
-      (map-utils/get-style-properties :point :normal nil stops size-stops)))
+       (om/get-state owner :mapboxgl-map) id_string
+       (map-utils/get-style-properties :point :normal nil stops size-stops)))
     #_(doseq [marker markers]
-      (map-utils/re-style-marker m->s marker)
-      (map-utils/bring-to-top-if-selected id-selected? marker))))
+        (map-utils/re-style-marker m->s marker)
+        (map-utils/bring-to-top-if-selected id-selected? marker))))
 
 (defn filter-answer-data-structures
   "Given a list of answers + query, returns map from answers to true/false.

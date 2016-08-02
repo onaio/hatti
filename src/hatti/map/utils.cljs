@@ -321,14 +321,14 @@
                                                stops
                                                [[0 "#f30"]])})]
                     #_["circle-radius" (clj->js
-                                       {:property "id"
-                                        :type "categorical"
-                                        :stops (if size-stops
-                                                 size-stops
-                                                 [[0 6]])})]
+                                        {:property "id"
+                                         :type "categorical"
+                                         :stops (if size-stops
+                                                  size-stops
+                                                  [[0 6]])})]
                     #_["circle-opacity" (clj->js
-                                        {:stops
-                                         [[3, 0.2][15, 0.8]]})]]
+                                         {:stops
+                                          [[3, 0.2] [15, 0.8]]})]]
            :hover [["circle-color" (clj->js
                                     {:property "id"
                                      :type "categorical"
@@ -395,4 +395,4 @@
   (add-mapboxgl-layer map "circle" id_string)
   (register-mapboxgl-mouse-events map event-chan id_string)
   (set-mapboxgl-paint-property
-    map id_string (get-style-properties :point :normal)))
+   map id_string (get-style-properties :point :normal)))

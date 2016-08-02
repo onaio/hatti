@@ -1,6 +1,7 @@
 (ns hatti.views.map
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan put! timeout]]
+            [chimera.js-interop :refer [json->cljs]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :refer [_id _rank]]
@@ -48,7 +49,7 @@
 (defn handle-submission-events
   "Listens to sumission events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
-  [app-state {:keys [get-id-marker-map]}]
+  [app-state {:keys [get-id-marker-map data-get]}]
   (let [event-chan (shared/event-tap)]
     (go
       (while true
@@ -62,10 +63,10 @@
                         {:data nil :prev-marker prev-marker}))
           (when mapped-submission-to-rank
             (let [rank mapped-submission-to-rank
-                  new-data (first
-                            (filter
-                             #(= rank (get % _rank))
-                             (get-in @app-state [:map-page :data])))]
+                  new-data  (first
+                             (filter
+                              #(= rank (get % _rank))
+                              (get-in @app-state [:data])))]
               (om/update! app-state [:map-page :submission-clicked]
                           {:data new-data
                            :marker (get (get-id-marker-map)
@@ -76,12 +77,21 @@
                   new-data (first
                             (filter
                              #(= id (get % _id))
-                             (get-in @app-state [:map-page :data])))]
+                             (get-in @app-state [:data])))]
               (om/update! app-state [:map-page :submission-clicked]
                           {:data new-data
+                           :id id
                            :marker (get (get-id-marker-map)
                                         (get new-data _id))
-                           :prev-marker prev-marker}))))))))
+                           :prev-marker prev-marker})
+              (when-not new-data
+                (let [datum (-> id data-get <! :body json->cljs)]
+                  (om/update! app-state [:map-page :submission-clicked]
+                              {:data datum
+                               :id id
+                               :marker (get (get-id-marker-map)
+                                            (get datum _id))
+                               :prev-marker prev-marker}))))))))))
 
 (defn handle-data-updates
   "Fires events that need to be re-fired when data updates."
@@ -325,7 +335,7 @@
               (put! shared/event-chan {:data-updated true}))))))))
 
 (defn mapboxgl-map
-  [app-state owner]
+  [app-state owner {:keys [data-get]}]
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
    Cursor is at :map-page"
   (reify
@@ -340,10 +350,11 @@
       (let [re-render! #(identity "")]
         (load-mapboxgl-helper app-state owner)
         (handle-map-events
-          app-state
-          {:owner owner
-           :re-render! re-render!
-           :get-id-marker-map  #(om/get-state owner :id-marker-map)})))))
+         app-state
+         {:owner owner
+          :re-render! re-render!
+          :get-id-marker-map  #(om/get-state owner :id-marker-map)
+          :data-get data-get})))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
