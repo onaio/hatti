@@ -50,10 +50,12 @@
    answer->count, answer->selected?, answer->color are maps from answer;
    used for the legend rendering. An 'answer' is mapped from a data element,
    eg. a bin for numbers/dates, an option for multiple/single selects."
-  [{:keys [full-name] :as field} data]
+  [{:keys [full-name name] :as field} data & [with-geolocaion?]]
   (let [ids (map #(get % _id) data)
         raw-answers (map #(get % full-name) data)
-        submissions-with-geolocation (filterv has-geolocation? data)
+        submissions-with-geolocation (if with-geolocaion?
+                                       (filterv has-geolocation? data)
+                                       (vec data))
         raw-answers-with-geolocation (map #(get % full-name)
                                           submissions-with-geolocation)
         preprocessed-answers (preprocess-answers field raw-answers)

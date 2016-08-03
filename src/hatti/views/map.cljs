@@ -19,24 +19,53 @@
                      map-viewby-answer-legend map-viewby-answer-close]]
             [hatti.views.record]))
 
+;;;; HELPERS
+(defn get-viewby-data
+  "Gets view-by data from charts and data endpoints if the data is not in
+  app-state"
+  [app-state {:keys [chart-get data-get]}
+   {:keys [name full-name children] :as field}]
+  (go (let [{:keys [data]} (:body (<! (chart-get name)))
+            label-names (when (or (f/select-one? field) (f/select-all? field))
+                          (apply merge (map (fn [{:keys [label name]}]
+                                              {label name}) children)))
+            field-key (keyword name)]
+        (om/update! app-state [:map-page :data] [])
+        (doseq [d data]
+          (let [label (-> d field-key first)
+                label->answer (get label-names label)
+                query (str "{\"" name \" ":\"" label->answer "\"}")
+                fields  (str "[\"" _id \" "]")
+                ids (-> (<! (data-get nil {:query query :fields fields}))
+                        :body json->cljs)
+                data (map #(merge % {full-name label->answer}) ids)]
+            (om/transact! app-state [:map-page :data] #(concat % data)))))))
+
 ;;;;; EVENT HANDLERS
 
 (defn handle-viewby-events
   "Listens to view-by events, and change the map-cursor appropriately.
    Needs access to app-state, event channels, as well as map objects."
-  [app-state {:keys [get-id-marker-map owner]}]
+  [app-state {:keys [get-id-marker-map owner chart-get] :as opts}]
   (let [event-chan (shared/event-tap)]
     (go
       (while true
         (let [e (<! event-chan)
               {:keys [view-by view-by-closed view-by-filtered]} e
-              markers (vals (get-id-marker-map))]
+              markers (vals (get-id-marker-map))
+              {:keys [data dataset-info]} @app-state
+              field (:field view-by)
+              data-not-in-appstate? (< (count data)
+                                       (:num_of_submissions dataset-info))]
+
+          ;; Fetches view-by data if data not in app-state
+          (when data-not-in-appstate?
+            (<! (get-viewby-data app-state opts field)))
           (when view-by
-            (let [{:keys [full-name] :as field} (:field view-by)
-                  vb-info (->> @app-state
-                               :map-page
-                               :data
-                               (vb/viewby-info field))]
+            (let [data (if data-not-in-appstate?
+                         (-> @app-state :map-page :data)
+                         (:data @app-state))
+                  vb-info (vb/viewby-info field data false)]
               (om/update! app-state [:map-page :view-by] vb-info)
               (vb/view-by! vb-info markers owner)))
           (when view-by-filtered
@@ -335,7 +364,7 @@
               (put! shared/event-chan {:data-updated true}))))))))
 
 (defn mapboxgl-map
-  [app-state owner {:keys [data-get]}]
+  [app-state owner opts]
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
    Cursor is at :map-page"
   (reify
@@ -351,10 +380,11 @@
         (load-mapboxgl-helper app-state owner)
         (handle-map-events
          app-state
-         {:owner owner
-          :re-render! re-render!
-          :get-id-marker-map  #(om/get-state owner :id-marker-map)
-          :data-get data-get})))))
+         (merge
+          (select-keys opts [:chart-get :data-get])
+          {:owner owner
+           :re-render! re-render!
+           :get-id-marker-map  #(om/get-state owner :id-marker-map)}))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
