@@ -291,7 +291,8 @@
   [map id_string]
   (let [tiles #js [(get-tiles-endpoint id_string)]
         source #js {:type "vector" :tiles tiles}]
-    (.addSource map id_string source)))
+    (when-not (.getSource map id_string)
+      (.addSource map id_string source))))
 
 (defn add-mapboxgl-layer
   "Add map layer."
@@ -300,7 +301,8 @@
                         :type layer-type
                         :source id_string
                         :source-layer (str id_string "_geom")})]
-    (.addLayer map layer)))
+    (when-not (.getLayer map id_string)
+      (.addLayer map layer))))
 
 (defn generate-stops
   [selected-id selected-color]
@@ -387,6 +389,16 @@
                                                    (-> (first features)
                                                        (aget "properties")
                                                        (aget "id"))))))))))
+
+(defn fitMapBounds
+  [map layer-id]
+  (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
+        bounds (LngLatBounds.)
+        features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
+    (doseq [feature features]
+      (.extend bounds (.-coordinates (.-geometry feature))))
+    (when (> (count features) 0)
+      (.fitBounds map bounds #js {:padding "10"}))))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."

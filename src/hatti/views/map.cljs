@@ -25,7 +25,8 @@
   app-state"
   [app-state {:keys [chart-get data-get]}
    {:keys [name full-name children] :as field}]
-  (go (let [{:keys [data]} (:body (<! (chart-get name)))
+  (go (let [{:keys [data]} (when name
+                             (-> name chart-get <! :body))
             label-names (when (or (f/select-one? field) (f/select-all? field))
                           (apply merge (map (fn [{:keys [label name]}]
                                               {label name}) children)))
@@ -312,18 +313,6 @@
     (om/set-state! owner :id-marker-map id->marker)
     (om/set-state! owner :geojson geojson)))
 
-(defn- load-mapboxgl-helper
-  "Helper for map-and-markers component (see below);
-   If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info]} owner]
-  (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
-                         (mu/create-mapboxgl-map
-                          (om/get-node owner)))]
-    (.on mapboxgl-map "load" #(mu/map-on-load mapboxgl-map
-                                              shared/event-chan
-                                              dataset-info))
-    (om/set-state! owner :mapboxgl-map mapboxgl-map)))
-
 (defmethod map-and-markers :default [app-state owner]
   "Map and markers. Initializes leaflet map + adds geojson data to it.
    Cursor is at :map-page"
@@ -362,6 +351,29 @@
               (when leaflet-map (.removeLayer leaflet-map feature-layer))
               (load-geojson-helper owner new-geojson)
               (put! shared/event-chan {:data-updated true}))))))))
+
+(defn- load-mapboxgl-helper
+  "Helper for map-and-markers component (see below);
+   If map doesn't exists in local-state, creates it and puts it there."
+  [{:keys [dataset-info] :as app-state} {:keys [zoomed?] :as owner}]
+  (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
+                         (mu/create-mapboxgl-map
+                          (om/get-node owner)))
+        load-layers (fn []
+                      (mu/map-on-load mapboxgl-map
+                                      shared/event-chan
+                                      dataset-info)
+                      (om/set-state! owner :zoomed? false))]
+    (.on mapboxgl-map "load" load-layers)
+    (.on mapboxgl-map "style.load" load-layers)
+    (.on mapboxgl-map "render"
+         (fn []
+           (when (and (.loaded mapboxgl-map)
+                      (not (om/get-state owner :zoomed?)))
+             (mu/fitMapBounds mapboxgl-map (:id_string dataset-info))
+             (om/set-state! owner :zoomed? true))))
+    (om/set-state! owner :mapboxgl-map mapboxgl-map)
+    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
 
 (defn mapboxgl-map
   [app-state owner opts]
@@ -403,7 +415,7 @@
         (let [with-suffix #(if-not (om/get-state owner :expanded) %
                                    (str % " leaflet-control-layers-expanded"))]
           (html
-           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
+           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "148px"}}
             [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                    :on-mouse-enter #(om/set-state! owner :expanded true)
                    :on-mouse-leave #(om/set-state! owner :expanded false)}
@@ -415,6 +427,48 @@
                   {:type "radio" :checked (= field geofield)
                    :on-click (click-fn #(om/update! geofield field))}]
                  (get-label field) [:br]])]]]))))))
+
+(defn map-layer-selector
+  [cursor owner {:keys [geofields]}]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:expanded false
+       :styles ["basic" "streets" "bright" "light" "dark" "satellite"]
+       :current-style "streets"})
+    om/IRenderState
+    (render-state [_ {:keys [expanded styles current-style]}]
+      "Render layer selector component w/css + expansion technique from
+      leaflet layer control."
+      (let [with-suffix
+            #(if-not expanded % (str % " leaflet-control-layers-expanded"))
+            map (get-in cursor [:map-page :mapboxgl-map])]
+        (html
+         [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
+          [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
+                 :aria-haspopup "true"}
+           [:a {:class "leaflet-control-layers-toggle"
+                :title "Layers"
+                :on-mouse-enter #(om/set-state! owner :expanded true)}]
+           [:form {:class "leaflet-control-layers-list"}
+            [:div {:class "leaflet-control-layers-base"
+                   :on-mouse-leave #(om/set-state! owner :expanded false)}
+             (for [style styles]
+               [:label
+                [:input
+                 {:type "radio"
+                  :class "leaflet-control-layers-selector"
+                  :name "leaflet-base-layers"
+                  :on-click (fn []
+                              (om/set-state! owner :current-style style)
+                              (.setStyle map
+                                         (str "mapbox://styles/mapbox/" style "-v9"))
+                              (put! shared/event-chan {:re-render :map}))
+                  :checked (= style current-style)}]
+                [:span " " style]])]
+            [:div {:class "leaflet-control-layers-separator"
+                   :style {:display "none"}}]
+            [:div {:class "leaflet-control-layers-overlays"}]]]])))))
 
 (defmethod map-page :default
   [cursor owner opts]
@@ -433,6 +487,9 @@
           (om/build map-geofield-chooser
                     (get-in cursor [:map-page :geofield])
                     {:opts {:geofields (filter f/geofield? form)}})
+          (om/build map-layer-selector
+                    cursor
+                    {:opts opts})
           (om/build map-viewby-legend
                     {:view-by (get-in cursor [:map-page :view-by])
                      :dataset-info (get-in cursor [:dataset-info])}
