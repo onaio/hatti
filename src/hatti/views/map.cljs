@@ -429,7 +429,7 @@
                  (get-label field) [:br]])]]]))))))
 
 (defn map-layer-selector
-  [cursor owner {:keys [geofields]}]
+  [cursor owner]
   (reify
     om/IInitState
     (init-state [_]

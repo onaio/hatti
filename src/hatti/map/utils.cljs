@@ -5,7 +5,7 @@
             [cljsjs.leaflet]
             [hatti.constants :refer [_id _rank
                                      mapboxgl-access-token
-                                     tile-sever]]
+                                     tile-sever tile-endpoint]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -282,14 +282,15 @@
     (.addControl m (Navigation. #js {:position "bottom-left"}))))
 
 (defn get-tiles-endpoint
-  [id_string]
-  (str tile-sever "/services/postgis/" id_string
-       "/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=id"))
+  [formid fields]
+  (str tile-sever tile-endpoint
+       "?where=deleted_at is null and xform_id =" formid
+       "&fields=" (string/join ",", fields)))
 
 (defn add-mapboxgl-source
   "Add map source."
-  [map id_string]
-  (let [tiles #js [(get-tiles-endpoint id_string)]
+  [map formid id_string]
+  (let [tiles #js [(get-tiles-endpoint formid ["id"])]
         source #js {:type "vector" :tiles tiles}]
     (when-not (.getSource map id_string)
       (.addSource map id_string source))))
@@ -300,7 +301,7 @@
   (let [layer (clj->js {:id id_string
                         :type layer-type
                         :source id_string
-                        :source-layer (str id_string "_geom")})]
+                        :source-layer "logger_instance_geom"})]
     (when-not (.getLayer map id_string)
       (.addLayer map layer))))
 
@@ -402,8 +403,8 @@
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan {:keys [id_string]}]
-  (add-mapboxgl-source map id_string)
+  [map event-chan {:keys [formid id_string]}]
+  (add-mapboxgl-source map formid id_string)
   (add-mapboxgl-layer map "circle" id_string)
   (register-mapboxgl-mouse-events map event-chan id_string)
   (set-mapboxgl-paint-property
