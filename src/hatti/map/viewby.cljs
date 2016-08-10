@@ -118,7 +118,7 @@
                        [% (id-color %)]
                        [% grey]) ids)
         id_string (om/get-props owner [:dataset-info :id_string])]
-    (when-not (empty? stops)
+    (when (seq? stops)
       (map-utils/set-mapboxgl-paint-property
        (om/get-state owner :mapboxgl-map) id_string
        (map-utils/get-style-properties :point :normal nil stops size-stops)))

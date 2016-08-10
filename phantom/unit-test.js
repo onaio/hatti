@@ -1,5 +1,6 @@
 var system = require("system"); // jshint ignore:line
 var page = require("webpage").create();
+
 var url = system.args[1];
 
 page.onConsoleMessage = function (message) {
@@ -31,6 +32,7 @@ page.open(url, function (status) {
     }
     else {
         console.log("*** Tests failed! ***");
+        phantom.exit(1)
     }
     phantom.exit(failures?100:0);
 });

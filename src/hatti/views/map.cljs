@@ -469,7 +469,7 @@
                   (fn []
                     (om/set-state! owner :current-style style)
                     (.setStyle
-                      map (str "mapbox://styles/mapbox/" style "-v9"))
+                     map (str "mapbox://styles/mapbox/" style "-v9"))
                     (put! shared/event-chan {:re-render :map}))
                   :checked (= style current-style)}]
                 [:span " " style]])]

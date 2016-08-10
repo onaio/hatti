@@ -397,7 +397,7 @@
         features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
     (doseq [feature features]
       (.extend bounds (.-coordinates (.-geometry feature))))
-    (when (> (count features) 0)
+    (when (-> features count pos?)
       (.fitBounds map bounds #js {:padding "10"}))))
 
 (defn map-on-load
