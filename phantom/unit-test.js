@@ -33,5 +33,5 @@ page.open(url, function (status) {
     else {
         console.log("*** Tests failed! ***");
     }
-    phantom.exit(failures || !failures ?100:0);
+    phantom.exit(failures || !failures ? 100 : 0);
 });

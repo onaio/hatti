@@ -60,7 +60,8 @@
                                        "target/main-test.js"]
                       :compiler {:optimizations :whitespace
                                  :output-to "target/main-test.js"
-                                 :pretty-print true}}}
+                                 :pretty-print true
+                                 :closure-output-charset "US-ASCII"}}}
               :test-commands {"unit-test"
                               ["phantomjs"
                                "phantom/unit-test.js"
