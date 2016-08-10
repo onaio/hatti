@@ -50,7 +50,7 @@
    answer->count, answer->selected?, answer->color are maps from answer;
    used for the legend rendering. An 'answer' is mapped from a data element,
    eg. a bin for numbers/dates, an option for multiple/single selects."
-  [{:keys [full-name name] :as field} data & [with-geolocaion?]]
+  [{:keys [full-name] :as field} data & [with-geolocaion?]]
   (let [ids (map #(get % _id) data)
         raw-answers (map #(get % full-name) data)
         submissions-with-geolocation (if with-geolocaion?
