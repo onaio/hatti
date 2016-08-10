@@ -4,7 +4,7 @@
             [chimera.js-interop :refer [json->cljs]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :refer [_id _rank]]
+            [hatti.constants :as constants :refer [_id _rank]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.utils.style :refer [grey]]
@@ -355,14 +355,20 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info] :as app-state} {:keys [zoomed?] :as owner}]
+  [{:keys [dataset-info tiles-server] :as app-state} {:keys [zoomed?] :as
+                                                      owner}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map
                           (om/get-node owner)))
+        tiles-endpoint (mu/get-tiles-endpoint (or tiles-server
+                                                  constants/tiles-server)
+                                              (:formid dataset-info)
+                                              ["id"])
         load-layers (fn []
                       (mu/map-on-load mapboxgl-map
                                       shared/event-chan
-                                      dataset-info)
+                                      dataset-info
+                                      tiles-endpoint)
                       (om/set-state! owner :zoomed? false))]
     (.on mapboxgl-map "load" load-layers)
     (.on mapboxgl-map "style.load" load-layers)
@@ -459,11 +465,12 @@
                  {:type "radio"
                   :class "leaflet-control-layers-selector"
                   :name "leaflet-base-layers"
-                  :on-click (fn []
-                              (om/set-state! owner :current-style style)
-                              (.setStyle map
-                                         (str "mapbox://styles/mapbox/" style "-v9"))
-                              (put! shared/event-chan {:re-render :map}))
+                  :on-click
+                  (fn []
+                    (om/set-state! owner :current-style style)
+                    (.setStyle
+                      map (str "mapbox://styles/mapbox/" style "-v9"))
+                    (put! shared/event-chan {:re-render :map}))
                   :checked (= style current-style)}]
                 [:span " " style]])]
             [:div {:class "leaflet-control-layers-separator"

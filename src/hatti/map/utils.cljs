@@ -4,8 +4,7 @@
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
             [hatti.constants :refer [_id _rank
-                                     mapboxgl-access-token
-                                     tile-sever tile-endpoint]]
+                                     mapboxgl-access-token tiles-endpoint]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]))
 
@@ -282,15 +281,15 @@
     (.addControl m (Navigation. #js {:position "bottom-left"}))))
 
 (defn get-tiles-endpoint
-  [formid fields]
-  (str tile-sever tile-endpoint
+  [tiles-server formid fields]
+  (str tiles-server tiles-endpoint
        "?where=deleted_at is null and xform_id =" formid
        "&fields=" (string/join ",", fields)))
 
 (defn add-mapboxgl-source
   "Add map source."
-  [map formid id_string]
-  (let [tiles #js [(get-tiles-endpoint formid ["id"])]
+  [map endpoint id_string]
+  (let [tiles #js [endpoint]
         source #js {:type "vector" :tiles tiles}]
     (when-not (.getSource map id_string)
       (.addSource map id_string source))))
@@ -403,8 +402,8 @@
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan {:keys [formid id_string]}]
-  (add-mapboxgl-source map formid id_string)
+  [map event-chan {:keys [formid id_string]} endpoint]
+  (add-mapboxgl-source map endpoint id_string)
   (add-mapboxgl-layer map "circle" id_string)
   (register-mapboxgl-mouse-events map event-chan id_string)
   (set-mapboxgl-paint-property
