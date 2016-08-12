@@ -355,30 +355,31 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info tiles-server] :as app-state} {:keys [zoomed?] :as
-                                                      owner}]
+  [{:keys [dataset-info tiles-server] :as app-state} owner
+   & {:keys [geojson geofield]}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
-                         (mu/create-mapboxgl-map
-                          (om/get-node owner)))
-        tiles-endpoint (mu/get-tiles-endpoint (or tiles-server
-                                                  constants/tiles-server)
-                                              (:formid dataset-info)
-                                              ["id"])
+                         (mu/create-mapboxgl-map (om/get-node owner)))
+        {:keys [formid id_string]} dataset-info
+        tiles-endpoint (mu/get-tiles-endpoint
+                        (or tiles-server constants/tiles-server) formid ["id"])
         load-layers (fn []
-                      (mu/map-on-load mapboxgl-map
-                                      shared/event-chan
-                                      dataset-info
-                                      tiles-endpoint)
-                      (om/set-state! owner :zoomed? false))]
+                      (mu/map-on-load
+                       mapboxgl-map shared/event-chan id_string
+                       :tiles-url tiles-endpoint :geojson geojson
+                       :geofield geofield)
+                      (when (empty? geojson)
+                        (om/set-state! owner :zoomed? false)))
+        fitBounds (fn []
+                    (when (and (.loaded mapboxgl-map)
+                               (not (om/get-state owner :zoomed?)))
+                      (mu/fitMapBounds mapboxgl-map (:id_string dataset-info))
+                      (om/set-state! owner :zoomed? true)))]
     (.on mapboxgl-map "load" load-layers)
     (.on mapboxgl-map "style.load" load-layers)
-    (.on mapboxgl-map "render"
-         (fn []
-           (when (and (.loaded mapboxgl-map)
-                      (not (om/get-state owner :zoomed?)))
-             (mu/fitMapBounds mapboxgl-map (:id_string dataset-info))
-             (om/set-state! owner :zoomed? true))))
+    (.on mapboxgl-map "render" fitBounds)
+    (when geojson (load-layers) (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
+    (om/set-state! owner :layer-id id_string)
     (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
 
 (defn mapboxgl-map
@@ -402,7 +403,30 @@
           (select-keys opts [:chart-get :data-get])
           {:owner owner
            :re-render! re-render!
-           :get-id-marker-map  #(om/get-state owner :id-marker-map)}))))))
+           :get-id-marker-map  #(om/get-state owner :id-marker-map)}))))
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
+      "will-recieve-props resets mapboxglmap
+      swiches to geojson source if the map data has changed to geoshapes."
+      (let [{old-data :data} (om/get-props owner)
+            {new-data :data} next-props
+            old-field (get-in (om/get-props owner) [:map-page :geofield])
+            new-field (get-in next-props [:map-page :geofield])]
+        (when (or (not= old-field new-field)
+                  (not= (count old-data) (count new-data))
+                  (not= old-data new-data))
+          (let [{:keys [flat-form]} (om/get-shared owner)
+                {:keys [mapboxgl-map layer-id geojson]}
+                (om/get-state owner)
+                new-geojson (mu/as-geojson new-data flat-form new-field)]
+            (when (and (not-empty old-field) (not= geojson new-geojson))
+              (when (.getLayer mapboxgl-map layer-id)
+                (.removeLayer mapboxgl-map layer-id)
+                (.removeSource mapboxgl-map layer-id)
+                (load-mapboxgl-helper app-state owner
+                                      :geojson new-geojson
+                                      :geofield new-field)
+                (put! shared/event-chan {:data-updated true})))))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]

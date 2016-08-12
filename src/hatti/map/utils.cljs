@@ -288,15 +288,17 @@
 
 (defn add-mapboxgl-source
   "Add map source."
-  [map endpoint id_string]
-  (let [tiles #js [endpoint]
-        source #js {:type "vector" :tiles tiles}]
+  [map id_string {:keys [tiles-url geojson]}]
+  (let [tiles #js [tiles-url]
+        source (cond
+                 geojson (clj->js {:type "geojson" :data geojson})
+                 tiles #js {:type "vector" :tiles tiles})]
     (when-not (.getSource map id_string)
       (.addSource map id_string source))))
 
 (defn add-mapboxgl-layer
   "Add map layer."
-  [map layer-type id_string]
+  [map id_string layer-type]
   (let [layer (clj->js {:id id_string
                         :type layer-type
                         :source id_string
@@ -340,7 +342,25 @@
                                      {:property "id"
                                       :type "categorical"
                                       :stops (generate-stops
-                                              selected-id "#ad2300")})]}})
+                                              selected-id "#ad2300")})]}
+   :fill {:normal [["fill-color" (clj->js
+                                  {:property "id"
+                                   :type "categorical"
+                                   :stops (if stops
+                                            stops
+                                            [[0 "#f30"]])})]
+                   ["fill-opacity" 0.9]
+                   ["fill-outline-color" "white"]]
+          :hover [["fill-color" (clj->js
+                                 {:property "id"
+                                  :type "categorical"
+                                  :stops (generate-stops
+                                          selected-id "#631400")})]]
+          :clicked ["fill-color" (clj->js
+                                  {:property "id"
+                                   :type "categorical"
+                                   :stops (generate-stops
+                                           selected-id "#ad2300")})]}})
 
 (defn get-style-properties
   [layer-type style-type & [selected-id stops size-stops]]
@@ -400,11 +420,18 @@
     (when (-> features count pos?)
       (.fitBounds map bounds #js {:padding "10"}))))
 
+(defn geotype->marker-style
+  [field]
+  (cond
+    (f/geoshape? field) {:layer-type "fill" :style :fill}
+    :else {:layer-type "circle" :style :point}))
+
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan {:keys [formid id_string]} endpoint]
-  (add-mapboxgl-source map endpoint id_string)
-  (add-mapboxgl-layer map "circle" id_string)
-  (register-mapboxgl-mouse-events map event-chan id_string)
-  (set-mapboxgl-paint-property
-   map id_string (get-style-properties :point :normal)))
+  [map event-chan id_string & {:keys [geofield] :as map-data}]
+  (let [{:keys [layer-type style]} (geotype->marker-style geofield)]
+    (add-mapboxgl-source map id_string map-data)
+    (add-mapboxgl-layer map id_string layer-type)
+    (register-mapboxgl-mouse-events map event-chan id_string)
+    (set-mapboxgl-paint-property
+     map id_string (get-style-properties style :normal))))

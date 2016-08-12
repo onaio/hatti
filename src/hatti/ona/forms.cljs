@@ -294,8 +294,8 @@
         geoshapes (filter geoshape? geofields)
         geopoints (filter geopoint? geofields)]
     (cond
-      (seq geoshapes) (first geoshapes)
       (seq geopoints) (first geopoints)
+      (seq geoshapes) (first geoshapes)
       :else (first geofields))))
 
 ;; UTILITY: languages
