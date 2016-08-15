@@ -431,8 +431,11 @@
         features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
     (doseq [feature features]
       (.extend bounds (.-coordinates (.-geometry feature))))
-    (when (-> features count pos?)
-      (.fitBounds map bounds #js {:padding "10"}))))
+    (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
+          valid-bounds? (not (and (= Lat1 Lat2)
+                                  (= Lng1 Lng2)))]
+      (when (and (-> features count pos?) valid-bounds?)
+        (.fitBounds map bounds #js {:padding "10"})))))
 
 (defn geotype->marker-style
   [field]
