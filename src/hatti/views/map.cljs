@@ -366,7 +366,7 @@
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
                        :tiles-url tiles-endpoint :geojson geojson
-                       :geofield geofield)
+                       :geofield geofield :owner owner)
                       (when (empty? geojson)
                         (om/set-state! owner :zoomed? false)))
         fitBounds (fn []

@@ -6,7 +6,8 @@
             [hatti.constants :refer [_id _rank
                                      mapboxgl-access-token tiles-endpoint]]
             [hatti.ona.forms :as f]
-            [hatti.utils :refer [indexed]]))
+            [hatti.utils :refer [indexed]]
+            [om.core :as om :include-macros true]))
 
 ;; STYLES
 
@@ -338,13 +339,13 @@
                                      :type "categorical"
                                      :stops (generate-stops
                                              selected-id "#631400")})]]
-           :clicked ["circle-color" (clj->js
-                                     {:property "id"
-                                      :type "categorical"
-                                      :stops (generate-stops
-                                              selected-id "#ad2300")})]}
+           :clicked [["circle-color" (clj->js
+                                      {:property "id"
+                                       :type "categorical"
+                                       :stops (generate-stops
+                                               selected-id "#ad2300")})]]}
    :fill {:normal [["fill-color" (clj->js
-                                  {:property "id"
+                                  {:property "_id"
                                    :type "categorical"
                                    :stops (if stops
                                             stops
@@ -352,19 +353,19 @@
                    ["fill-opacity" 0.9]
                    ["fill-outline-color" "white"]]
           :hover [["fill-color" (clj->js
-                                 {:property "id"
+                                 {:property "_id"
                                   :type "categorical"
                                   :stops (generate-stops
                                           selected-id "#631400")})]]
-          :clicked ["fill-color" (clj->js
-                                  {:property "id"
-                                   :type "categorical"
-                                   :stops (generate-stops
-                                           selected-id "#ad2300")})]}})
+          :clicked [["fill-color" (clj->js
+                                   {:property "_id"
+                                    :type "categorical"
+                                    :stops (generate-stops
+                                            selected-id "#ad2300")})]]}})
 
 (defn get-style-properties
-  [layer-type style-type & [selected-id stops size-stops]]
-  (-> (get-styles selected-id stops) layer-type style-type))
+  [style-type style-state & [selected-id stops size-stops]]
+  (-> (get-styles selected-id stops) style-type style-state))
 
 (defn set-mapboxgl-paint-property
   "Sets maps paint properties given layer-id and list of properties to set.
@@ -375,7 +376,9 @@
 
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
-  [map event-chan id_string]
+  [owner map event-chan id_string style]
+  (.off map "mousemove")
+  (.off map "click")
   (.on map "mousemove"
        (fn [e]
          (let [layer-id id_string
@@ -387,10 +390,21 @@
                  (if (pos? (.-length features)) "pointer" ""))
            (if (= no-of-features 1)
              (set-mapboxgl-paint-property
-              map layer-id (get-style-properties :point :hover
-                                                 (-> (first features)
-                                                     (aget "properties")
-                                                     (aget "id"))))))))
+              map layer-id
+              (get-style-properties
+               style :hover (or (-> (first features) (aget "properties")
+                                    (aget "id"))
+                                (-> (first features) (aget "properties")
+                                    (aget _id)))))
+             (do
+               (set-mapboxgl-paint-property
+                map layer-id (get-style-properties style :normal))
+               (when-let
+                [selected-id
+                 (om/get-props owner [:map-page :submission-clicked :id])]
+                 (set-mapboxgl-paint-property
+                  map layer-id (get-style-properties style :clicked
+                                                     selected-id))))))))
   (.on map "click"
        (fn [e]
          (let [layer-id id_string
@@ -400,15 +414,15 @@
                no-of-features (.-length features)]
            (when (pos? no-of-features)
              (when (= no-of-features 1)
-               (put! event-chan {:mapped-submission-to-id
-                                 (-> (first features)
-                                     (aget "properties")
-                                     (aget "id"))})
-               (set-mapboxgl-paint-property
-                map layer-id (get-style-properties :point :selected
-                                                   (-> (first features)
-                                                       (aget "properties")
-                                                       (aget "id"))))))))))
+               (let [feature-id (or
+                                 (-> (first features) (aget "properties")
+                                     (aget "id"))
+                                 (-> (first features) (aget "properties")
+                                     (aget _id)))]
+                 (put! event-chan {:mapped-submission-to-id feature-id})
+                 (set-mapboxgl-paint-property
+                  map layer-id (get-style-properties style :clicked
+                                                     feature-id)))))))))
 
 (defn fitMapBounds
   [map layer-id]
@@ -428,10 +442,10 @@
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan id_string & {:keys [geofield] :as map-data}]
+  [map event-chan id_string & {:keys [geofield owner] :as map-data}]
   (let [{:keys [layer-type style]} (geotype->marker-style geofield)]
     (add-mapboxgl-source map id_string map-data)
     (add-mapboxgl-layer map id_string layer-type)
-    (register-mapboxgl-mouse-events map event-chan id_string)
+    (register-mapboxgl-mouse-events owner map event-chan id_string style)
     (set-mapboxgl-paint-property
      map id_string (get-style-properties style :normal))))
