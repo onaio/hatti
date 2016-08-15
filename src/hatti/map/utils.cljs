@@ -324,16 +324,7 @@
                                       :type "categorical"
                                       :stops (if stops
                                                stops
-                                               [[0 "#f30"]])})]
-                    #_["circle-radius" (clj->js
-                                        {:property "id"
-                                         :type "categorical"
-                                         :stops (if size-stops
-                                                  size-stops
-                                                  [[0 6]])})]
-                    #_["circle-opacity" (clj->js
-                                         {:stops
-                                          [[3, 0.2] [15, 0.8]]})]]
+                                               [[0 "#f30"]])})]]
            :hover [["circle-color" (clj->js
                                     {:property "id"
                                      :type "categorical"
@@ -343,7 +334,16 @@
                                       {:property "id"
                                        :type "categorical"
                                        :stops (generate-stops
-                                               selected-id "#ad2300")})]]}
+                                               selected-id "#ad2300")})]]
+           :sized [["circle-radius" (clj->js
+                                     {:property "id"
+                                      :type "categorical"
+                                      :stops (if size-stops
+                                               size-stops
+                                               [[0 6]])})]
+                   ["circle-opacity" (clj->js
+                                      {:stops
+                                       [[3, 0.2] [15, 0.8]]})]]}
    :fill {:normal [["fill-color" (clj->js
                                   {:property "_id"
                                    :type "categorical"
@@ -385,23 +385,26 @@
                features
                (.queryRenderedFeatures
                 map (.-point e) (clj->js {:layers [layer-id]}))
-               no-of-features (.-length features)]
+               no-of-features (.-length features)
+               view-by (om/get-props owner [:map-page :view-by])
+               selected-id (om/get-props owner [:map-page :submission-clicked
+                                                :id])]
            (set! (.-cursor (.-style (.getCanvas map)))
                  (if (pos? (.-length features)) "pointer" ""))
-           (if (= no-of-features 1)
-             (set-mapboxgl-paint-property
-              map layer-id
-              (get-style-properties
-               style :hover (or (-> (first features) (aget "properties")
-                                    (aget "id"))
-                                (-> (first features) (aget "properties")
-                                    (aget _id)))))
+           (when-not view-by
+             (if (= no-of-features 1)
+
+               (set-mapboxgl-paint-property
+                map layer-id
+                (get-style-properties
+                 style :hover (or (-> (first features) (aget "properties")
+                                      (aget "id"))
+                                  (-> (first features) (aget "properties")
+                                      (aget _id))))))
              (do
                (set-mapboxgl-paint-property
                 map layer-id (get-style-properties style :normal))
-               (when-let
-                [selected-id
-                 (om/get-props owner [:map-page :submission-clicked :id])]
+               (when selected-id
                  (set-mapboxgl-paint-property
                   map layer-id (get-style-properties style :clicked
                                                      selected-id))))))))
@@ -411,7 +414,8 @@
                features
                (.queryRenderedFeatures
                 map (.-point e) (clj->js {:layers [layer-id]}))
-               no-of-features (.-length features)]
+               no-of-features (.-length features)
+               view-by (om/get-props owner [:map-page :view-by])]
            (when (pos? no-of-features)
              (when (= no-of-features 1)
                (let [feature-id (or
@@ -420,9 +424,10 @@
                                  (-> (first features) (aget "properties")
                                      (aget _id)))]
                  (put! event-chan {:mapped-submission-to-id feature-id})
-                 (set-mapboxgl-paint-property
-                  map layer-id (get-style-properties style :clicked
-                                                     feature-id)))))))))
+                 (when (not view-by)
+                   (set-mapboxgl-paint-property
+                    map layer-id (get-style-properties style :clicked
+                                                       feature-id))))))))))
 
 (defn fitMapBounds
   [map layer-id]

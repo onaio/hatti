@@ -118,13 +118,13 @@
                        [% (id-color %)]
                        [% grey]) ids)
         id_string (om/get-props owner [:dataset-info :id_string])]
-    (when (seq? stops)
+    (when (-> stops seq seq?)
       (map-utils/set-mapboxgl-paint-property
        (om/get-state owner :mapboxgl-map) id_string
        (map-utils/get-style-properties :point :normal nil stops size-stops)))
-    #_(doseq [marker markers]
-        (map-utils/re-style-marker m->s marker)
-        (map-utils/bring-to-top-if-selected id-selected? marker))))
+    (doseq [marker markers]
+      (map-utils/re-style-marker m->s marker)
+      (map-utils/bring-to-top-if-selected id-selected? marker))))
 
 (defn filter-answer-data-structures
   "Given a list of answers + query, returns map from answers to true/false.
