@@ -183,7 +183,7 @@
                       " on " (.format sdatetime "ll")) [:br]
                  [:span (str "Record ID: " instance-id)]
                  (om/build edit-delete instance-id {:opts opts})
-                 [:span {:class "expand-meta right"}
+                 [:span.expand-meta.right
                   [:a {:href "#"
                        :on-click (click-fn
                                   #(om/update-state! owner :expand-meta? not))}

@@ -14,5 +14,8 @@
   "/services/postgis/logger_instance/geom/vector-tiles/{z}/{x}/{y}.pbf")
 (def mapboxgl-access-token
   "pk.eyJ1Ijoib25hIiwiYSI6IlVYbkdyclkifQ.0Bz-QOOXZZK01dq4MuMImQ")
+(def map-styles-url #(str "mapbox://styles/mapbox/" % "-v9"))
+(def map-styles ["basic" "outdoors" "streets" "bright" "light" "dark"
+                 "satellite" "satellite-streets"])
 ;; For leaflet
 (def mapping-threshold 10000)

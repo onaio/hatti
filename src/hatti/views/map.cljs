@@ -4,7 +4,9 @@
             [chimera.js-interop :refer [json->cljs]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :as constants :refer [_id _rank]]
+            [hatti.constants :as constants :refer [_id _rank
+                                                   map-styles-url
+                                                   map-styles]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.utils.style :refer [grey]]
@@ -391,7 +393,7 @@
     (render-state [_ _]
       "render-state simply renders an emtpy div that mapboxgl will render
       into."
-      (html [:div {:id "map"}]))
+      (html [:div#map]))
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
@@ -450,7 +452,7 @@
                    :on-mouse-enter #(om/set-state! owner :expanded true)
                    :on-mouse-leave #(om/set-state! owner :expanded false)}
              [:a.icon-map.field-chooser {:href "#" :title "Choose Geo Field"}]
-             [:form {:class "leaflet-control-layers-list"}
+             [:form.leaflet-control-layers-list
               (for [field geofields]
                 [:label
                  [:input.leaflet-control-layers-selector
@@ -464,7 +466,7 @@
     om/IInitState
     (init-state [_]
       {:expanded false
-       :styles ["basic" "streets" "bright" "light" "dark" "satellite"]
+       :styles map-styles
        :current-style "streets"})
     om/IRenderState
     (render-state [_ {:keys [expanded styles current-style]}]
@@ -477,29 +479,27 @@
          [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
           [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                  :aria-haspopup "true"}
-           [:a {:class "leaflet-control-layers-toggle"
-                :title "Layers"
-                :on-mouse-enter #(om/set-state! owner :expanded true)}]
-           [:form {:class "leaflet-control-layers-list"}
-            [:div {:class "leaflet-control-layers-base"
-                   :on-mouse-leave #(om/set-state! owner :expanded false)}
+           [:a.leaflet-control-layers-toggle
+            {:title "Layers"
+             :on-mouse-enter #(om/set-state! owner :expanded true)}]
+           [:form.leaflet-control-layers-list
+            [:div.leaflet-control-layers-base
+             {:on-mouse-leave #(om/set-state! owner :expanded false)}
              (for [style styles]
                [:label
-                [:input
+                [:input.leaflet-control-layers-selector
                  {:type "radio"
-                  :class "leaflet-control-layers-selector"
                   :name "leaflet-base-layers"
                   :on-click
                   (fn []
                     (om/set-state! owner :current-style style)
                     (.setStyle
-                     map (str "mapbox://styles/mapbox/" style "-v9"))
+                     map (map-styles-url style))
                     (put! shared/event-chan {:re-render :map}))
                   :checked (= style current-style)}]
                 [:span " " style]])]
-            [:div {:class "leaflet-control-layers-separator"
-                   :style {:display "none"}}]
-            [:div {:class "leaflet-control-layers-overlays"}]]]])))))
+            [:div.leaflet-control-layers-separator {:style {:display "none"}}]
+            [:div.leaflet-control-layers-overlays]]]])))))
 
 (defmethod map-page :default
   [cursor owner opts]

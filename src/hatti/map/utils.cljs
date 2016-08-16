@@ -288,7 +288,8 @@
        "&fields=" (string/join ",", fields)))
 
 (defn add-mapboxgl-source
-  "Add map source."
+  "Add map source. This is called with either tiles-url or geoson which
+  determins the source type (Vector GeosJSON). "
   [map id_string {:keys [tiles-url geojson]}]
   (let [tiles #js [tiles-url]
         source (cond
@@ -298,7 +299,7 @@
       (.addSource map id_string source))))
 
 (defn add-mapboxgl-layer
-  "Add map layer."
+  "Add map layer from available sources."
   [map id_string layer-type]
   (let [layer (clj->js {:id id_string
                         :type layer-type
@@ -308,16 +309,25 @@
       (.addLayer map layer))))
 
 (defn generate-stops
+  "Generates a collection of  input value and one output value pairs is known
+   as stops. These stops are used by styling function to decide the style
+   output base on a defined a input vaue. This function genereates stops for
+    colour styling."
   [selected-id selected-color]
   [[0 "#f30"]
    [selected-id selected-color]])
 
 (defn generate-size-stops
+  "Generates a collection of  input value and one output value pairs is known
+   as stops. These stops are used by styling function to decide the style
+   output base on a defined a input vaue. This function genereates stops for
+   circle-size styling."
   [selected-id selected-color]
   [[0 4]
    [selected-id selected-color]])
 
 (defn get-styles
+  "Gets predefined styles for diffent layer types and states."
   [& [selected-id stops size-stops]]
   {:point {:normal [["circle-color" (clj->js
                                      {:property "id"
@@ -364,6 +374,7 @@
                                             selected-id "#ad2300")})]]}})
 
 (defn get-style-properties
+  "Get style properties for layer."
   [style-type style-state & [selected-id stops size-stops]]
   (-> (get-styles selected-id stops) style-type style-state))
 
@@ -373,6 +384,13 @@
   and value in a vector. e.g. [[property1 value1] [property2 value2]"
   [map layer-id properties]
   (doseq [[p v] properties] (.setPaintProperty map layer-id p v)))
+
+(defn get-id-property
+  [features]
+  (let [properties (-> features first (aget "properties"))
+        id (or (aget properties "id") (aget properties _id))]
+    (.log js/console (clj->js id))
+    id))
 
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
@@ -387,27 +405,25 @@
                 map (.-point e) (clj->js {:layers [layer-id]}))
                no-of-features (.-length features)
                view-by (om/get-props owner [:map-page :view-by])
-               selected-id (om/get-props owner [:map-page :submission-clicked
-                                                :id])]
+               selected-id (om/get-props
+                            owner [:map-page :submission-clicked :id])]
            (set! (.-cursor (.-style (.getCanvas map)))
                  (if (pos? (.-length features)) "pointer" ""))
            (when-not view-by
              (if (= no-of-features 1)
-
                (set-mapboxgl-paint-property
                 map layer-id
                 (get-style-properties
-                 style :hover (or (-> (first features) (aget "properties")
-                                      (aget "id"))
-                                  (-> (first features) (aget "properties")
-                                      (aget _id))))))
-             (do
-               (set-mapboxgl-paint-property
-                map layer-id (get-style-properties style :normal))
-               (when selected-id
+                 style :hover (get-id-property features)))
+               (do
                  (set-mapboxgl-paint-property
-                  map layer-id (get-style-properties style :clicked
-                                                     selected-id))))))))
+                  map layer-id
+                  (get-style-properties style :normal))
+                 (when selected-id
+                   (set-mapboxgl-paint-property
+                    map layer-id
+                    (get-style-properties
+                     style :clicked selected-id)))))))))
   (.on map "click"
        (fn [e]
          (let [layer-id id_string
@@ -418,18 +434,15 @@
                view-by (om/get-props owner [:map-page :view-by])]
            (when (pos? no-of-features)
              (when (= no-of-features 1)
-               (let [feature-id (or
-                                 (-> (first features) (aget "properties")
-                                     (aget "id"))
-                                 (-> (first features) (aget "properties")
-                                     (aget _id)))]
+               (let [feature-id (get-id-property features)]
                  (put! event-chan {:mapped-submission-to-id feature-id})
-                 (when (not view-by)
-                   (set-mapboxgl-paint-property
-                    map layer-id (get-style-properties style :clicked
-                                                       feature-id))))))))))
+                 (when-not view-by
+                   (set-mapboxgl-paint-property map layer-id
+                                                (get-style-properties
+                                                 style :clicked feature-id))))))))))
 
 (defn fitMapBounds
+  "Fits map boundaries on rendered features."
   [map layer-id]
   (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
         bounds (LngLatBounds.)
@@ -440,13 +453,15 @@
           valid-bounds? (not (and (= Lat1 Lat2)
                                   (= Lng1 Lng2)))]
       (when (and (-> features count pos?) valid-bounds?)
-        (.fitBounds map bounds #js {:padding "10"})))))
+        (.fitBounds map bounds #js {:padding "10"
+                                    :linear true})))))
 
 (defn geotype->marker-style
+  "Get marker style for field type."
   [field]
-  (cond
-    (f/geoshape? field) {:layer-type "fill" :style :fill}
-    :else {:layer-type "circle" :style :point}))
+  (if (f/geoshape? field)
+    {:layer-type "fill" :style :fill}
+    {:layer-type "circle" :style :point}))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
