@@ -39,7 +39,7 @@
         (doseq [d data]
           (let [label (-> d field-key first)
                 answer (label->answer label)
-                query (str "{\"" name \" ":\"" answer "\"}")
+                query (str "{\"" full-name \" ":\"" answer "\"}")
                 fields  (str "[\"" _id \" "]")
                 ids (->> (<! (data-get nil {:query query :fields fields}))
                          :body json->cljs (remove empty?))
@@ -64,7 +64,9 @@
                                        (:num_of_submissions dataset-info))]
 
           ;; Fetches view-by data if data not in app-state
-          (when data-not-in-appstate?
+          (when (and data-not-in-appstate? view-by)
+            (om/update! app-state [:map-page :view-by]
+                        {:field field :loading? true})
             (<! (get-viewby-data app-state opts field)))
           (when view-by
             (let [data (if data-not-in-appstate?
@@ -270,13 +272,15 @@
     om/IRender
     (render [_]
       (let [language (:current (om/observe owner (shared/language-cursor)))
-            {:keys [field]} cursor]
+            {:keys [field loading?]} cursor]
         (html
          [:div {:class "legend viewby top left"}
           (om/build map-viewby-answer-close nil)
           [:div {:class "pure-menu pure-menu-open"}
            [:h4 (get-label field language)]
-           (om/build viewby-answer-list cursor)]])))))
+           (if loading?
+             [:span [:i.fa.fa-spinner.fa-pulse] "Loading filters ..."]
+             (om/build viewby-answer-list cursor))]])))))
 
 (defmethod map-viewby-legend :default
   [{:keys [view-by dataset-info]} owner opts]
