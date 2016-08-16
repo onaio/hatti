@@ -387,10 +387,8 @@
 
 (defn get-id-property
   [features]
-  (let [properties (-> features first (aget "properties"))
-        id (or (aget properties "id") (aget properties _id))]
-    (.log js/console (clj->js id))
-    id))
+  (let [properties (-> features first (aget "properties"))]
+    (or (aget properties "id") (aget properties _id))))
 
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
@@ -437,9 +435,10 @@
                (let [feature-id (get-id-property features)]
                  (put! event-chan {:mapped-submission-to-id feature-id})
                  (when-not view-by
-                   (set-mapboxgl-paint-property map layer-id
-                                                (get-style-properties
-                                                 style :clicked feature-id))))))))))
+                   (set-mapboxgl-paint-property
+                    map layer-id
+                    (get-style-properties
+                     style :clicked feature-id))))))))))
 
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
@@ -471,4 +470,12 @@
     (add-mapboxgl-layer map id_string layer-type)
     (register-mapboxgl-mouse-events owner map event-chan id_string style)
     (set-mapboxgl-paint-property
-     map id_string (get-style-properties style :normal))))
+     map id_string (get-style-properties style :normal))
+    (om/set-state! owner :style style)))
+
+(defn clear-map-styles
+  "Set default style"
+  [owner]
+  (set-mapboxgl-paint-property
+   (om/get-state owner :mapboxgl-map) (om/get-state owner :layer-id)
+   (get-style-properties (om/get-state owner :style) :normal)))

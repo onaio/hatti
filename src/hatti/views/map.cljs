@@ -29,19 +29,21 @@
    {:keys [name full-name children] :as field}]
   (go (let [{:keys [data]} (when name
                              (-> name chart-get <! :body))
-            label-names (when (or (f/select-one? field) (f/select-all? field))
-                          (apply merge (map (fn [{:keys [label name]}]
-                                              {label name}) children)))
+            label->answer #(if (or (f/select-one? field) (f/select-all? field))
+                             (get
+                              (apply merge (map (fn [{:keys [label name]}]
+                                                  {label name}) children)) %)
+                             %)
             field-key (keyword name)]
         (om/update! app-state [:map-page :data] [])
         (doseq [d data]
           (let [label (-> d field-key first)
-                label->answer (get label-names label)
-                query (str "{\"" name \" ":\"" label->answer "\"}")
+                answer (label->answer label)
+                query (str "{\"" name \" ":\"" answer "\"}")
                 fields  (str "[\"" _id \" "]")
-                ids (-> (<! (data-get nil {:query query :fields fields}))
-                        :body json->cljs)
-                data (map #(merge % {full-name label->answer}) ids)]
+                ids (->> (<! (data-get nil {:query query :fields fields}))
+                         :body json->cljs (remove empty?))
+                data (map #(merge % {full-name answer}) ids)]
             (om/transact! app-state [:map-page :data] #(concat % data)))))))
 
 ;;;;; EVENT HANDLERS
@@ -76,7 +78,8 @@
                          owner))
           (when view-by-closed
             (om/update! app-state [:map-page :view-by] {})
-            (mu/clear-all-styles markers)))))))
+            (mu/clear-all-styles markers)
+            (mu/clear-map-styles owner)))))))
 
 (defn handle-submission-events
   "Listens to sumission events, and change the map-cursor appropriately.
