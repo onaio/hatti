@@ -1,6 +1,7 @@
 (ns hatti.views.map
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljs.core.async :refer [<! chan put! timeout]]
+            [clojure.string :as string]
             [chimera.js-interop :refer [json->cljs]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
@@ -34,17 +35,17 @@
                               (apply merge (map (fn [{:keys [label name]}]
                                                   {label name}) children)) %)
                              %)
-            field-key (keyword name)]
+            field-key (keyword name)
+            answers (for [d data]
+                      (let [label (-> d field-key first)
+                            answer (label->answer label)]
+                        (str "{\"" full-name \" ":\"" answer "\"}")))
+            query (str "{\"$or\":[" (string/join "," answers) "]}")
+            fields (str "[\"" _id \"  ", \"" full-name "\"]")
+            data (->> (<! (data-get nil {:query query :fields fields}))
+                      :body json->cljs (remove empty?))]
         (om/update! app-state [:map-page :data] [])
-        (doseq [d data]
-          (let [label (-> d field-key first)
-                answer (label->answer label)
-                query (str "{\"" full-name \" ":\"" answer "\"}")
-                fields  (str "[\"" _id \" "]")
-                ids (->> (<! (data-get nil {:query query :fields fields}))
-                         :body json->cljs (remove empty?))
-                data (map #(merge % {full-name answer}) ids)]
-            (om/transact! app-state [:map-page :data] #(concat % data)))))))
+        (om/transact! app-state [:map-page :data] #(concat % data)))))
 
 ;;;;; EVENT HANDLERS
 
