@@ -501,9 +501,7 @@
                   :on-click
                   (fn []
                     (om/set-state! owner :current-style k)
-                    (.setStyle
-                     map (map-styles-url k))
-                    (put! shared/event-chan {:re-render :map}))
+                    (.setStyle map (map-styles-url k)))
                   :checked (= k current-style)}]
                 [:span " " v]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]

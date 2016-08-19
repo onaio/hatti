@@ -380,7 +380,7 @@
 
 (defn get-style-properties
   "Get style properties for layer."
-  [style-type style-state & [selected-id stops size-stops]]
+  [style-type style-state & {:keys [selected-id stops]}]
   (-> (get-styles selected-id stops) style-type style-state))
 
 (defn set-mapboxgl-paint-property
@@ -417,7 +417,7 @@
                (set-mapboxgl-paint-property
                 map layer-id
                 (get-style-properties
-                 style :hover (get-id-property features)))
+                 style :hover :selected-id (get-id-property features)))
                (do
                  (set-mapboxgl-paint-property
                   map layer-id
@@ -426,7 +426,7 @@
                    (set-mapboxgl-paint-property
                     map layer-id
                     (get-style-properties
-                     style :clicked selected-id)))))))))
+                     style :clicked :selected-id selected-id)))))))))
   (.on map "click"
        (fn [e]
          (let [layer-id id_string
@@ -443,7 +443,7 @@
                    (set-mapboxgl-paint-property
                     map layer-id
                     (get-style-properties
-                     style :clicked feature-id))))))))))
+                     style :clicked :selected-id feature-id))))))))))
 
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
@@ -470,12 +470,14 @@
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
   [map event-chan id_string & {:keys [geofield owner] :as map-data}]
-  (let [{:keys [layer-type style]} (geotype->marker-style geofield)]
+  (let [{:keys [layer-type style]} (geotype->marker-style geofield)
+        stops (om/get-state owner :stops)
+        _ (.log js/console (clj->js stops))]
     (add-mapboxgl-source map id_string map-data)
     (add-mapboxgl-layer map id_string layer-type)
     (register-mapboxgl-mouse-events owner map event-chan id_string style)
     (set-mapboxgl-paint-property
-     map id_string (get-style-properties style :normal))
+     map id_string (get-style-properties style :normal :stops stops))
     (when (= :point style)
       (add-mapboxgl-layer map id_string layer-type
                           "point-casting"

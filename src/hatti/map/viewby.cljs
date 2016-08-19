@@ -111,9 +111,6 @@
         m->s (marker-styler id-color id-selected?)
         idan (:id->answers view-by-info)
         ids (sort (keys idan))
-        size-stops (mapv #(if (id-selected? %)
-                            [% (rand-int 30)]
-                            [% 4]) ids)
         stops (mapv #(if (id-selected? %)
                        [% (id-color %)]
                        [% grey]) ids)
@@ -121,7 +118,8 @@
     (when (-> stops seq seq?)
       (map-utils/set-mapboxgl-paint-property
        (om/get-state owner :mapboxgl-map) id_string
-       (map-utils/get-style-properties :point :normal nil stops size-stops)))
+       (map-utils/get-style-properties :point :normal :stops stops))
+      (om/set-state! owner :stops stops))
     (doseq [marker markers]
       (map-utils/re-style-marker m->s marker)
       (map-utils/bring-to-top-if-selected id-selected? marker))))
