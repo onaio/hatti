@@ -300,13 +300,17 @@
 
 (defn add-mapboxgl-layer
   "Add map layer from available sources."
-  [map id_string layer-type]
-  (let [layer (clj->js {:id id_string
-                        :type layer-type
-                        :source id_string
-                        :source-layer "logger_instance_geom"})]
-    (when-not (.getLayer map id_string)
-      (.addLayer map layer))))
+  [map id_string layer-type & [layer-id paint-properties]]
+  (let [l-id (or layer-id id_string)
+        layer-def {:id l-id
+                   :type layer-type
+                   :source id_string
+                   :source-layer "logger_instance_geom"}
+        layer (clj->js (if paint-properties
+                         (assoc layer-def :paint paint-properties)
+                         layer-def))]
+    (when-not (.getLayer map l-id)
+      (.addLayer map layer id_string))))
 
 (defn generate-stops
   "Generates a collection of  input value and one output value pairs is known
@@ -334,7 +338,8 @@
                                       :type "categorical"
                                       :stops (if stops
                                                stops
-                                               [[0 "#f30"]])})]]
+                                               [[0 "#f30"]])})]
+                    ["circle-radius" 4]]
            :hover [["circle-color" (clj->js
                                     {:property "id"
                                      :type "categorical"
@@ -471,6 +476,10 @@
     (register-mapboxgl-mouse-events owner map event-chan id_string style)
     (set-mapboxgl-paint-property
      map id_string (get-style-properties style :normal))
+    (when (= :point style)
+      (add-mapboxgl-layer map id_string layer-type
+                          "point-casting"
+                          {:circle-color "#fff" :circle-radius 6}))
     (om/set-state! owner :style style)))
 
 (defn clear-map-styles

@@ -18,4 +18,4 @@
 (def map-styles ["basic" "outdoors" "streets" "bright" "light" "dark"
                  "satellite" "satellite-streets"])
 ;; For leaflet
-(def mapping-threshold 10000)
+(def mapping-threshold 1000000)
