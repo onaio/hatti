@@ -493,19 +493,19 @@
            [:form.leaflet-control-layers-list
             [:div.leaflet-control-layers-base
              {:on-mouse-leave #(om/set-state! owner :expanded false)}
-             (for [style styles]
+             (for [[k v] styles]
                [:label
                 [:input.leaflet-control-layers-selector
                  {:type "radio"
                   :name "leaflet-base-layers"
                   :on-click
                   (fn []
-                    (om/set-state! owner :current-style style)
+                    (om/set-state! owner :current-style k)
                     (.setStyle
-                     map (map-styles-url style))
+                     map (map-styles-url k))
                     (put! shared/event-chan {:re-render :map}))
-                  :checked (= style current-style)}]
-                [:span " " style]])]
+                  :checked (= k current-style)}]
+                [:span " " v]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]
             [:div.leaflet-control-layers-overlays]]]])))))
 

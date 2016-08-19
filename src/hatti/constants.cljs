@@ -15,7 +15,12 @@
 (def mapboxgl-access-token
   "pk.eyJ1Ijoib25hIiwiYSI6IlVYbkdyclkifQ.0Bz-QOOXZZK01dq4MuMImQ")
 (def map-styles-url #(str "mapbox://styles/mapbox/" % "-v9"))
-(def map-styles ["basic" "outdoors" "streets" "bright" "light" "dark"
-                 "satellite" "satellite-streets"])
+(def map-styles {"basic" "Mapbox Basic"
+                  "outdoors" "Mapbox Outdoors"
+                  "streets" "MapBox"
+                  "bright" "Mapbox Bright"
+                  "light" "Mapbox Light"
+                  "dark" "Mapbox Dark"
+                  "satellite-streets" "Mapbox Satellite"})
 ;; For leaflet
 (def mapping-threshold 1000000)
