@@ -313,19 +313,16 @@
       (.addLayer map layer id_string))))
 
 (defn generate-stops
-  "Generates a collection of  input value and one output value pairs is known
-   as stops. These stops are used by styling function to decide the style
-   output base on a defined a input vaue. This function genereates stops for
-    colour styling."
+  "Generates a collection of input - output value pairs known
+   as stops. These stops are used by get-styles function to decide the style
+   output based on an input vaue from the dataset. e.g. _id. By defauly this
+    function purely generates color stops."
   [selected-id selected-color]
   [[0 "#f30"]
    [selected-id selected-color]])
 
 (defn generate-size-stops
-  "Generates a collection of  input value and one output value pairs is known
-   as stops. These stops are used by styling function to decide the style
-   output base on a defined a input vaue. This function genereates stops for
-   circle-size styling."
+  "Generates cirlce size property stops base on values from dataset."
   [selected-id selected-color]
   [[0 4]
    [selected-id selected-color]])
