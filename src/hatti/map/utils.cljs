@@ -471,8 +471,7 @@
   "Functions that are called after map is loaded in DOM."
   [map event-chan id_string & {:keys [geofield owner] :as map-data}]
   (let [{:keys [layer-type style]} (geotype->marker-style geofield)
-        stops (om/get-state owner :stops)
-        _ (.log js/console (clj->js stops))]
+        stops (om/get-state owner :stops)]
     (add-mapboxgl-source map id_string map-data)
     (add-mapboxgl-layer map id_string layer-type)
     (register-mapboxgl-mouse-events owner map event-chan id_string style)

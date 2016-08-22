@@ -44,8 +44,7 @@
             fields (str "[\"" _id \"  ", \"" full-name "\"]")
             data (->> (<! (data-get nil {:query query :fields fields}))
                       :body json->cljs (remove empty?))]
-        (om/update! app-state [:map-page :data] [])
-        (om/transact! app-state [:map-page :data] #(concat % data)))))
+        (om/update! app-state [:map-page :data] data))))
 
 ;;;;; EVENT HANDLERS
 
@@ -73,12 +72,12 @@
             (let [data (if data-not-in-appstate?
                          (-> @app-state :map-page :data)
                          (:data @app-state))
-                  vb-info (vb/viewby-info field data false)]
+                  vb-info (vb/viewby-data field data)]
               (om/update! app-state [:map-page :view-by] vb-info)
-              (vb/view-by! vb-info markers owner)))
+              (vb/apply-view-by! vb-info owner)))
           (when view-by-filtered
-            (vb/view-by! (get-in @app-state [:map-page :view-by]) markers
-                         owner))
+            (vb/apply-view-by!
+             (get-in @app-state [:map-page :view-by]) owner))
           (when view-by-closed
             (om/update! app-state [:map-page :view-by] {})
             (mu/clear-all-styles markers)
@@ -229,7 +228,7 @@
   [cursor owner]
   (om/component
    (let [{:keys [answer->color answer->count answer->count-with-geolocations
-                 answer->selected? answers field visible-answers]}
+                 answer->selected? field visible-answers]}
          cursor
          language (:current (om/observe owner (shared/language-cursor)))
          toggle! (fn [ans]
@@ -245,20 +244,15 @@
          (let [selected? (answer->selected? answer)
                col (answer->color answer)
                answer-count (or (answer->count answer) 0)
-               answer-count-with-geolocations
-               (or (answer->count-with-geolocations answer) 0)
+               answer-count-with-geolocations 0
                answer-string (format-answer field answer language)
                title (str answer-count-with-geolocations " of "
-                          answer-count " submissions have geo data")
-               disabled? (<= answer-count-with-geolocations
-                             0)]
+                          answer-count " submissions have geo data")]
            [:li
             [:a (when answer {:href "#"
                               :title title
-                              :class (when disabled? "is-disabled")
                               :on-click (click-fn
-                                         #(when-not disabled?
-                                            (toggle! answer)))})
+                                         #(toggle! answer))})
              [:div
               [:div {:class "small-circle"
                      :style {:background-color (if selected? col grey)}}]

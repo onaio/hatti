@@ -22,5 +22,4 @@
                  "light" "Mapbox Light"
                  "dark" "Mapbox Dark"
                  "satellite-streets" "Mapbox Satellite"})
-;; For leaflet
 (def mapping-threshold 1000000)
