@@ -433,14 +433,13 @@
                no-of-features (.-length features)
                view-by (om/get-props owner [:map-page :view-by])]
            (when (pos? no-of-features)
-             (when (= no-of-features 1)
-               (let [feature-id (get-id-property features)]
-                 (put! event-chan {:mapped-submission-to-id feature-id})
-                 (when-not view-by
-                   (set-mapboxgl-paint-property
-                    map layer-id
-                    (get-style-properties
-                     style :clicked :selected-id feature-id))))))))))
+             (let [feature-id (get-id-property features)]
+               (put! event-chan {:mapped-submission-to-id feature-id})
+               (when-not view-by
+                 (set-mapboxgl-paint-property
+                  map layer-id
+                  (get-style-properties
+                   style :clicked :selected-id feature-id)))))))))
 
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
