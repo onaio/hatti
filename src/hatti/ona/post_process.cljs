@@ -98,7 +98,7 @@
   (let [filename (last-url-param (get attachement "filename"))
         appendments (split filename #"_")]
     (if (> (count appendments) 1)
-      (join "." [(first appendments) (last (split (last appendments) #"\."))])
+      (join "." [(first appendments) (-> appendments last (split #"\.") last)])
       filename)))
 
 (defn get-attach-map
