@@ -93,9 +93,9 @@
      :small_download_url (str file-url "&suffix=small")}))
 
 (defn get-filename
-  "Gets valid filename from attachement and removes appendments."
-  [attachement]
-  (let [filename (last-url-param (get attachement "filename"))
+  "Gets valid filename from attachment and removes appendments."
+  [attachment]
+  (let [filename (last-url-param (get attachment "filename"))
         appendments (split filename #"_")]
     (if (> (count appendments) 1)
       (join "." [(first appendments) (-> appendments last (split #"\.") last)])
