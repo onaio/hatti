@@ -80,3 +80,14 @@
       (is (= (-> tags2 keys set)
              #{:building :addr:postcode :addr:street :name :building:levels
                :amenity :addr:housenumber :name:fr :addr:city})))))
+
+(deftest get-filename-with-appendment
+  (testing "get filename with appendment removes it"
+    (=
+     (post-process/get-filename
+      {:mimetype "image/jpeg"
+       :download_url "/attachments/1471331024537_Fg4Zxjv.jpg"
+       :filename "test_account/attachments/1471331024537_Fg4Zxjv.jpg"
+       :instance 7903599
+       :id 1223
+       :xform 11})  "1471331024537.jpg")))
