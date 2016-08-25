@@ -230,10 +230,7 @@
        :date (when answer
                (-> (js/moment answer)
                    (.format "LLL")))
-       :else (if (string? answer)
-               (map #(vector :p %)
-                    (string/split answer #"[\n\r]"))
-               answer)))))
+       :else answer))))
 
 (defn relabel-meta-field
   "Try and produce a label for meta field if non-existent."
