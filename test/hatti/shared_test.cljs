@@ -75,12 +75,12 @@
 
 (deftest integrate-attachments
   (let [data [{"_attachments"
-               [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
+               [{"filename" "prabhasp/attachments/hist_Bhkt36.jpg"
                  "id" 287633}
-                {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
+                {"filename" "prabhasp/attachments/hist2_Bhkt36.jpg"
                  "id" 287632}]
-               "historic_photo" "Bhkt36_hist2.jpg"
-               "historic_photo2" "Bhkt36_hist.jpg"}]
+               "historic_photo" "hist2.jpg"
+               "historic_photo2" "hist.jpg"}]
         form [{:type "photo" :name "historic_photo" :full-name "historic_photo"}
               {:type "photo" :name "historic_photo2"
                :full-name "historic_photo2"}]]
@@ -90,12 +90,12 @@
         (is (= (-> revised-record (get "historic_photo") :download_url)
                (str
                 media-url
-                "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+                "/287632?filename=prabhasp/attachments/hist2_Bhkt36.jpg")))
         (is (=
              (-> revised-record (get "historic_photo") :small_download_url)
              (str
               media-url
-              "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg"
+              "/287632?filename=prabhasp/attachments/hist2_Bhkt36.jpg"
               "&suffix=small")))))
     (testing "data with no images doesn't get touched"
       (let [form [{:type "string" :name "historic_photo"
@@ -106,12 +106,12 @@
         (is (= data untouched-data))))))
 
 (deftest integrate-attachments-with-repeats
-  (let [data [{"repeat" [{"repeat/photo1" "Bhkt36_hist2.jpg"
-                          "repeat/photo2" "Bhkt36_hist.jpg"}]
+  (let [data [{"repeat" [{"repeat/photo1" "hist2.jpg"
+                          "repeat/photo2" "hist.jpg"}]
                "_attachments"
-               [{"filename" "prabhasp/attachments/Bhkt36_hist.jpg"
+               [{"filename" "prabhasp/attachments/hist_Bhkt36.jpg"
                  "id" 287633}
-                {"filename" "prabhasp/attachments/Bhkt36_hist2.jpg"
+                {"filename" "prabhasp/attachments/hist2_Bhkt36.jpg"
                  "id" 287632}]}]
         form [{:type "repeat" :name "repeat" :full-name "repeat"
                :children [{:type "photo" :name "photo1"
@@ -132,10 +132,10 @@
                 :download_url)
             (str
              media-url
-             "/287632?filename=prabhasp/attachments/Bhkt36_hist2.jpg")))
+             "/287632?filename=prabhasp/attachments/hist2_Bhkt36.jpg")))
         (is
          (= (-> revised-record (get "repeat") first (get "repeat/photo2")
                 :download_url)
             (str
              media-url
-             "/287633?filename=prabhasp/attachments/Bhkt36_hist.jpg")))))))
+             "/287633?filename=prabhasp/attachments/hist_Bhkt36.jpg")))))))
