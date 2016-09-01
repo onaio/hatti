@@ -92,21 +92,12 @@
      :download_url file-url
      :small_download_url (str file-url "&suffix=small")}))
 
-(defn get-filename
-  "Gets valid filename from attachment and removes appendments."
-  [attachment]
-  (let [filename (last-url-param (get attachment "filename"))
-        appendments (split filename #"_")]
-    (if (> (count appendments) 1)
-      (join "." [(first appendments) (-> appendments last (split #"\.") last)])
-      filename)))
-
 (defn get-attach-map
   "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
   [record attachments]
   (let [attachments (or attachments (get record "_attachments"))
-        fnames (map get-filename attachments)
+        fnames (map #(last-url-param (get % "filename")) attachments)
         fname->urlobj (zipmap fnames (map url-obj attachments))]
     ;; If urlobj isn't found, we'll just return filename
     (fn [fname] (get fname->urlobj fname fname))))
