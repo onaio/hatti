@@ -35,9 +35,13 @@
                               (apply merge (map (fn [{:keys [label name]}]
                                                   {label name}) children)) %)
                              %)
+            get-label #(if (or (f/select-one? field)
+                               (f/select-all? field)
+                               (f/text? field))
+                        (first %) %)
             field-key (keyword name)
             answers (for [d data]
-                      (let [label (-> d field-key first)
+                      (let [label (-> d field-key get-label )
                             answer (label->answer label)]
                         (str "{\"" full-name \" ":\"" answer "\"}")))
             query (str "{\"$or\":[" (string/join "," answers) "]}")
