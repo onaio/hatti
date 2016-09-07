@@ -38,10 +38,10 @@
             get-label #(if (or (f/select-one? field)
                                (f/select-all? field)
                                (f/text? field))
-                        (first %) %)
+                         (first %) %)
             field-key (keyword name)
             answers (for [d data]
-                      (let [label (-> d field-key get-label )
+                      (let [label (-> d field-key get-label)
                             answer (label->answer label)]
                         (str "{\"" full-name \" ":\"" answer "\"}")))
             query (str "{\"$or\":[" (string/join "," answers) "]}")
@@ -367,9 +367,11 @@
    & {:keys [geojson geofield]}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map (om/get-node owner)))
-        {:keys [formid id_string]} dataset-info
+        {:keys [formid id_string query]} dataset-info
+        {:keys [flat-form]} (om/get-shared owner)
         tiles-endpoint (mu/get-tiles-endpoint
-                        (or tiles-server constants/tiles-server) formid ["id"])
+                        (or tiles-server constants/tiles-server) formid ["id"]
+                        flat-form query)
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string

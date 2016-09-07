@@ -281,10 +281,32 @@
                      :style "mapbox://styles/mapbox/streets-v9"})]
     (.addControl m (Navigation. #js {:position "bottom-left"}))))
 
+(defn get-filter
+  "Gets query filter and returns filters based on field type"
+  [{:keys [column filter value]} flat-form]
+  (let [field (first
+               (cljs.core/filter
+                (fn [{:keys [full-name]}]
+                  (= full-name column)) flat-form))]
+    (cond
+      (f/numeric? field)
+      (str "CAST(json->>'" column "' AS INT) " filter " '" value "'")
+      (f/time-based? field)
+      (str "CAST(json->>'" column "' AS AS TIMESTAMP) " filter " '" value "'")
+      :else (str "json->>'" column "' " filter " '" value "'"))))
+
+(defn generate-filter-string
+  "Generates query params filters for filtered datasets "
+  [query flat-form]
+  (when (not-empty query)
+    (str " and " (string/join " and " (map #(get-filter % flat-form) query)))))
+
 (defn get-tiles-endpoint
-  [tiles-server formid fields]
+  "Generates tiles url with appropriate filters as query params"
+  [tiles-server formid fields flat-form & [query]]
   (str tiles-server tiles-endpoint
        "?where=deleted_at is null and xform_id =" formid
+       (generate-filter-string query flat-form)
        "&fields=" (string/join ",", fields)))
 
 (defn add-mapboxgl-source
