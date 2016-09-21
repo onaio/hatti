@@ -471,34 +471,37 @@
         features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
     (doseq [feature features]
       (.extend bounds (.-coordinates (.-geometry feature))))
-    (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
-          valid-bounds? (not (and (= Lat1 Lat2)
-                                  (= Lng1 Lng2)))]
-      (when (and (-> features count pos?) valid-bounds?)
-        (.fitBounds map bounds #js {:padding "10"
-                                    :linear true})))))
+    (when (pos? (count features))
+      (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
+            valid-bounds? (not (and (= Lat1 Lat2)
+                                    (= Lng1 Lng2)))]
+        (when (and (-> features count pos?) valid-bounds?)
+          (.fitBounds map bounds #js {:padding "10"
+                                      :linear true}))))))
 
 (defn geotype->marker-style
   "Get marker style for field type."
   [field]
-  (if (f/geoshape? field)
-    {:layer-type "fill" :style :fill}
-    {:layer-type "circle" :style :point}))
+  (cond
+    (f/geoshape? field) {:layer-type "fill" :style :fill}
+    (f/osm? field) {:layer-type "fill" :style :fill}
+    :else {:layer-type "circle" :style :point}))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
   [map event-chan id_string & {:keys [geofield owner] :as map-data}]
   (let [{:keys [layer-type style]} (geotype->marker-style geofield)
-        stops (om/get-state owner :stops)]
+        stops (om/get-state owner :stops)
+        circle-border "point-casting"]
     (add-mapboxgl-source map id_string map-data)
     (add-mapboxgl-layer map id_string layer-type)
     (register-mapboxgl-mouse-events owner map event-chan id_string style)
     (set-mapboxgl-paint-property
      map id_string (get-style-properties style :normal :stops stops))
-    (when (= :point style)
-      (add-mapboxgl-layer map id_string layer-type
-                          "point-casting"
-                          {:circle-color "#fff" :circle-radius 6}))
+    (if (= :point style)
+      (add-mapboxgl-layer map id_string layer-type circle-border
+                          {:circle-color "#fff" :circle-radius 6})
+      (when (.getLayer map circle-border) (.removeLayer map circle-border)))
     (om/set-state! owner :style style)))
 
 (defn clear-map-styles
