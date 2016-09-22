@@ -378,13 +378,16 @@
                        :tiles-url tiles-endpoint :geojson geojson
                        :geofield geofield :owner owner)
                       (om/set-state! owner :zoomed? false))
-        fitBounds (fn []
+        fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
                                (not (om/get-state owner :zoomed?)))
-                      (mu/fitMapBounds mapboxgl-map (:id_string dataset-info))
+                      (mu/fitMapBounds mapboxgl-map
+                                       (:id_string dataset-info)
+                                       geojson)
                       (om/set-state! owner :zoomed? true)))]
     (.on mapboxgl-map "style.load" load-layers)
-    (.on mapboxgl-map "render" fitBounds)
+    (.on mapboxgl-map "render" #(fitBounds
+                                 (om/get-state owner [:geojson])))
     (when geojson (load-layers) (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)

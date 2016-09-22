@@ -465,19 +465,26 @@
 
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
-  [map layer-id]
-  (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
-        bounds (LngLatBounds.)
-        features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
-    (doseq [feature features]
-      (.extend bounds (.-coordinates (.-geometry feature))))
-    (when (pos? (count features))
-      (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
-            valid-bounds? (not (and (= Lat1 Lat2)
-                                    (= Lng1 Lng2)))]
-        (when (and (-> features count pos?) valid-bounds?)
-          (.fitBounds map bounds #js {:padding "10"
-                                      :linear true}))))))
+  [map layer-id & [geojson]]
+  (if geojson
+    ;; Fit bounds for geojson source
+    (let [bbox (.extent js/turf (clj->js geojson))]
+      (when (pos? (count (:features geojson)))
+        (.fitBounds map bbox #js {:padding "15"
+                                  :linear true})))
+    ;; Fit bounds for vector tiles  source 
+    (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
+          bounds (LngLatBounds.)
+          features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
+      (doseq [feature features]
+        (.extend bounds (.-coordinates (.-geometry feature))))
+      (when (pos? (count features))
+        (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
+              valid-bounds? (not (and (= Lat1 Lat2)
+                                      (= Lng1 Lng2)))]
+          (when (and (-> features count pos?) valid-bounds?)
+            (.fitBounds map bounds #js {:padding "15"
+                                        :linear true})))))))
 
 (defn geotype->marker-style
   "Get marker style for field type."
