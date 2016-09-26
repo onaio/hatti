@@ -384,8 +384,8 @@
                                    :stops (if stops
                                             stops
                                             [[0 "#f30"]])})]
-                   ["fill-opacity" 0.9]
-                   ["fill-outline-color" "white"]]
+                   ["fill-opacity" 0.7]
+                   ["fill-outline-color" "#666"]]
           :hover [["fill-color" (clj->js
                                  {:property "_id"
                                   :type "categorical"

@@ -29,7 +29,7 @@
   [app-state {:keys [chart-get data-get]}
    {:keys [name full-name children] :as field}]
   (go (let [{:keys [data]} (when name
-                             (-> name chart-get <! :body))
+                             (-> full-name chart-get <! :body))
             label->answer #(if (or (f/select-one? field) (f/select-all? field))
                              (get
                               (apply merge (map (fn [{:keys [label name]}]
@@ -48,7 +48,7 @@
             fields (str "[\"" _id \"  ", \"" full-name "\"]")
             data (->> (<! (data-get nil {:query query :fields fields}))
                       :body json->cljs (remove empty?))]
-        (om/update! app-state [:map-page :data] data))))
+        (om/update! app-state [:map-page :view-by-data] data))))
 
 ;;;;; EVENT HANDLERS
 
@@ -67,14 +67,15 @@
               data-not-in-appstate? (< (count data)
                                        (:num_of_submissions dataset-info))]
 
-          ;; Fetches view-by data if data not in app-state
+          ;; Fetches data to generated view-by data if not all data is in
+          ;; app-state
           (when (and data-not-in-appstate? view-by)
             (om/update! app-state [:map-page :view-by]
                         {:field field :loading? true})
             (<! (get-viewby-data app-state opts field)))
           (when view-by
             (let [data (if data-not-in-appstate?
-                         (-> @app-state :map-page :data)
+                         (-> @app-state :map-page :view-by-data)
                          (:data @app-state))
                   vb-info (vb/viewby-data field data)]
               (om/update! app-state [:map-page :view-by] vb-info)
@@ -419,17 +420,23 @@
     (will-receive-props [_ next-props]
       "will-recieve-props resets mapboxglmap
       swiches to geojson source if the map data has changed to geoshapes."
-      (let [{old-data :data} (om/get-props owner)
-            {new-data :data} next-props
+      (let [{{old-map-data :data} :map-page old-data :data} (om/get-props owner)
+            {{new-map-data :data} :map-page new-data :data}  next-props
             old-field (get-in (om/get-props owner) [:map-page :geofield])
             new-field (get-in next-props [:map-page :geofield])]
         (when (or (not= old-field new-field)
                   (not= (count old-data) (count new-data))
-                  (not= old-data new-data))
+                  (not= old-data new-data)
+                  (not= old-map-data new-map-data))
           (let [{:keys [flat-form]} (om/get-shared owner)
                 {:keys [mapboxgl-map layer-id geojson]}
                 (om/get-state owner)
-                new-geojson (mu/as-geojson new-data flat-form new-field)]
+                generate-geojson #(mu/as-geojson % flat-form
+                                                 new-field)
+                new-geojson (generate-geojson
+                             (if (or (f/geoshape? new-field)
+                                     (f/osm? new-field))
+                               new-map-data new-data))]
             (when (and (not-empty old-field) (not= geojson new-geojson))
               (when (.getLayer mapboxgl-map layer-id)
                 (.removeLayer mapboxgl-map layer-id)
