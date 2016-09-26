@@ -472,7 +472,7 @@
       (when (pos? (count (:features geojson)))
         (.fitBounds map bbox #js {:padding "15"
                                   :linear true})))
-    ;; Fit bounds for vector tiles  source 
+    ;; Fit bounds for vector tiles  source
     (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
           bounds (LngLatBounds.)
           features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
