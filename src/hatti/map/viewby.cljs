@@ -154,11 +154,12 @@
         stops (mapv #(if (id-selected? %)
                        [% (id-color %)]
                        [% grey]) ids)
-        id_string (om/get-props owner [:dataset-info :id_string])]
+        id_string (om/get-props owner [:dataset-info :id_string])
+        style (om/get-state owner [:style])]
     (when (-> stops seq seq?)
       (map-utils/set-mapboxgl-paint-property
        (om/get-state owner :mapboxgl-map) id_string
-       (map-utils/get-style-properties :point :normal :stops stops))
+       (map-utils/get-style-properties style :normal :stops stops))
       (om/set-state! owner :stops stops))))
 
 (defn filter-answer-data-structures
