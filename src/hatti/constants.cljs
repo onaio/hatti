@@ -22,4 +22,4 @@
                  "light" "Mapbox Light"
                  "dark" "Mapbox Dark"
                  "satellite-streets" "Mapbox Satellite"})
-(def mapping-threshold 1000000)
+(def mapping-threshold 10000)
