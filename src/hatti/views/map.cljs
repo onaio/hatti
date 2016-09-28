@@ -7,7 +7,8 @@
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
                                                    map-styles-url
-                                                   map-styles]]
+                                                   map-styles
+                                                   mapping-threshold]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.utils.style :refer [grey]]
@@ -62,10 +63,11 @@
         (let [e (<! event-chan)
               {:keys [view-by view-by-closed view-by-filtered]} e
               markers (vals (get-id-marker-map))
-              {:keys [data dataset-info]} @app-state
+              {:keys [dataset-info] {data :data} :map-page}
+              @app-state
               field (:field view-by)
-              data-not-in-appstate? (< (count data)
-                                       (:num_of_submissions dataset-info))]
+              data-not-in-appstate? (> (:num_of_submissions dataset-info)
+                                       mapping-threshold)]
 
           ;; Fetches data to generated view-by data if not all data is in
           ;; app-state
@@ -249,10 +251,8 @@
          (let [selected? (answer->selected? answer)
                col (answer->color answer)
                answer-count (or (answer->count answer) 0)
-               answer-count-with-geolocations 0
                answer-string (format-answer field answer language)
-               title (str answer-count-with-geolocations " of "
-                          answer-count " submissions have geo data")]
+               title (str answer-string " - " answer-count)]
            [:li
             [:a (when answer {:href "#"
                               :title title
@@ -262,9 +262,7 @@
               [:div {:class "small-circle"
                      :style {:background-color (if selected? col grey)}}]
               [:div (when-not selected? {:style {:color grey}})
-               (str answer-string " ["
-                    answer-count-with-geolocations "/"
-                    answer-count "]")]]]]))]))))
+               (str answer-string " [" answer-count "]")]]]]))]))))
 
 (defmethod map-viewby-answer-legend :default
   [cursor owner]
@@ -370,9 +368,13 @@
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
         {:keys [flat-form]} (om/get-shared owner)
-        tiles-endpoint (mu/get-tiles-endpoint
-                        (or tiles-server constants/tiles-server) formid ["id"]
-                        flat-form query)
+        ;; Only use tiles server endpoint as sourice if it's large dataset,
+        ;; otherwise genereated geojson will be rendered on map
+        tiles-endpoint (when (> (:num_of_submissions dataset-info)
+                                mapping-threshold)
+                         (mu/get-tiles-endpoint
+                          (or tiles-server constants/tiles-server)
+                          formid ["id"] flat-form query))
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
@@ -440,11 +442,11 @@
             (when (and (not-empty old-field) (not= geojson new-geojson))
               (when (.getLayer mapboxgl-map layer-id)
                 (.removeLayer mapboxgl-map layer-id)
-                (.removeSource mapboxgl-map layer-id)
-                (load-mapboxgl-helper app-state owner
-                                      :geojson new-geojson
-                                      :geofield new-field)
-                (put! shared/event-chan {:data-updated true})))))))))
+                (.removeSource mapboxgl-map layer-id))
+              (load-mapboxgl-helper app-state owner
+                                    :geojson new-geojson
+                                    :geofield new-field)
+              (put! shared/event-chan {:data-updated true}))))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]

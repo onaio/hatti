@@ -137,6 +137,7 @@
   [geometry record-id index]
   {:type "Feature"
    :properties {(keyword _rank) (inc index)
+                :id record-id
                 (keyword _id) record-id}
    :geometry geometry})
 
@@ -311,7 +312,7 @@
 
 (defn add-mapboxgl-source
   "Add map source. This is called with either tiles-url or geoson which
-  determins the source type (Vector GeosJSON). "
+  determins the source type (Vector or  GeosJSON). "
   [map id_string {:keys [tiles-url geojson]}]
   (let [tiles #js [tiles-url]
         source (cond
@@ -466,25 +467,15 @@
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
   [map layer-id & [geojson]]
-  (if geojson
-    ;; Fit bounds for geojson source
-    (let [bbox (.extent js/turf (clj->js geojson))]
-      (when (pos? (count (:features geojson)))
-        (.fitBounds map bbox #js {:padding "15"
-                                  :linear true})))
-    ;; Fit bounds for vector tiles  source
-    (let [LngLatBounds (.-LngLatBounds js/mapboxgl)
-          bounds (LngLatBounds.)
-          features (.queryRenderedFeatures map (clj->js {:layers [layer-id]}))]
-      (doseq [feature features]
-        (.extend bounds (.-coordinates (.-geometry feature))))
-      (when (pos? (count features))
-        (let [[[Lng1 Lat1] [Lng2 Lat2]] (.toArray bounds)
-              valid-bounds? (not (and (= Lat1 Lat2)
-                                      (= Lng1 Lng2)))]
-          (when (and (-> features count pos?) valid-bounds?)
-            (.fitBounds map bounds #js {:padding "15"
-                                        :linear true})))))))
+  (let [features (or (:features geojson)
+                     (.queryRenderedFeatures
+                      map (clj->js {:layers [layer-id]})))
+        layer-data (or geojson
+                       (clj->js
+                        {:type "FeatureCollection" :features features}))
+        bbox (.bbox js/turf (clj->js layer-data))]
+    (when (pos? (count (:features geojson)))
+      (.fitBounds map bbox #js {:padding "15" :linear true}))))
 
 (defn geotype->marker-style
   "Get marker style for field type."
@@ -496,20 +487,22 @@
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
-  [map event-chan id_string & {:keys [geofield owner] :as map-data}]
+  [map event-chan id_string &
+   {:keys [geofield owner tiles-url geojson] :as map-data}]
   (let [{:keys [layer-type style]} (geotype->marker-style geofield)
         stops (om/get-state owner :stops)
         circle-border "point-casting"]
-    (add-mapboxgl-source map id_string map-data)
-    (add-mapboxgl-layer map id_string layer-type)
-    (register-mapboxgl-mouse-events owner map event-chan id_string style)
-    (set-mapboxgl-paint-property
-     map id_string (get-style-properties style :normal :stops stops))
-    (if (= :point style)
-      (add-mapboxgl-layer map id_string layer-type circle-border
-                          {:circle-color "#fff" :circle-radius 6})
-      (when (.getLayer map circle-border) (.removeLayer map circle-border)))
-    (om/set-state! owner :style style)))
+    (when (or geojson tiles-url)
+      (add-mapboxgl-source map id_string map-data)
+      (add-mapboxgl-layer map id_string layer-type)
+      (register-mapboxgl-mouse-events owner map event-chan id_string style)
+      (set-mapboxgl-paint-property
+       map id_string (get-style-properties style :normal :stops stops))
+      (if (= :point style)
+        (add-mapboxgl-layer map id_string layer-type circle-border
+                            {:circle-color "#fff" :circle-radius 6})
+        (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+      (om/set-state! owner :style style))))
 
 (defn clear-map-styles
   "Set default style"
