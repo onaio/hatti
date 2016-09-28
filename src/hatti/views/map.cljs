@@ -391,7 +391,9 @@
     (.on mapboxgl-map "style.load" load-layers)
     (.on mapboxgl-map "render" #(fitBounds
                                  (om/get-state owner [:geojson])))
-    (when geojson (load-layers) (om/set-state! owner :geojson geojson))
+    (when geojson
+      (.on mapboxgl-map "style.load" load-layers)
+      (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)
     (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
@@ -439,7 +441,7 @@
                              (if (or (f/geoshape? new-field)
                                      (f/osm? new-field))
                                new-map-data new-data))]
-            (when (and (not-empty old-field) (not= geojson new-geojson))
+            (when (and (not-empty new-field) (not= geojson new-geojson))
               (when (.getLayer mapboxgl-map layer-id)
                 (.removeLayer mapboxgl-map layer-id)
                 (.removeSource mapboxgl-map layer-id))
