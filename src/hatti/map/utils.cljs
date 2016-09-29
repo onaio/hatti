@@ -474,7 +474,7 @@
                        (clj->js
                         {:type "FeatureCollection" :features features}))
         bbox (.bbox js/turf (clj->js layer-data))]
-    (when (pos? (count (:features geojson)))
+    (when (pos? (count features))
       (.fitBounds map bbox #js {:padding "15" :linear true}))))
 
 (defn geotype->marker-style
@@ -492,7 +492,7 @@
   (let [{:keys [layer-type style]} (geotype->marker-style geofield)
         stops (om/get-state owner :stops)
         circle-border "point-casting"]
-    (when (or geojson tiles-url)
+    (when (or (-> geojson :features count pos?) tiles-url)
       (add-mapboxgl-source map id_string map-data)
       (add-mapboxgl-layer map id_string layer-type)
       (register-mapboxgl-mouse-events owner map event-chan id_string style)
@@ -502,7 +502,8 @@
         (add-mapboxgl-layer map id_string layer-type circle-border
                             {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
-      (om/set-state! owner :style style))))
+      (om/set-state! owner :style style)
+      (om/set-state! owner :loaded? true))))
 
 (defn clear-map-styles
   "Set default style"

@@ -378,7 +378,8 @@
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
-                       :tiles-url tiles-endpoint :geojson geojson
+                       :tiles-url tiles-endpoint
+                       :geojson geojson
                        :geofield geofield :owner owner)
                       (om/set-state! owner :zoomed? false))
         fitBounds (fn [geojson]
@@ -391,8 +392,17 @@
     (.on mapboxgl-map "style.load" load-layers)
     (.on mapboxgl-map "render" #(fitBounds
                                  (om/get-state owner [:geojson])))
-    (when geojson
-      (.on mapboxgl-map "style.load" load-layers)
+    ;; Handles change in geojson source when geofield is changed
+    (when (and geojson (-> geojson :features count pos?))
+      (if (or (.loaded mapboxgl-map) (om/get-state owner [:loaded?]))
+        (do
+          (.off mapboxgl-map "style.load")
+          (.off mapboxgl-map "load")
+          (.on mapboxgl-map "style.load" load-layers)
+          (load-layers))
+        (do
+          (.off mapboxgl-map "load")
+          (.on mapboxgl-map "load" load-layers)))
       (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)
@@ -424,23 +434,17 @@
     (will-receive-props [_ next-props]
       "will-recieve-props resets mapboxglmap
       swiches to geojson source if the map data has changed to geoshapes."
-      (let [{{old-map-data :data} :map-page old-data :data} (om/get-props owner)
-            {{new-map-data :data} :map-page new-data :data}  next-props
+      (let [{{old-map-data :data} :map-page} (om/get-props owner)
+            {{new-map-data :data} :map-page}  next-props
             old-field (get-in (om/get-props owner) [:map-page :geofield])
             new-field (get-in next-props [:map-page :geofield])]
         (when (or (not= old-field new-field)
-                  (not= (count old-data) (count new-data))
-                  (not= old-data new-data)
-                  (not= old-map-data new-map-data))
+                  (not= (count old-map-data) (count new-map-data))
+                  (not= old-map-data old-map-data))
           (let [{:keys [flat-form]} (om/get-shared owner)
                 {:keys [mapboxgl-map layer-id geojson]}
                 (om/get-state owner)
-                generate-geojson #(mu/as-geojson % flat-form
-                                                 new-field)
-                new-geojson (generate-geojson
-                             (if (or (f/geoshape? new-field)
-                                     (f/osm? new-field))
-                               new-map-data new-data))]
+                new-geojson (mu/as-geojson new-map-data flat-form new-field)]
             (when (and (not-empty new-field) (not= geojson new-geojson))
               (when (.getLayer mapboxgl-map layer-id)
                 (.removeLayer mapboxgl-map layer-id)
