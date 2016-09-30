@@ -63,8 +63,7 @@
         (let [e (<! event-chan)
               {:keys [view-by view-by-closed view-by-filtered]} e
               markers (vals (get-id-marker-map))
-              {:keys [dataset-info] {data :data} :map-page}
-              @app-state
+              {:keys [dataset-info]} @app-state
               field (:field view-by)
               data-not-in-appstate? (> (:num_of_submissions dataset-info)
                                        mapping-threshold)]
@@ -78,7 +77,7 @@
           (when view-by
             (let [data (if data-not-in-appstate?
                          (-> @app-state :map-page :view-by-data)
-                         (:data @app-state))
+                         (-> @app-state :map-page :data))
                   vb-info (vb/viewby-data field data)]
               (om/update! app-state [:map-page :view-by] vb-info)
               (vb/apply-view-by! vb-info owner)))
