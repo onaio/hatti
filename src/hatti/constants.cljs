@@ -9,7 +9,6 @@
 (def google-sheets "google_sheets")
 
 ;; Map configs
-(def tiles-server "https://stage-tiles.ona.io")
 (def tiles-endpoint
   "/services/postgis/logger_instance/geom/vector-tiles/{z}/{x}/{y}.pbf")
 (def mapboxgl-access-token

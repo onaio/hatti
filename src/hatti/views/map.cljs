@@ -365,19 +365,19 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info tiles-server] :as app-state} owner
-   & {:keys [geojson geofield]}]
+  [{:keys [dataset-info] {:keys [tiles-server]} :map-page
+    :as app-state} owner & {:keys [geojson geofield]}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
         {:keys [flat-form]} (om/get-shared owner)
         ;; Only use tiles server endpoint as source loading a large dataset,
         ;;otherwise genereated geojson will be rendered on map.
-        tiles-endpoint (when (> (:num_of_submissions dataset-info)
-                                mapping-threshold)
-                         (mu/get-tiles-endpoint
-                          (or tiles-server constants/tiles-server)
-                          formid ["id"] flat-form query))
+        tiles-endpoint (when (and (> (:num_of_submissions dataset-info)
+                                     mapping-threshold)
+                                  tiles-server)
+                         (mu/get-tiles-endpoint tiles-server
+                                                formid ["id"] flat-form query))
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
