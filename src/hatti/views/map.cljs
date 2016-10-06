@@ -6,7 +6,6 @@
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
-                                                   map-styles-url
                                                    map-styles
                                                    mapping-threshold]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
@@ -50,6 +49,11 @@
             data (->> (<! (data-get nil {:query query :fields fields}))
                       :body json->cljs (remove empty?))]
         (om/update! app-state [:map-page :view-by-data] data))))
+
+(defn get-style-url
+  "Returns selected map style URL."
+  [style url]
+  (or url (str "mapbox://styles/mapbox/" style "-v9")))
 
 ;;;;; EVENT HANDLERS
 
@@ -367,8 +371,8 @@
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
         {:keys [flat-form]} (om/get-shared owner)
-        ;; Only use tiles server endpoint as sourice if it's large dataset,
-        ;; otherwise genereated geojson will be rendered on map
+        ;; Only use tiles server endpoint as source loading a large dataset,
+        ;;otherwise genereated geojson will be rendered on map.
         tiles-endpoint (when (> (:num_of_submissions dataset-info)
                                 mapping-threshold)
                          (mu/get-tiles-endpoint
@@ -408,9 +412,9 @@
     (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
 
 (defn mapboxgl-map
-  [app-state owner opts]
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
    Cursor is at :map-page"
+  [app-state owner opts]
   (reify
     om/IRenderState
     (render-state [_ _]
@@ -497,7 +501,12 @@
       leaflet layer control."
       (let [with-suffix
             #(if-not expanded % (str % " leaflet-control-layers-expanded"))
-            map (get-in cursor [:map-page :mapboxgl-map])]
+            mapboxgl-map (get-in cursor [:map-page :mapboxgl-map])
+            custom-styles
+            (apply merge
+                   (map (fn [{:keys [name url]}]
+                          {name [name url]})
+                        (om/get-shared owner [:map-config :custom-syles])))]
         (html
          [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
           [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
@@ -508,7 +517,7 @@
            [:form.leaflet-control-layers-list
             [:div.leaflet-control-layers-base
              {:on-mouse-leave #(om/set-state! owner :expanded false)}
-             (for [[k v] styles]
+             (for [[k [style-name url]] (merge styles custom-styles)]
                [:label
                 [:input.leaflet-control-layers-selector
                  {:type "radio"
@@ -516,9 +525,9 @@
                   :on-click
                   (fn []
                     (om/set-state! owner :current-style k)
-                    (.setStyle map (map-styles-url k)))
+                    (.setStyle mapboxgl-map (get-style-url k url)))
                   :checked (= k current-style)}]
-                [:span " " v]])]
+                [:span " " style-name]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]
             [:div.leaflet-control-layers-overlays]]]])))))
 
