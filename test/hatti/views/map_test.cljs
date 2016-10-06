@@ -57,11 +57,12 @@
 
 (deftest viewby-answer-renders-properly
   (let [sel1-field {:type "select one" :name "name"
-                    :full-name "Name" :label "This is the label"
+                    :full-name "name" :label "This is the label"
                     :children [{:name "1" :label "One"}
                                {:name "2" :label "Two"}]}
         vbdata {:view-by (vb/viewby-info
-                          sel1-field ["1" "2" "2" nil nil nil] (range 7))
+                          sel1-field [{"name" "1"} {"name" "2"} {"name" "2"}
+                                      nil nil nil] true)
                 :dataset-info {:num_of_submissions 100}}
         viewby (map-container map-viewby-legend vbdata map-form owner)
         option-list (sel viewby :li)]

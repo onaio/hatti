@@ -3,13 +3,13 @@
       [path]
       (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.1"
+(defproject onaio/hatti "0.3.2-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
   :dependencies [;; Core libraries
                  [org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.8.51"]
+                 [org.clojure/clojurescript "1.9.89"]
                  [org.clojure/core.async "0.2.374"]
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.9.0"]
@@ -60,7 +60,8 @@
                                        "target/main-test.js"]
                       :compiler {:optimizations :whitespace
                                  :output-to "target/main-test.js"
-                                 :pretty-print true}}}
+                                 :pretty-print true
+                                 :closure-output-charset "US-ASCII"}}}
               :test-commands {"unit-test"
                               ["phantomjs"
                                "phantom/unit-test.js"

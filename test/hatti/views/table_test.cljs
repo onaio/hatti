@@ -97,15 +97,15 @@
 (defn- table-container
   [data form role]
   "Returns a container in which a table has been rendered."
-  (merge-into-app-state! shared/app-state {:dataset-info
-                                           {:num_of_submissions 0}})
+  (merge-into-app-state! shared/app-state {:dataset-info {:num_of_submissions 0}
+                                           :views {:active [:table]}})
+  (shared/update-app-data! shared/app-state data)
   (let [c (new-container!)
-        _ (shared/update-app-data! shared/app-state data)
         args {:shared {:flat-form form
                        :external-events (chan)
                        :event-chan (chan (sliding-buffer 1))}
-              :opts {:role role}}
-        table (om/root table-page shared/app-state (merge args {:target c}))]
+              :opts {:role role}}]
+    (om/root table-page shared/app-state (merge args {:target c}))
     c))
 
 (deftest table-renders-properly

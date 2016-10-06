@@ -1,6 +1,7 @@
 (ns hatti.map.viewby-test
   (:require-macros [cljs.test :refer (is deftest testing)])
   (:require [cljs.test :as t]
+            [hatti.constants :refer [_id]]
             [hatti.test-utils :refer [remove-nil ordered-diff]]
             [hatti.utils.style :as style]
             [hatti.map.viewby :as vb]
@@ -8,27 +9,41 @@
 
 ;; VIEW BY HELPER FUNCTION TESTS
 (deftest viewby-info-tests
-  (let [sel1 {:type "select one" :label "SELECT!"
+  (let [options "options"
+        sel-all "sel-all"
+        number "number"
+
+        sel1 {:type "select one" :label "SELECT!"
+              :full-name "options"
               :children [{:name "1" :label "Option 1"}
                          {:name "2" :label "Option 2"}]}
-        sel1-big {:type "select one" :lable "SELECT 1!"
+        sel1-big {:type "select one" :lable "SELECT 1!" :full-name options
                   :children (for [i (range 20)]
                               {:name (str i) :label (str "Option " i)})}
-        selm (merge sel1 {:type "select all that apply"})
-        intf (merge sel1 {:type "integer"})
+        selm (merge sel1 {:type "select all that apply" :full-name sel-all})
+        intf (merge sel1 {:type "integer" :full-name number})
         N 50
         ids (range N)
-        sel1-answers (for [i ids] (rand-nth [nil "1" "2"]))
-        sel1-answers-big (map str (range 20))
-        selm-answers (for [i ids] (rand-nth [nil "1" "2" "1 2"]))
-        int-answers (concat [0 99 nil] (for [i (range (- N 3))] (rand-int 100)))
-        num-nil-sel1 (count (filter nil? sel1-answers))
-        num-nil-selm (count (filter nil? selm-answers))
-        num-nil-int (count (filter nil? int-answers))
-        vbi-sel1 (vb/viewby-info sel1 sel1-answers ids)
-        vbi-sel1-big (vb/viewby-info sel1-big sel1-answers-big ids)
-        vbi-selm (vb/viewby-info selm selm-answers ids)
-        vbi-int (vb/viewby-info intf int-answers ids)
+        sel1-answers (for [i ids] {_id i
+                                   options (rand-nth [nil "1" "2"])})
+        sel1-answers-big (map (fn [i] {options (str i)}) (range 20))
+        selm-answers (for [i ids] {_id i
+                                   sel-all (rand-nth [nil "1" "2" "1 2"])})
+        int-answers (concat [{number 0 _id 47}
+                             {number 99 _id 48}
+                             {number nil _id 49}]
+                            (for [i (range (- N 3))]
+                              {_id i number (rand-int 100)}))
+        num-nil-sel1 (count (filter (fn [s] (nil? (get s options)))
+                                    sel1-answers))
+        num-nil-selm (count (filter (fn [s] (nil? (get s sel-all)))
+                                    selm-answers))
+        num-nil-int (count (filter (fn [s] (nil? (get s number)))
+                                   int-answers))
+        vbi-sel1 (vb/viewby-data sel1 sel1-answers)
+        vbi-sel1-big (vb/viewby-data sel1-big sel1-answers-big)
+        vbi-selm (vb/viewby-data selm selm-answers)
+        vbi-int (vb/viewby-data intf int-answers)
         sel1-colors (set (take 3 style/qualitative-palette))
         selm-colors #{"#f30"}
         int-colors (set style/sequential-palette)

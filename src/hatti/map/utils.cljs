@@ -3,9 +3,11 @@
   (:require [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.constants :refer [_id _rank]]
+            [hatti.constants :refer [_id _rank
+                                     mapboxgl-access-token tiles-endpoint]]
             [hatti.ona.forms :as f]
-            [hatti.utils :refer [indexed]]))
+            [hatti.utils :refer [indexed]]
+            [om.core :as om :include-macros true]))
 
 ;; STYLES
 
@@ -135,6 +137,7 @@
   [geometry record-id index]
   {:type "Feature"
    :properties {(keyword _rank) (inc index)
+                :id record-id
                 (keyword _id) record-id}
    :geometry geometry})
 
@@ -267,3 +270,244 @@
     {:feature-layer feature-layer
      :markers markers
      :id->marker (zipmap ids markers)}))
+
+;;MAPBOX GL
+(defn create-mapboxgl-map
+  "Creates a mapboxgl map, rendering it to the dom element with given id."
+  [id]
+  (set! (.-accessToken js/mapboxgl) mapboxgl-access-token)
+  (let [Map (.-Map js/mapboxgl)
+        Navigation (.-Navigation js/mapboxgl)
+        m (Map. #js {:container id
+                     :style "mapbox://styles/mapbox/streets-v9"})]
+    (.addControl m (Navigation. #js {:position "bottom-left"}))))
+
+(defn get-filter
+  "Gets query filter and returns filters based on field type"
+  [{:keys [column filter value]} flat-form]
+  (let [field (first
+               (cljs.core/filter
+                (fn [{:keys [full-name]}]
+                  (= full-name column)) flat-form))]
+    (cond
+      (f/numeric? field)
+      (str "CAST(json->>'" column "' AS INT) " filter " '" value "'")
+      (f/time-based? field)
+      (str "CAST(json->>'" column "' AS AS TIMESTAMP) " filter " '" value "'")
+      :else (str "json->>'" column "' " filter " '" value "'"))))
+
+(defn generate-filter-string
+  "Generates query params filters for filtered datasets "
+  [query flat-form]
+  (when (not-empty query)
+    (str " and " (string/join " and " (map #(get-filter % flat-form) query)))))
+
+(defn get-tiles-endpoint
+  "Generates tiles url with appropriate filters as query params"
+  [tiles-server formid fields flat-form & [query]]
+  (str tiles-server tiles-endpoint
+       "?where=deleted_at is null and xform_id =" formid
+       (generate-filter-string query flat-form)
+       "&fields=" (string/join ",", fields)))
+
+(defn add-mapboxgl-source
+  "Add map source. This is called with either tiles-url or geoson which
+  determins the source type (Vector or  GeosJSON). "
+  [map id_string {:keys [tiles-url geojson]}]
+  (let [tiles #js [tiles-url]
+        source (cond
+                 geojson (clj->js {:type "geojson" :data geojson})
+                 tiles #js {:type "vector" :tiles tiles})]
+    (when-not (.getSource map id_string)
+      (.addSource map id_string source))))
+
+(defn add-mapboxgl-layer
+  "Add map layer from available sources."
+  [map id_string layer-type & [layer-id paint-properties]]
+  (let [l-id (or layer-id id_string)
+        layer-def {:id l-id
+                   :type layer-type
+                   :source id_string
+                   :source-layer "logger_instance_geom"}
+        layer (clj->js (if paint-properties
+                         (assoc layer-def :paint paint-properties)
+                         layer-def))]
+    (when-not (.getLayer map l-id)
+      (.addLayer map layer id_string))))
+
+(defn generate-stops
+  "Generates a collection of input - output value pairs known
+   as stops. These stops are used by get-styles function to decide the style
+   output based on an input vaue from the dataset. e.g. _id. By defauly this
+    function purely generates color stops."
+  [selected-id selected-color]
+  [[0 "#f30"]
+   [selected-id selected-color]])
+
+(defn generate-size-stops
+  "Generates cirlce size property stops base on values from dataset."
+  [selected-id selected-color]
+  [[0 4]
+   [selected-id selected-color]])
+
+(defn get-styles
+  "Gets predefined styles for diffent layer types and states."
+  [& [selected-id stops size-stops]]
+  {:point {:normal [["circle-color" (clj->js
+                                     {:property "id"
+                                      :type "categorical"
+                                      :stops (if stops
+                                               stops
+                                               [[0 "#f30"]])})]
+                    ["circle-radius" 4]]
+           :hover [["circle-color" (clj->js
+                                    {:property "id"
+                                     :type "categorical"
+                                     :stops (generate-stops
+                                             selected-id "#631400")})]]
+           :clicked [["circle-color" (clj->js
+                                      {:property "id"
+                                       :type "categorical"
+                                       :stops (generate-stops
+                                               selected-id "#ad2300")})]]
+           :sized [["circle-radius" (clj->js
+                                     {:property "id"
+                                      :type "categorical"
+                                      :stops (if size-stops
+                                               size-stops
+                                               [[0 6]])})]
+                   ["circle-opacity" (clj->js
+                                      {:stops
+                                       [[3, 0.2] [15, 0.8]]})]]}
+   :fill {:normal [["fill-color" (clj->js
+                                  {:property "_id"
+                                   :type "categorical"
+                                   :stops (if stops
+                                            stops
+                                            [[0 "#f30"]])})]
+                   ["fill-opacity" 0.7]
+                   ["fill-outline-color" "#666"]]
+          :hover [["fill-color" (clj->js
+                                 {:property "_id"
+                                  :type "categorical"
+                                  :stops (generate-stops
+                                          selected-id "#631400")})]]
+          :clicked [["fill-color" (clj->js
+                                   {:property "_id"
+                                    :type "categorical"
+                                    :stops (generate-stops
+                                            selected-id "#ad2300")})]]}})
+
+(defn get-style-properties
+  "Get style properties for layer."
+  [style-type style-state & {:keys [selected-id stops]}]
+  (-> (get-styles selected-id stops) style-type style-state))
+
+(defn set-mapboxgl-paint-property
+  "Sets maps paint properties given layer-id and list of properties to set.
+  properties should be a list of properties that contains the propery name
+  and value in a vector. e.g. [[property1 value1] [property2 value2]"
+  [map layer-id properties]
+  (doseq [[p v] properties] (.setPaintProperty map layer-id p v)))
+
+(defn get-id-property
+  [features]
+  (let [properties (-> features first (aget "properties"))]
+    (or (aget properties "id") (aget properties _id))))
+
+(defn register-mapboxgl-mouse-events
+  "Register map mouse events."
+  [owner map event-chan id_string style]
+  (.off map "mousemove")
+  (.off map "click")
+  (.on map "mousemove"
+       (fn [e]
+         (let [layer-id id_string
+               features
+               (.queryRenderedFeatures
+                map (.-point e) (clj->js {:layers [layer-id]}))
+               no-of-features (.-length features)
+               view-by (om/get-props owner [:map-page :view-by])
+               selected-id (om/get-props
+                            owner [:map-page :submission-clicked :id])]
+           (set! (.-cursor (.-style (.getCanvas map)))
+                 (if (pos? (.-length features)) "pointer" ""))
+           (when-not view-by
+             (if (= no-of-features 1)
+               (set-mapboxgl-paint-property
+                map layer-id
+                (get-style-properties
+                 style :hover :selected-id (get-id-property features)))
+               (do
+                 (set-mapboxgl-paint-property
+                  map layer-id
+                  (get-style-properties style :normal))
+                 (when selected-id
+                   (set-mapboxgl-paint-property
+                    map layer-id
+                    (get-style-properties
+                     style :clicked :selected-id selected-id)))))))))
+  (.on map "click"
+       (fn [e]
+         (let [layer-id id_string
+               features
+               (.queryRenderedFeatures
+                map (.-point e) (clj->js {:layers [layer-id]}))
+               no-of-features (.-length features)
+               view-by (om/get-props owner [:map-page :view-by])]
+           (when (pos? no-of-features)
+             (let [feature-id (get-id-property features)]
+               (put! event-chan {:mapped-submission-to-id feature-id})
+               (when-not view-by
+                 (set-mapboxgl-paint-property
+                  map layer-id
+                  (get-style-properties
+                   style :clicked :selected-id feature-id)))))))))
+
+(defn fitMapBounds
+  "Fits map boundaries on rendered features."
+  [map layer-id & [geojson]]
+  (let [features (or (:features geojson)
+                     (.queryRenderedFeatures
+                      map (clj->js {:layers [layer-id]})))
+        layer-data (or geojson
+                       (clj->js
+                        {:type "FeatureCollection" :features features}))
+        bbox (.bbox js/turf (clj->js layer-data))]
+    (when (pos? (count features))
+      (.fitBounds map bbox #js {:padding "15" :linear true}))))
+
+(defn geotype->marker-style
+  "Get marker style for field type."
+  [field]
+  (cond
+    (f/geoshape? field) {:layer-type "fill" :style :fill}
+    (f/osm? field) {:layer-type "fill" :style :fill}
+    :else {:layer-type "circle" :style :point}))
+
+(defn map-on-load
+  "Functions that are called after map is loaded in DOM."
+  [map event-chan id_string &
+   {:keys [geofield owner tiles-url geojson] :as map-data}]
+  (let [{:keys [layer-type style]} (geotype->marker-style geofield)
+        stops (om/get-state owner :stops)
+        circle-border "point-casting"]
+    (when (or (-> geojson :features count pos?) tiles-url)
+      (add-mapboxgl-source map id_string map-data)
+      (add-mapboxgl-layer map id_string layer-type)
+      (register-mapboxgl-mouse-events owner map event-chan id_string style)
+      (set-mapboxgl-paint-property
+       map id_string (get-style-properties style :normal :stops stops))
+      (if (= :point style)
+        (add-mapboxgl-layer map id_string layer-type circle-border
+                            {:circle-color "#fff" :circle-radius 6})
+        (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+      (om/set-state! owner :style style)
+      (om/set-state! owner :loaded? true))))
+
+(defn clear-map-styles
+  "Set default style"
+  [owner]
+  (set-mapboxgl-paint-property
+   (om/get-state owner :mapboxgl-map) (om/get-state owner :layer-id)
+   (get-style-properties (om/get-state owner :style) :normal)))

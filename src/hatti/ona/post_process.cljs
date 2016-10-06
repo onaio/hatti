@@ -61,21 +61,26 @@
       (let [data (get-in app-state app-state-keys)
             osm-data (osm-id->osm-data data form osm-xml)
             osm-val->osm-id #(re-find #"[-]?[0-9]+" %)
-            osm-val->osm-data (fn [osm-val]
+            osm-val->osm-data (fn [osm-val osm-id]
                                 ;; The OSM-val can be either a string or a
                                 ;; precomputed osm-data value. This condition
                                 ;; ensures only strings are parsed for OSM ids
                                 (if (string? osm-val)
                                   (if-let [osm-submission-data
-                                           (osm-data
-                                            (osm-val->osm-id osm-val))]
+                                           (osm-data osm-id)]
                                     osm-submission-data
                                     osm-val)
                                   osm-val))
             updater (fn [osm-key]
                       (fn [data]
                         (for [datum data]
-                          (update-in datum [osm-key] osm-val->osm-data))))]
+                          (let [osm-id (or
+                                        (get-in datum [(str osm-key
+                                                            ":way:id")])
+                                        (get-in datum [(str osm-key
+                                                            ":node:id")]))]
+                            (update-in datum [osm-key]
+                                       #(osm-val->osm-data % osm-id))))))]
 
         (doseq [osm-field osm-fields]
           (transact! app-state app-state-keys

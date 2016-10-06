@@ -5,7 +5,7 @@
             [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :refer [mapping-threshold google-sheets]]
+            [hatti.constants :refer [google-sheets]]
             [hatti.ona.forms :as f]
             [hatti.shared :as shared]
             [hatti.views :refer [tabbed-dataview
@@ -147,17 +147,6 @@
                          (cond
                            (and (= view :map) no-geodata?)
                            [:a {:class "inactive" :title "No geodata"}
-                            (name view)]
-                           (and (= view :map)
-                                (> (-> app-state
-                                       :dataset-info
-                                       :num_of_submissions)
-                                   mapping-threshold))
-                           [:a
-                            {:class "inactive"
-                             :title (format
-                                     "Map does not support more than %d points."
-                                     mapping-threshold)}
                             (name view)]
                            :else
                            [:a

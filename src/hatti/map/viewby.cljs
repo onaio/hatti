@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :refer [split]]
             [chimera.js-interop :refer [safe-regex]]
+            [om.core :as om :include-macros true]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.constants :refer [_id]]
             [hatti.ona.forms :as form-utils]
@@ -87,6 +88,42 @@
 
       :else defaults)))
 
+(defn viewby-data
+  "Produces a set of data structures / functions for view-by.
+   answers are a list of answers, sorted by count;
+   id->answers is a mapping from id to either one or many answers
+   answer->count, answer->selected?, answer->color are maps from answer;
+   used for the legend rendering. An 'answer' is mapped from a data element,
+   eg. a bin for numbers/dates, an option for multiple/single selects."
+  [{:keys [full-name] :as field} data]
+  (when (-> data seq seq?)
+    (let [ids (map #(get % _id) data)
+          raw-answers (map #(get % full-name) data)
+          preprocessed-answers (preprocess-answers field raw-answers)
+          answer->count (frequencies (flatten preprocessed-answers))
+          sorted-answers (cond
+                           (or (form-utils/categorical? field)
+                               (form-utils/text? field)
+                               (form-utils/calculate? field))
+                           (map first (sort-by second > answer->count))
+                           (or (form-utils/time-based? field)
+                               (form-utils/numeric? field))
+                           (-> preprocessed-answers meta :bins))
+          sorted-answers-with-nil-at-end (move-nil-to-end sorted-answers)
+          answer->color-map (answer->color field sorted-answers)
+          defaults {:ids ids
+                    :answers sorted-answers-with-nil-at-end
+                    :id->answers (zipmap ids preprocessed-answers)
+                    :answer->count answer->count
+                    :answer->selected? (all-but-nil-selected sorted-answers)
+                    :answer->color answer->color-map
+                    :visible-answers sorted-answers-with-nil-at-end
+                    :field field}]
+      (cond
+        (form-utils/select-all? field)
+        (merge defaults {:id-color #(first (vals answer->color-map))})
+        :else defaults))))
+
 (defn id-color-selected
   "Generates id-color and id-selected? functions based on viewby-info."
   [{:keys [field id->answers answer->color answer->selected?]}]
@@ -109,6 +146,21 @@
     (doseq [marker markers]
       (map-utils/re-style-marker m->s marker)
       (map-utils/bring-to-top-if-selected id-selected? marker))))
+
+(defn apply-view-by!
+  [{:keys [id->answers] :as view-by-info} owner]
+  (let [{:keys [id-selected? id-color]} (id-color-selected view-by-info)
+        ids (sort (keys id->answers))
+        stops (mapv #(if (id-selected? %)
+                       [% (id-color %)]
+                       [% grey]) ids)
+        id_string (om/get-props owner [:dataset-info :id_string])
+        style (om/get-state owner [:style])]
+    (when (-> stops seq seq?)
+      (map-utils/set-mapboxgl-paint-property
+       (om/get-state owner :mapboxgl-map) id_string
+       (map-utils/get-style-properties style :normal :stops stops))
+      (om/set-state! owner :stops stops))))
 
 (defn filter-answer-data-structures
   "Given a list of answers + query, returns map from answers to true/false.
