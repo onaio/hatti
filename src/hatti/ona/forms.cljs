@@ -91,6 +91,10 @@
   [field]
   (field-type-in-set? #{"geoshape"} field))
 
+(defn geotrace?
+  [field]
+  (field-type-in-set? #{"geotrace"} field))
+
 (defn image?
   [field]
   (field-type-in-set? #{"image" "photo"} field))
