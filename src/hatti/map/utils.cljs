@@ -323,15 +323,15 @@
 
 (defn add-mapboxgl-layer
   "Add map layer from available sources."
-  [map id_string layer-type & [layer-id paint-properties]]
+  [map id_string layer-type & {:keys [layer-id layout paint]}]
   (let [l-id (or layer-id id_string)
         layer-def {:id l-id
                    :type layer-type
                    :source id_string
                    :source-layer "logger_instance_geom"}
-        layer (clj->js (if paint-properties
-                         (assoc layer-def :paint paint-properties)
-                         layer-def))]
+        layer (clj->js (cond-> layer-def
+                         paint (assoc :paint paint)
+                         layout (assoc :layout layout)))]
     (when-not (.getLayer map l-id)
       (.addLayer map layer id_string))))
 
@@ -393,6 +393,24 @@
                                   :stops (generate-stops
                                           selected-id "#631400")})]]
           :clicked [["fill-color" (clj->js
+                                   {:property "_id"
+                                    :type "categorical"
+                                    :stops (generate-stops
+                                            selected-id "#ad2300")})]]}
+   :line {:normal [["line-color" (clj->js
+                                  {:property "_id"
+                                   :type "categorical"
+                                   :stops (if stops
+                                            stops
+                                            [[0 "#f30"]])})]
+                   ["line-opacity" 0.8]
+                   ["line-width" 7]]
+          :hover [["line-color" (clj->js
+                                 {:property "_id"
+                                  :type "categorical"
+                                  :stops (generate-stops
+                                          selected-id "#631400")})]]
+          :clicked [["line-color" (clj->js
                                    {:property "_id"
                                     :type "categorical"
                                     :stops (generate-stops
@@ -483,24 +501,29 @@
   (cond
     (f/geoshape? field) {:layer-type "fill" :style :fill}
     (f/osm? field) {:layer-type "fill" :style :fill}
+    (f/geotrace? field) {:layer-type "line" :style :line
+                         :layout {:line-join "round"
+                                  :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
   [map event-chan id_string &
    {:keys [geofield owner tiles-url geojson] :as map-data}]
-  (let [{:keys [layer-type style]} (geotype->marker-style geofield)
+  (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
         stops (om/get-state owner :stops)
         circle-border "point-casting"]
+    (.log js/console (js/JSON.stringify (clj->js geojson)))
     (when (or (-> geojson :features count pos?) tiles-url)
       (add-mapboxgl-source map id_string map-data)
-      (add-mapboxgl-layer map id_string layer-type)
+      (add-mapboxgl-layer map id_string layer-type :layout layout)
       (register-mapboxgl-mouse-events owner map event-chan id_string style)
       (set-mapboxgl-paint-property
        map id_string (get-style-properties style :normal :stops stops))
       (if (= :point style)
-        (add-mapboxgl-layer map id_string layer-type circle-border
-                            {:circle-color "#fff" :circle-radius 6})
+        (add-mapboxgl-layer map id_string layer-type
+                            :layer-id circle-border
+                            :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
