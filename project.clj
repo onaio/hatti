@@ -9,8 +9,8 @@
   :url "https://github.com/onaio/hatti"
   :dependencies [;; Core libraries
                  [org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.89"]
-                 [org.clojure/core.async "0.2.374"]
+                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/core.async "0.2.395"]
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.9.0"]
                  [inflections "0.9.7"]
@@ -30,7 +30,7 @@
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
                  ;; For client
-                 [cljs-http "0.1.40"]
+                 [cljs-http "0.1.42"]
                  ;; For testing
                  [prismatic/dommy "1.1.0"]]
   :cljfmt {:file-pattern #"[^\.#]*\.clj[s]?$"}
