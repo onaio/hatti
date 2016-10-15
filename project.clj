@@ -15,7 +15,7 @@
                  [org.omcljs/om "0.9.0"]
                  [inflections "0.9.7"]
                  [secretary "1.2.3"]
-                 [onaio/chimera "0.0.2-SNAPSHOT"]
+                 [onaio/chimera "0.0.2"]
                  ;; For charts
                  [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
                  [org.clojure/math.numeric-tower "0.0.4"]
