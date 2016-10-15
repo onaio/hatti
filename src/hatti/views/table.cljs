@@ -16,7 +16,6 @@
             [hatti.views.record]
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
-            [chimera.core :refer [any?]]
             [cljsjs.slickgrid-with-deps]))
 
 (def default-num-displayed-records 25)
