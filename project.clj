@@ -3,34 +3,35 @@
       [path]
       (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.3"
+(defproject onaio/hatti "0.3.4"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
   :dependencies [;; Core libraries
                  [org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.89"]
-                 [org.clojure/core.async "0.2.374"]
+                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/core.async "0.2.395"]
+                 ;; Use Sablono version matching Om and react 13
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.9.0"]
-                 [inflections "0.9.7"]
+                 [inflections "0.12.2"]
                  [secretary "1.2.3"]
-                 [onaio/chimera "0.0.2-SNAPSHOT"]
+                 [onaio/chimera "0.0.3"]
                  ;; For charts
                  [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [clj-time "0.7.0"]
-                 [com.andrewmcveigh/cljs-time "0.2.3"]
+                 [clj-time "0.12.0"]
+                 [com.andrewmcveigh/cljs-time "0.4.0"]
                  ;; JS
-                 [cljsjs/moment "2.9.0-1"]
+                 [cljsjs/moment "2.10.6-4"]
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
                  [cljsjs/oboe "2.1.2-1"]
-                 [cljsjs/jquery "1.9.1-0"]
+                 [cljsjs/jquery "2.2.4-0"]
                  [onaio/slickgrid-cljs "0.0.3"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
                  ;; For client
-                 [cljs-http "0.1.40"]
+                 [cljs-http "0.1.42"]
                  ;; For testing
                  [prismatic/dommy "1.1.0"]]
   :cljfmt {:file-pattern #"[^\.#]*\.clj[s]?$"}
