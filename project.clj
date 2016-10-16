@@ -11,6 +11,7 @@
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [org.clojure/core.async "0.2.395"]
+                 ;; Use Sablono version matching Om and react 13
                  [sablono "0.3.1"]
                  [org.omcljs/om "0.9.0"]
                  [inflections "0.12.2"]

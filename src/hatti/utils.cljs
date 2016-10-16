@@ -3,7 +3,7 @@
             [goog.string.format]
             [goog.string]
             [inflections.core :refer [plural]]
-            [sablono.core :as html :refer-macros [html]]))
+            [sablono.core :refer-macros [html] :refer [render-static]]))
 
 (defn json->js
   "Convert json to js using JSON.parse"
@@ -55,6 +55,6 @@
                                        [component]
                                        (if (string? component)
                                          component
-                                         (html/render-static component)))
+                                         (render-static component)))
                                      components)]
     (join components-as-static-markup)))

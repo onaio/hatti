@@ -16,10 +16,11 @@
 
 ;; Helper functions to easily create sablono / hiccup vectors
 
-(defn wrap-with [root]
+(defn wrap-with
   "Wrap-with produces a partial to wrap a set of children.
    ((wrap-with :div) 1 2 3) => [:div [1 2 3]]
    ((wrap-with [:div {:class 0}]) 1 2 3) => [:div {:class 0} [1 2 3]]"
+  [root]
   (fn [& children]
     (if (keyword? root)
       (conj [root] children)
