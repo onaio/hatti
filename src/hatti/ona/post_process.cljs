@@ -9,6 +9,8 @@
             [cljsjs.jquery]
             [osmtogeojson]))
 
+(def attachments-key "_attachments")
+
 ;; OSM POST-PROCESSING
 
 (defn ona-osm-link
@@ -87,6 +89,7 @@
                      (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
+
 (defn url-obj
   "Calculate full image and thumbnail urls given attachment information."
   [media-obj]
@@ -101,14 +104,14 @@
   "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
   [record attachments]
-  (let [attachments (or attachments (get record "_attachments"))
+  (let [attachments (or attachments (get record attachments-key))
         fnames (map #(last-url-param (get % "filename")) attachments)
         fname->urlobj (zipmap fnames (map url-obj attachments))]
     ;; If urlobj isn't found, we'll just return filename
     (fn [fname] (get fname->urlobj fname fname))))
 
 (defn integrate-attachments
-  "Inlines media data from within _attachments into each record."
+  "Inlines media data from within attachments-key into each record."
   [flat-form data & {:keys [attachments]}]
   (let [image-fields (filter forms/image? flat-form)]
     (for [record data]
@@ -119,7 +122,7 @@
                 image-fields)))))
 
 (defn integrate-attachments-in-repeats
-  "Inlines data from within _attachments into each datapoint within repeats."
+  "Inlines data from within attachments-key into each datapoint within repeats."
   [flat-form data]
   (let [repeat-fields (filter forms/repeat? flat-form)
         integrate (fn [record rpt-field]
@@ -129,7 +132,7 @@
                               (:children rpt-field)
                               (get record key)
                               :attachments
-                              (get record "_attachments")))))]
+                              (get record attachments-key)))))]
     (for [record data]
       (reduce integrate record repeat-fields))))
 

@@ -25,15 +25,15 @@
   {:overview {:view :overview
               :label "Overview"
               :component overview-page}
-   :photos {:view :photos
-            :label "Photos"
-            :component photos-page}
    :map {:view :map
          :label "Map"
          :component map-page}
    :table {:view :table
            :label "Table"
            :component table-page}
+   :photos {:view :photos
+            :label "Photos"
+            :component photos-page}
    :chart {:view :chart
            :label "Charts"
            :component chart-page}

@@ -25,8 +25,9 @@
                  ;; JS
                  [cljsjs/moment "2.10.6-4"]
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
-                 [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/jquery "2.2.4-0"]
+                 [cljsjs/oboe "2.1.2-1"]
+                 [cljsjs/photoswipe "4.1.1-0"]
                  [onaio/slickgrid-cljs "0.0.3"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
