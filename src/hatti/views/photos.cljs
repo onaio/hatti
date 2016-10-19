@@ -1,27 +1,34 @@
 (ns hatti.views.photos
-  (:require [cljsjs.photoswipe]
+  (:require [chimera.js-interop :refer [format]]
+            [cljsjs.photoswipe]
             [cljsjs.photoswipe-ui-default]
             [clojure.string :refer [replace]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
-            [hatti.ona.post-process :refer [attachments-key]]
+            [hatti.constants :as constants]
             [hatti.shared :as hatti-shared]
             [hatti.views :refer [photos-page]]
-            [milia.utils.remote :refer [make-url]]))
+            [milia.utils.remote :as remote]))
 
-(def medium-download-url "medium_download_url")
 (def width-px 400)
+
+(defn- make-url
+  "Remove the API namespace prefix from a URI string and convert to a fully
+   qualified URL."
+  [str]
+  (remote/make-url (replace str #"/api/v1" "")))
 
 (defn build-photos
   "Build photos for photoswipe from a set of form data."
   [data]
   (flatten
    (for [datum data
-         :let [attachments (get datum attachments-key)]
+         :let [attachments (get datum constants/_attachments)]
          :when (seq attachments)]
      (for [attachment attachments]
-       {:src (make-url (replace (get attachment medium-download-url)
-                                #"/api/v1" ""))
+       {:src (make-url (get attachment constants/medium-download-url))
+        :thumb (make-url (get attachment constants/small-download-url))
+        :rank (get datum constants/_rank)
         :w width-px :h width-px}))))
 
 (defmethod photos-page :default
@@ -65,7 +72,20 @@
             {:title "Next (arrow right)"}]
            [:div.pswp__caption
             [:div.pswp__caption__center]]]]]
-        ]))
+        [:div.gallery {:itemscope ""
+                       :itemtype "http://schema.org/ImageGallery"}
+         (for [photo photos
+               :let [caption (format "Submission %s" (:rank photo))]]
+           [:figure {:itemprop "associatedMedia"
+                     :itemscope ""
+                     :itemtype "http://schema.org/ImageObject"}
+            [:a {:href (:src photo)
+                 :itemprop "contentUrl"
+                 :data-size (format "%sx%s" width-px width-px)}
+             [:img {:src (:thumb photo)
+                    :itemprop "thumbnail"
+                    :alt caption}]]
+            [:figcaption {:itemprop "caption description"} caption]])]]))
     om/IDidMount
     (did-mount [_]
       (let [pswp-element (first (.querySelectorAll js/document ".pswp"))

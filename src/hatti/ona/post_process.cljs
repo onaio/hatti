@@ -3,13 +3,11 @@
             [chimera.om.state :refer [transact!]]
             [chimera.urls :refer [url last-url-param]]
             [clojure.string :refer [join split]]
-            [hatti.constants :refer [_id _rank]]
+            [hatti.constants :refer [_attachments _id _rank]]
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [cljsjs.jquery]
             [osmtogeojson]))
-
-(def attachments-key "_attachments")
 
 ;; OSM POST-PROCESSING
 
@@ -104,14 +102,14 @@
   "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
   [record attachments]
-  (let [attachments (or attachments (get record attachments-key))
+  (let [attachments (or attachments (get record _attachments))
         fnames (map #(last-url-param (get % "filename")) attachments)
         fname->urlobj (zipmap fnames (map url-obj attachments))]
     ;; If urlobj isn't found, we'll just return filename
     (fn [fname] (get fname->urlobj fname fname))))
 
 (defn integrate-attachments
-  "Inlines media data from within attachments-key into each record."
+  "Inlines media data from within _attachments into each record."
   [flat-form data & {:keys [attachments]}]
   (let [image-fields (filter forms/image? flat-form)]
     (for [record data]
@@ -122,7 +120,7 @@
                 image-fields)))))
 
 (defn integrate-attachments-in-repeats
-  "Inlines data from within attachments-key into each datapoint within repeats."
+  "Inlines data from within _attachments into each datapoint within repeats."
   [flat-form data]
   (let [repeat-fields (filter forms/repeat? flat-form)
         integrate (fn [record rpt-field]
@@ -132,12 +130,12 @@
                               (:children rpt-field)
                               (get record key)
                               :attachments
-                              (get record attachments-key)))))]
+                              (get record _attachments)))))]
     (for [record data]
       (reduce integrate record repeat-fields))))
 
 (defn integrate-attachments!
-  "Inlines data from within _atatchments into each record within app-state."
+  "Inlines data from within _attachments into each record within app-state."
   [app-state flat-form & {:keys [app-data-keys]
                           :or {app-data-keys [:data]}}]
   (transact! app-state
