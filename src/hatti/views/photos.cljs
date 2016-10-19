@@ -10,6 +10,8 @@
             [hatti.views :refer [photos-page]]
             [milia.utils.remote :as remote]))
 
+(def data-pswp-id "data-pswp-id")
+(def pswp-gallery-class "pswp")
 (def width-px 400)
 
 (defn- make-url
@@ -18,7 +20,40 @@
   [str]
   (remote/make-url (replace str #"/api/v1" "")))
 
-(defn build-photos
+(defn- open-photoswipe
+  [index owner]
+  (let [pswp-element (first (.querySelectorAll js/document
+                                               (str "." pswp-gallery-class)))
+        options {:index (int index)
+                 :getThumbBoundsFn
+                 (fn [index]
+                   (let [thumbnail
+                         (first (.querySelectorAll
+                                 js/document
+                                 (format "[%s='%s']"
+                                         data-pswp-id
+                                         index)))
+                         page-y-scroll (+ (.-pageYOffset js/window)
+                                          (.. js/document
+                                              -documentElement
+                                              -scrollTop))
+                         rect (.getBoundingClientRect thumbnail)]
+                     {:x (.-left rect)
+                      :y (+ (.-top rect) page-y-scroll)
+                      :w (.-width rect)}))}
+        gallery (js/PhotoSwipe. pswp-element
+                                js/PhotoSwipeUI_Default
+                                (clj->js (om/get-state owner :photos))
+                                (clj->js options))]
+  (.init gallery)))
+
+(defn- on-thumbnail-click
+  [event owner]
+  (.preventDefault event)
+  (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
+                   owner))
+
+(defn- build-photos
   "Build photos for photoswipe from a set of form data."
   [data]
   (flatten
@@ -31,6 +66,25 @@
         :rank (get datum constants/_rank)
         :w width-px :h width-px}))))
 
+(defn- build-photo-gallery
+  "Build markup with actions for a photo gallery."
+  [photos owner]
+  (for [i (-> photos count range)
+        :let [photo (nth photos i)
+              caption (format "Submission %s" (:rank photo))]]
+    [:figure {:itemprop "associatedMedia"
+              :itemscope ""
+              :itemtype "http://schema.org/ImageObject"}
+     [:a {:href (:src photo)
+          :itemprop "contentUrl"
+          :data-size (format "%sx%s" width-px width-px)
+          :on-click #(on-thumbnail-click % owner)}
+      [:img {:src (:thumb photo)
+             :itemprop "thumbnail"
+             (keyword data-pswp-id) i
+             :alt caption}]]
+     [:figcaption {:itemprop "caption description"} caption]]))
+
 (defmethod photos-page :default
   [{:keys [dataset-info]} owner]
   "Om component for the photos page."
@@ -42,7 +96,10 @@
     (render-state [_ {:keys [photos]}]
       (html
        [:div.container
-        [:div.pswp {:role "dialog" :aria-hidden "true" :tab-index "-1"}
+        [:div {:role "dialog"
+               :aria-hidden "true"
+               :tab-index "-1"
+               :class pswp-gallery-class}
          [:div.pswp__bg]
          [:div.pswp__scroll-wrap
           [:div.pswp__container
@@ -74,25 +131,4 @@
             [:div.pswp__caption__center]]]]]
         [:div.gallery {:itemscope ""
                        :itemtype "http://schema.org/ImageGallery"}
-         (for [photo photos
-               :let [caption (format "Submission %s" (:rank photo))]]
-           [:figure {:itemprop "associatedMedia"
-                     :itemscope ""
-                     :itemtype "http://schema.org/ImageObject"}
-            [:a {:href (:src photo)
-                 :itemprop "contentUrl"
-                 :data-size (format "%sx%s" width-px width-px)}
-             [:img {:src (:thumb photo)
-                    :itemprop "thumbnail"
-                    :alt caption}]]
-            [:figcaption {:itemprop "caption description"} caption]])]]))
-    om/IDidMount
-    (did-mount [_]
-      (let [pswp-element (first (.querySelectorAll js/document ".pswp"))
-            options {:index 0 ;; start at the first slide
-                     }
-            gallery (js/PhotoSwipe. pswp-element
-                                    js/PhotoSwipeUI_Default
-                                    (clj->js (om/get-state owner :photos))
-                                    (clj->js options))]
-        (.init gallery)))))
+         (build-photo-gallery photos owner)]]))))
