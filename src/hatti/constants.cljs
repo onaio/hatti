@@ -7,6 +7,7 @@
 (def _submitted_by "_submitted_by")
 
 ;; Attachments keys
+(def download-url "download_url")
 (def medium-download-url "medium_download_url")
 (def small-download-url "small_download_url")
 

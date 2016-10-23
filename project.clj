@@ -25,7 +25,7 @@
                  ;; JS
                  [cljsjs/moment "2.10.6-4"]
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
-                 [onaio/milia "0.3.20"]
+                 [onaio/milia "0.3.21-SNAPSHOT"]
                  [cljsjs/jquery "2.2.4-0"]
                  [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/photoswipe "4.1.1-0"]

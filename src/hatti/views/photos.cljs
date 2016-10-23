@@ -8,11 +8,13 @@
             [hatti.constants :as constants]
             [hatti.shared :as hatti-shared]
             [hatti.views :refer [photos-page]]
+            [milia.utils.images :refer [resize-image]]
             [milia.utils.remote :as remote]))
 
 (def data-pswp-id "data-pswp-id")
 (def pswp-gallery-class "pswp")
-(def width-px 400)
+(def width-px 800)
+(def num-columns 3)
 
 (defn- make-url
   "Remove the API namespace prefix from a URI string and convert to a fully
@@ -21,6 +23,7 @@
   (remote/make-url (replace str #"/api/v1" "")))
 
 (defn- open-photoswipe
+  "Initiate photoswipe using the index of the image that was just clicked on."
   [index owner]
   (let [pswp-element (first (.querySelectorAll js/document
                                                (str "." pswp-gallery-class)))
@@ -45,9 +48,10 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js (om/get-state owner :photos))
                                 (clj->js options))]
-  (.init gallery)))
+    (.init gallery)))
 
 (defn- on-thumbnail-click
+  "Actions to perform on thumbnail click."
   [event owner]
   (.preventDefault event)
   (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
@@ -61,29 +65,37 @@
          :let [attachments (get datum constants/_attachments)]
          :when (seq attachments)]
      (for [attachment attachments]
-       {:src (make-url (get attachment constants/medium-download-url))
+       {:src (resize-image
+              (make-url (get attachment constants/download-url))
+              width-px
+              width-px)
         :thumb (make-url (get attachment constants/small-download-url))
         :rank (get datum constants/_rank)
-        :w width-px :h width-px}))))
+        :w width-px
+        :h width-px}))))
 
 (defn- build-photo-gallery
   "Build markup with actions for a photo gallery."
   [photos owner]
-  (for [i (-> photos count range)
-        :let [photo (nth photos i)
-              caption (format "Submission %s" (:rank photo))]]
-    [:figure {:itemprop "associatedMedia"
-              :itemscope ""
-              :itemtype "http://schema.org/ImageObject"}
-     [:a {:href (:src photo)
-          :itemprop "contentUrl"
-          :data-size (format "%sx%s" width-px width-px)
-          :on-click #(on-thumbnail-click % owner)}
-      [:img {:src (:thumb photo)
-             :itemprop "thumbnail"
-             (keyword data-pswp-id) i
-             :alt caption}]]
-     [:figcaption {:itemprop "caption description"} caption]]))
+  (map #(vector :tr %)
+       (partition-all
+        num-columns
+        (for [i (-> photos count range)
+              :let [photo (nth photos i)
+                    caption (format "Submission %s" (:rank photo))]]
+          [:td
+           [:figure {:itemprop "associatedMedia"
+                     :itemscope ""
+                     :itemtype "http://schema.org/ImageObject"}
+            [:a {:href (:src photo)
+                 :itemprop "contentUrl"
+                 :data-size (format "%sx%s" width-px width-px)
+                 :on-click #(on-thumbnail-click % owner)}
+             [:img {:src (:thumb photo)
+                    :itemprop "thumbnail"
+                    (keyword data-pswp-id) i
+                    :alt caption}]]
+            [:figcaption {:itemprop "caption description"} caption]]]))))
 
 (defmethod photos-page :default
   [{:keys [dataset-info]} owner]
@@ -131,4 +143,5 @@
             [:div.pswp__caption__center]]]]]
         [:div.gallery {:itemscope ""
                        :itemtype "http://schema.org/ImageGallery"}
-         (build-photo-gallery photos owner)]]))))
+         [:table
+          (build-photo-gallery photos owner)]]]))))
