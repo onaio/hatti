@@ -62,16 +62,16 @@
       (let [form (om/get-shared owner [:flat-form])
             language (:current (om/observe owner (shared/language-cursor)))
             to-links (partial map #(field->link % language))]
-        (html [:div {:class "cfix" :id "chart-chooser"}
+        (html [:div.cfix#chart-chooser
                [:span "Add New Chart"]
-               [:div {:class "drop-hover dropdown-single" :id "chart-dropdown"}
-                [:a {:href "#" :class "pure-button btn-border t-red"}
+               [:div.drop-hover.dropdown-single#chart-dropdown
+                [:a.pure-button.btn-border.t-red {:href "#"}
                  "Select Field "]
-                [:ul {:id "chart-dropdown-menu" :class "submenu no-dot"}
-                 [:li [:span {:class "drop-header"} "Metadata"]]
+                [:ul#chart-dropdown-menu.submenu.no-dot
+                 [:li [:span.drop-header "Metadata"]]
                  (to-links (forms/meta-fields form
                                               :with-submission-details? true))
-                 [:li [:span {:class "drop-header"} "Questions"]]
+                 [:li [:span.drop-header "Questions"]]
                  (to-links (forms/non-meta-fields form))]]])))))
 
 (defmethod single-chart :default
@@ -88,17 +88,18 @@
         (html
          (if (= status :inactive)
            [:div]
-           [:div {:class "chart-holder"}
-            [:a {:on-click (click-fn
-                            #(put! shared/event-chan
-                                   {:field field :remove-chart true}))
-                 :class "btn-close right" :href "#"} "×"]
-            [:div {:class "chart-content"}
-             [:h3 {:class "chart-name"} (forms/get-label field language)]
-             [:div {:class "bar-chart"}
+           [:div.chart-holder
+            [:a.btn-close.right
+             {:on-click (click-fn
+                         #(put! shared/event-chan
+                                {:field field :remove-chart true}))
+              :href "#"} "×"]
+            [:div.chart-content
+             [:h3.chart-name (forms/get-label field language)]
+             [:div.bar-chart
               (if data
                 (-> data (make-chart language) :chart)
-                [:div [:i {:class "fa fa-cog fa-spin"}]])]]]))))))
+                [:div [:i.fa.fa-cog.fa-spin]])]]]))))))
 
 (defmethod list-of-charts :default
   [cursor owner]
@@ -107,7 +108,7 @@
     om/IRender
     (render [_]
       (html
-       [:div {:class "charts clearfix"}
+       [:div.charts.clearfix
         (for [field (:visible-charts cursor)]
           (om/build single-chart
                     {:data (get-in cursor [:chart-data (:name field)])}
@@ -127,6 +128,6 @@
     om/IRender
     (render [_]
       (html
-       [:div {:class "charts-ui"}
+       [:div.charts-ui
         (om/build chart-chooser nil)
         (om/build list-of-charts (:chart-page cursor))]))))

@@ -84,18 +84,18 @@
               :let [photo (nth photos i)
                     caption (format "Submission %s" (:rank photo))]]
           [:td
-           [:figure {:itemprop "associatedMedia"
-                     :itemscope ""
-                     :itemtype "http://schema.org/ImageObject"}
+           [:figure {"itemProp" "associatedMedia"
+                     "itemScope" ""
+                     "itemType" "http://schema.org/ImageObject"}
             [:a {:href (:src photo)
-                 :itemprop "contentUrl"
+                 "itemProp" "contentUrl"
                  :data-size (format "%sx%s" width-px width-px)
                  :on-click #(on-thumbnail-click % owner)}
              [:img {:src (:thumb photo)
-                    :itemprop "thumbnail"
+                    "itemProp" "thumbnail"
                     (keyword data-pswp-id) i
                     :alt caption}]]
-            [:figcaption {:itemprop "caption description"} caption]]]))))
+            [:figcaption {"itemProp" "caption description"} caption]]]))))
 
 (defmethod photos-page :default
   [{:keys [dataset-info]} owner]
@@ -141,7 +141,7 @@
             {:title "Next (arrow right)"}]
            [:div.pswp__caption
             [:div.pswp__caption__center]]]]]
-        [:div.gallery {:itemscope ""
-                       :itemtype "http://schema.org/ImageGallery"}
+        [:div.gallery {"itemScope" ""
+                       "itemType" "http://schema.org/ImageGallery"}
          [:table
           (build-photo-gallery photos owner)]]]))))
