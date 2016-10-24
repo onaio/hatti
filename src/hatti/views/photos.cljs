@@ -23,7 +23,7 @@
 
 (defn- open-photoswipe
   "Initiate photoswipe using the index of the image that was just clicked on."
-  [index owner]
+  [index photos]
   (let [pswp-element (first (.querySelectorAll js/document
                                                (str "." pswp-gallery-class)))
         options {:index (int index)
@@ -45,16 +45,16 @@
                       :w (.-width rect)}))}
         gallery (js/PhotoSwipe. pswp-element
                                 js/PhotoSwipeUI_Default
-                                (clj->js (om/get-state owner :photos))
+                                (clj->js photos)
                                 (clj->js options))]
     (.init gallery)))
 
 (defn- on-thumbnail-click
   "Actions to perform on thumbnail click."
-  [event owner]
+  [event photos]
   (.preventDefault event)
   (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
-                   owner))
+                   photos))
 
 (defn- build-photos
   "Build photos for photoswipe from a set of form data."
@@ -90,7 +90,7 @@
             [:a {:href (:src photo)
                  "itemProp" "contentUrl"
                  :data-size (format "%sx%s" width-px width-px)
-                 :on-click #(on-thumbnail-click % owner)}
+                 :on-click #(on-thumbnail-click % photos)}
              [:img {:src (:thumb photo)
                     "itemProp" "thumbnail"
                     (keyword data-pswp-id) i
