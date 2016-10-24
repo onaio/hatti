@@ -89,24 +89,20 @@
 (defn- build-photo-gallery
   "Build markup with actions for a photo gallery."
   [photos owner]
-  (map #(vector :tr %)
-       (partition-all
-        num-columns
-        (for [i (-> photos count range)
-              :let [{:keys [title] :as photo} (nth photos i)]]
-          [:td
-           [:figure {"itemProp" "associatedMedia"
-                     "itemScope" ""
-                     "itemType" "http://schema.org/ImageObject"}
-            [:a {:href (:src photo)
-                 "itemProp" "contentUrl"
-                 :data-size (format "%sx%s" width-px width-px)
-                 :on-click #(on-thumbnail-click % photos)}
-             [:img {:src (:thumb photo)
-                    "itemProp" "thumbnail"
-                    (keyword data-pswp-id) i
-                    :alt title}]]
-            [:figcaption {"itemProp" "caption description"} title]]]))))
+  (for [i (-> photos count range)
+        :let [{:keys [title] :as photo} (nth photos i)]]
+    [:figure {"itemProp" "associatedMedia"
+              "itemScope" ""
+              "itemType" "http://schema.org/ImageObject"}
+     [:a {:href (:src photo)
+          "itemProp" "contentUrl"
+          :data-size (format "%sx%s" width-px width-px)
+          :on-click #(on-thumbnail-click % photos)}
+      [:img {:src (:thumb photo)
+             "itemProp" "thumbnail"
+             (keyword data-pswp-id) i
+             :alt title}]]
+     [:figcaption {"itemProp" "caption description"} title]]))
 
 (defmethod photos-page :default
   [{:keys [data] {:keys [num_of_submissions]} :dataset-info} owner]
@@ -116,7 +112,7 @@
     (render [_]
       (let [photos (build-photos data)]
         (html
-         [:div.container
+         [:div.tab-content
           (cond
             (or (zero? num_of_submissions)
                 (and (seq data) (empty? photos)))
