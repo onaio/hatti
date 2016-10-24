@@ -21,13 +21,16 @@
   [str]
   (remote/make-url (replace str #"/api/v1" "")))
 
+;;; We use strings for some keywords below because keywords are forced to
+;;; lower-case.
+
 (defn- open-photoswipe
   "Initiate photoswipe using the index of the image that was just clicked on."
   [index photos]
   (let [pswp-element (first (.querySelectorAll js/document
                                                (str "." pswp-gallery-class)))
         options {:index (int index)
-                 :getThumbBoundsFn
+                 "getThumbBoundsFn"
                  (fn [index]
                    (let [thumbnail
                          (first (.querySelectorAll
@@ -40,9 +43,15 @@
                                               -documentElement
                                               -scrollTop))
                          rect (.getBoundingClientRect thumbnail)]
-                     {:x (.-left rect)
-                      :y (+ (.-top rect) page-y-scroll)
-                      :w (.-width rect)}))}
+                     (clj->js {:x (.-left rect)
+                               :y (+ (.-top rect) page-y-scroll)
+                               :w (.-width rect)})))
+                 "addCaptionHTMLFn"
+                 (fn [item caption-el is-fake]
+                   (set! (-> caption-el .-children first .-innerHTML)
+                         (str (.-title item) "<br/><small>Submitted at "
+                              (.-date item)
+                              "<br/>Record ID: " (.-id item) "</small>")))}
         gallery (js/PhotoSwipe. pswp-element
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
@@ -63,13 +72,17 @@
    (for [datum data
          :let [attachments (get datum constants/_attachments)]
          :when (seq attachments)]
-     (for [attachment attachments]
+     (for [attachment attachments
+           :let [rank (get datum constants/_rank)]]
        {:src (resize-image
               (make-url (get attachment constants/download-url))
               width-px
               width-px)
         :thumb (make-url (get attachment constants/small-download-url))
-        :rank (get datum constants/_rank)
+        :title (format "Submission %s" rank)
+        :date (get datum constants/_submission_time)
+        :id (get datum constants/_id)
+        :rank rank
         :w width-px
         :h width-px}))))
 
@@ -80,10 +93,8 @@
        (partition-all
         num-columns
         (for [i (-> photos count range)
-              :let [photo (nth photos i)
-                    caption (format "Submission %s" (:rank photo))]]
+              :let [{:keys [title] :as photo} (nth photos i)]]
           [:td
-           ;; Use strings because keywords are forced to lower-case.
            [:figure {"itemProp" "associatedMedia"
                      "itemScope" ""
                      "itemType" "http://schema.org/ImageObject"}
@@ -94,8 +105,8 @@
              [:img {:src (:thumb photo)
                     "itemProp" "thumbnail"
                     (keyword data-pswp-id) i
-                    :alt caption}]]
-            [:figcaption {"itemProp" "caption description"} caption]]]))))
+                    :alt title}]]
+            [:figcaption {"itemProp" "caption description"} title]]]))))
 
 (defmethod photos-page :default
   [{:keys [data] {:keys [num_of_submissions]} :dataset-info} owner]
