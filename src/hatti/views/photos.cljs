@@ -6,7 +6,6 @@
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
             [hatti.constants :as constants]
-            [hatti.shared :as hatti-shared]
             [hatti.views :refer [photos-page]]
             [milia.utils.images :refer [resize-image]]
             [milia.utils.remote :as remote]))
@@ -84,6 +83,7 @@
               :let [photo (nth photos i)
                     caption (format "Submission %s" (:rank photo))]]
           [:td
+           ;; Use strings because keywords are forced to lower-case.
            [:figure {"itemProp" "associatedMedia"
                      "itemScope" ""
                      "itemType" "http://schema.org/ImageObject"}
@@ -98,50 +98,56 @@
             [:figcaption {"itemProp" "caption description"} caption]]]))))
 
 (defmethod photos-page :default
-  [{:keys [dataset-info]} owner]
+  [{:keys [data] {:keys [num_of_submissions]} :dataset-info} owner]
   "Om component for the photos page."
   (reify
-    om/IInitState
-    (init-state [_]
-      {:photos (build-photos (:data @hatti-shared/app-state))})
-    om/IRenderState
-    (render-state [_ {:keys [photos]}]
-      (html
-       [:div.container
-        [:div {:role "dialog"
-               :aria-hidden "true"
-               :tab-index "-1"
-               :class pswp-gallery-class}
-         [:div.pswp__bg]
-         [:div.pswp__scroll-wrap
-          [:div.pswp__container
-           [:div.pswp__item]
-           [:div.pswp__item]
-           [:div.pswp__item]]
-          [:div.pswp__ui.pswp__ui--hidden
-           [:div.pswp__top-bar
-            [:div.pswp__counter]
-            [:button.pswp__button.pswp__button--close
-             {:title "Close (Esc)"}]
-            [:button.pswp__button.pswp__button--share
-             {:title "Share"}]
-            [:button.pswp__button.pswp__button--fs
-             {:title "Toggle fullscreen"}]
-            [:button.pswp__button.pswp__button--zoom
-             {:title "Zoom in/out"}]
-            [:div.pswp__preloader
-             [:div.pswp__preloader__icn
-              [:div.pswp__preloader__cut
-               [:div.pswp__preloader__donut]]]]]
-           [:div.pswp__share-modal.pswp__share-modal--hidden.pswp__single-tap
-            [:div.pswp__share-tooltip]]
-           [:button.pswp__button.pswp__button--arrow--left
-            {:title "Previous (arrow left)"}]
-           [:button.pswp__button.pswp__button--arrow--right
-            {:title "Next (arrow right)"}]
-           [:div.pswp__caption
-            [:div.pswp__caption__center]]]]]
-        [:div.gallery {"itemScope" ""
-                       "itemType" "http://schema.org/ImageGallery"}
-         [:table
-          (build-photo-gallery photos owner)]]]))))
+    om/IRender
+    (render [_]
+      (let [photos (build-photos data)]
+        (html
+         [:div.container
+          (cond
+            (or (zero? num_of_submissions)
+                (and (seq data) (empty? photos)))
+            [:p.alert.alert-warning "There are no photos in this dataset yet."]
+            (seq photos)
+            [:div {:role "dialog"
+                   :aria-hidden "true"
+                   :tab-index "-1"
+                   :class pswp-gallery-class}
+             [:div.pswp__bg]
+             [:div.pswp__scroll-wrap
+              [:div.pswp__container
+               [:div.pswp__item]
+               [:div.pswp__item]
+               [:div.pswp__item]]
+              [:div.pswp__ui.pswp__ui--hidden
+               [:div.pswp__top-bar
+                [:div.pswp__counter]
+                [:button.pswp__button.pswp__button--close
+                 {:title "Close (Esc)"}]
+                [:button.pswp__button.pswp__button--share
+                 {:title "Share"}]
+                [:button.pswp__button.pswp__button--fs
+                 {:title "Toggle fullscreen"}]
+                [:button.pswp__button.pswp__button--zoom
+                 {:title "Zoom in/out"}]
+                [:div.pswp__preloader
+                 [:div.pswp__preloader__icn
+                  [:div.pswp__preloader__cut
+                   [:div.pswp__preloader__donut]]]]]
+               [:div.pswp__share-modal.pswp__share-modal--hidden
+                {:class "pswp__single-tap"}
+                [:div.pswp__share-tooltip]]
+               [:button.pswp__button.pswp__button--arrow--left
+                {:title "Previous (arrow left)"}]
+               [:button.pswp__button.pswp__button--arrow--right
+                {:title "Next (arrow right)"}]
+               [:div.pswp__caption
+                [:div.pswp__caption__center]]]]]
+            :else
+            [:span [:i.fa.fa-spinner.fa-pulse] "Loading photos ..."])
+          [:div.gallery {"itemScope" ""
+                         "itemType" "http://schema.org/ImageGallery"}
+           [:table
+            (build-photo-gallery photos owner)]]])))))
