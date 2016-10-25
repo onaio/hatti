@@ -21,6 +21,14 @@
   [str]
   (remote/make-url (replace str #"/api/v1" "")))
 
+(defn- build-caption
+  [item]
+  (let [datetime (.-date item)
+        date (-> datetime js/moment (.format "MMM D, YYYY"))
+        time (-> datetime js/moment (.format "h:mm A"))]
+    (format "%s <br/><small>Submitted at %s on %s <br/>Record ID: %s </small>"
+            (.-title item) time date (.-id item))))
+
 ;;; We use strings for some keywords below because keywords are forced to
 ;;; lower-case.
 
@@ -49,9 +57,7 @@
                  "addCaptionHTMLFn"
                  (fn [item caption-el is-fake]
                    (set! (-> caption-el .-children first .-innerHTML)
-                         (str (.-title item) "<br/><small>Submitted at "
-                              (.-date item)
-                              "<br/>Record ID: " (.-id item) "</small>")))}
+                         (build-caption item)))}
         gallery (js/PhotoSwipe. pswp-element
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
@@ -68,23 +74,37 @@
 (defn- build-photos
   "Build photos for photoswipe from a set of form data."
   [data]
-  (flatten
-   (for [datum data
-         :let [attachments (get datum constants/_attachments)]
-         :when (seq attachments)]
-     (for [attachment attachments
-           :let [rank (get datum constants/_rank)]]
-       {:src (resize-image
-              (make-url (get attachment constants/download-url))
-              width-px
-              width-px)
-        :thumb (make-url (get attachment constants/small-download-url))
-        :title (format "Submission %s" rank)
-        :date (get datum constants/_submission_time)
-        :id (get datum constants/_id)
-        :rank rank
-        :w width-px
-        :h width-px}))))
+  (let [data-with-attachments (filter #(get % constants/_attachments) data)
+        total (reduce #(+ %1 (count (get %2 constants/_attachments)))
+                      0 data-with-attachments)]
+    (loop [data-left data-with-attachments
+           result []
+           photo-index 1]
+      (if (seq data-left)
+        (let [datum (first data-left)
+              rank (get datum constants/_rank)
+              attachments (get datum constants/_attachments)]
+          (recur
+           (rest data-left)
+           (concat
+            result
+            (map-indexed
+             (fn [j attachment]
+               {:src (resize-image
+                      (make-url (get attachment constants/download-url))
+                      width-px
+                      width-px)
+                :thumb (make-url (get attachment constants/small-download-url))
+                :title (format "%s/%s | Submission %s"
+                               (+ photo-index j) total rank)
+                :date (get datum constants/_submission_time)
+                :id (get datum constants/_id)
+                :rank rank
+                :w width-px
+                :h width-px})
+             attachments))
+           (+ photo-index (count attachments))))
+        result))))
 
 (defn- build-photo-gallery
   "Build markup with actions for a photo gallery."
