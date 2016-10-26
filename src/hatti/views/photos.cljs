@@ -73,16 +73,20 @@
   (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
                    photos))
 
+(defn- has-image?
+  "Return true if datum has at least 1 image."
+  [datum]
+  (or (-> datum (get constants/photo) (keyword constants/download-url))
+      (seq (map #(get % constants/download-url)
+                (get datum constants/_attachments)))))
+
 (defn- build-photos
-  "Build photos for photoswipe from a set of form data."
+  "Build photos for photoswipe from a set of form data. Ignore submissions that
+   do not have a photo attached. If the photo info is attached directly to the
+   submission and not to the attachments list, use the information attached
+   directly to the submission."
   [data]
-  ;; Remove data without an attachment or download URL
-  (let [data-with-attachments (filter
-                               (fn [datum]
-                                 (seq
-                                  (map #(get % constants/download-url)
-                                       (get datum constants/_attachments))))
-                               data)
+  (let [data-with-attachments (filter #(has-image? %) data)
         total (reduce #(+ %1 (count (get %2 constants/_attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
@@ -91,20 +95,24 @@
       (if (seq data-left)
         (let [datum (first data-left)
               rank (get datum constants/_rank)
-              attachments (get datum constants/_attachments)]
+              photo (get datum constants/photo)
+              download-url ((keyword constants/download-url) photo)
+              attachments (if download-url
+                            [(clojure.walk/stringify-keys photo)]
+                            (get datum constants/_attachments))]
           (recur
            (rest data-left)
            (concat
             result
             (map-indexed
              (fn [j attachment]
-               (let [download-url (get attachment constants/download-url)]
+               (let [download-url (get attachment constants/download-url)
+                     thumb (or (get attachment constants/small-download-url)
+                               download-url)]
                  {:src (resize-image (make-url download-url)
                                      width-px
                                      width-px)
-                  :thumb (make-url
-                          (or (get attachment constants/small-download-url)
-                              download-url))
+                  :thumb (make-url thumb)
                   :title (format "%s/%s | Submission %s"
                                  (+ photo-index j) total rank)
                   :date (get datum constants/_submission_time)
