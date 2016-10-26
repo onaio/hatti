@@ -11,6 +11,7 @@
 (def download-url "download_url")
 (def medium-download-url "medium_download_url")
 (def small-download-url "small_download_url")
+(def mimetype "mimetype")
 
 ;; Google Sheets app-type.
 (def google-sheets "google_sheets")

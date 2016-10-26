@@ -13,6 +13,8 @@
 (def data-pswp-id "data-pswp-id")
 (def pswp-gallery-class "pswp")
 (def width-px 800)
+(def thumb-width-px 180)
+(def thumb-width-px-str (str thumb-width-px "px"))
 (def num-columns 3)
 
 (defn- make-url
@@ -73,12 +75,25 @@
   (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
                    photos))
 
-(defn- has-image?
+(defn- image-or-no-mimetype?
+  "Return true if no mimetype or the mimetype begins with image."
+  [attachment]
+  (let [mimetype (get attachment constants/mimetype)]
+    (or (not mimetype) (= "image" (subs mimetype 0 5)))))
+
+;; This is not private so it can be tested
+(defn extract-images
   "Return true if datum has at least 1 image."
   [datum]
-  (or (-> datum (get constants/photo) (keyword constants/download-url))
-      (seq (map #(get % constants/download-url)
-                (get datum constants/_attachments)))))
+  (or (and
+       (-> datum (get constants/photo) (get (keyword constants/download-url)))
+       datum)
+      (let [attachments (filter #(and
+                                  (get % constants/download-url)
+                                  (image-or-no-mimetype? %))
+                                (get datum constants/_attachments))]
+        (and (seq attachments)
+             (assoc datum constants/_attachments attachments)))))
 
 (defn- build-photos
   "Build photos for photoswipe from a set of form data. Ignore submissions that
@@ -86,7 +101,7 @@
    submission and not to the attachments list, use the information attached
    directly to the submission."
   [data]
-  (let [data-with-attachments (filter #(has-image? %) data)
+  (let [data-with-attachments (keep #(extract-images %) data)
         total (reduce #(+ %1 (count (get %2 constants/_attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
@@ -108,11 +123,16 @@
              (fn [j attachment]
                (let [download-url (get attachment constants/download-url)
                      thumb (or (get attachment constants/small-download-url)
-                               download-url)]
+                               download-url)
+                     thumb-resized (resize-image (make-url thumb)
+                                                 thumb-width-px
+                                                 thumb-width-px)]
                  {:src (resize-image (make-url download-url)
                                      width-px
                                      width-px)
-                  :thumb (make-url thumb)
+                  :original-src (make-url download-url)
+                  :msrc thumb-resized
+                  :thumb thumb-resized
                   :title (format "%s/%s | Submission %s"
                                  (+ photo-index j) total rank)
                   :date (get datum constants/_submission_time)
@@ -136,7 +156,9 @@
           "itemProp" "contentUrl"
           :data-size (format "%sx%s" width-px width-px)
           :on-click #(on-thumbnail-click % photos)}
-      [:img {:src (:thumb photo)
+      [:img {:width thumb-width-px-str
+             :height thumb-width-px-str
+             :src (:thumb photo)
              "itemProp" "thumbnail"
              (keyword data-pswp-id) i
              :alt title}]]
