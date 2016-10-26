@@ -16,10 +16,12 @@
 (def num-columns 3)
 
 (defn- make-url
-  "Remove the API namespace prefix from a URI string and convert to a fully
-   qualified URL."
-  [str]
-  (remote/make-url (replace str #"/api/v1" "")))
+  "If not a fully qualified URL, remove the API namespace prefix from a URI
+   string and convert to a fully qualified URL."
+  [s]
+  (if (= (subs s 0 4) "http")
+    s
+    (remote/make-url (replace s #"/api/v1" ""))))
 
 (defn- build-caption
   [item]
@@ -74,7 +76,13 @@
 (defn- build-photos
   "Build photos for photoswipe from a set of form data."
   [data]
-  (let [data-with-attachments (filter #(get % constants/_attachments) data)
+  ;; Remove data without an attachment or download URL
+  (let [data-with-attachments (filter
+                               (fn [datum]
+                                 (seq
+                                  (map #(get % constants/download-url)
+                                       (get datum constants/_attachments))))
+                               data)
         total (reduce #(+ %1 (count (get %2 constants/_attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
@@ -90,18 +98,20 @@
             result
             (map-indexed
              (fn [j attachment]
-               {:src (resize-image
-                      (make-url (get attachment constants/download-url))
-                      width-px
-                      width-px)
-                :thumb (make-url (get attachment constants/small-download-url))
-                :title (format "%s/%s | Submission %s"
-                               (+ photo-index j) total rank)
-                :date (get datum constants/_submission_time)
-                :id (get datum constants/_id)
-                :rank rank
-                :w width-px
-                :h width-px})
+               (let [download-url (get attachment constants/download-url)]
+                 {:src (resize-image (make-url download-url)
+                                     width-px
+                                     width-px)
+                  :thumb (make-url
+                          (or (get attachment constants/small-download-url)
+                              download-url))
+                  :title (format "%s/%s | Submission %s"
+                                 (+ photo-index j) total rank)
+                  :date (get datum constants/_submission_time)
+                  :id (get datum constants/_id)
+                  :rank rank
+                  :w width-px
+                  :h width-px}))
              attachments))
            (+ photo-index (count attachments))))
         result))))
