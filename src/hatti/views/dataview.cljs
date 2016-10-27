@@ -79,8 +79,10 @@
           [:div.divider]
           (om/build dataview-actions dataset-id)])))))
 
-(defn activate-view! [view]
-  (let [view (keyword view)
+(defn activate-view!
+  "Strip off ampersand suffixes then switch to view if result is a valid view"
+  [view]
+  (let [view (keyword (or (last (re-find #"(.*?)&" view)) view))
         views (-> @shared/app-state :views :all)]
     (when (contains? (set views) view)
       (merge-into-app-state! shared/app-state
