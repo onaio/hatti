@@ -102,7 +102,7 @@
    submission and not to the attachments list, use the information attached
    directly to the submission."
   [data]
-  (let [data-with-attachments (keep #(extract-images %) data)
+  (let [data-with-attachments (keep extract-images data)
         total (reduce #(+ %1 (count (get %2 constants/_attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
