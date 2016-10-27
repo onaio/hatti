@@ -367,7 +367,7 @@
   [app-state owner]
   (om/component
    (html
-    [:div {:class "topbar"}
+    [:div.topbar
      [:div {:id pager-id}]
      (om/build label-changer nil)
      (om/build table-search app-state)
@@ -437,9 +437,9 @@
                                                    #{:delete-record! :role})
                                       {:view :table})})
               (om/build table-header app-state)
-              [:div {:id table-id :class "slickgrid"}
+              [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
-                 [:span {:class "empty-state"} "No data"]
+                 [:p.alert.alert-warning "No data"]
                  [:span
                   [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
       om/IDidMount

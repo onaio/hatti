@@ -37,7 +37,7 @@
   "An initial, empty, app-state, which can be modified to change dataviews."
   []
   (atom
-   {:views {:all [:overview :map :table :chart :saved-charts :settings]
+   {:views {:all [:overview :map :table :photos :chart :saved-charts :settings]
             :selected :overview
             :settings {:all [:form-info :settings :basemaps
                              :integrated-apps :media-files
@@ -117,14 +117,14 @@
                                    (.preventDefault event)))
             stringify #(if (keyword? %) (name %) (str %))]
         (html
-         [:div {:class "language-selector-inner"}
-          [:span {:class "dropdown drop-hover"}
-           [:i {:class "fa fa-globe" :style {:margin-right ".2em"}}]
+         [:div.language-selector-inner
+          [:span.dropdown.drop-hover
+           [:i.fa.fa-globe {:style {:margin-right ".2em"}}]
            [:span
             (if (f/english? current) "EN" (stringify current))]
-           [:i {:class "fa fa-angle-down" :style {:margin-left ".5em"}}]
-           [:ul {:class "submenu"}
+           [:i.fa.fa-angle-down {:style {:margin-left ".5em"}}]
+           [:ul.submenu
             (for [language all]
               [:li [:a {:href "#" :on-click (get-update-handler language)}
                     (stringify language)]])]]
-          [:div {:class "divider"}]])))))
+          [:div.divider]])))))

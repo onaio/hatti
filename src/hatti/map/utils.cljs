@@ -513,7 +513,6 @@
   (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
         stops (om/get-state owner :stops)
         circle-border "point-casting"]
-    (.log js/console (js/JSON.stringify (clj->js geojson)))
     (when (or (-> geojson :features count pos?) tiles-url)
       (add-mapboxgl-source map id_string map-data)
       (add-mapboxgl-layer map id_string layer-type :layout layout)

@@ -11,6 +11,7 @@
    [hatti.views.chart-test]
    [hatti.views.dataview-test]
    [hatti.views.map-test]
+   [hatti.views.photos-test]
    [hatti.views.record-test]
    [hatti.views.table-test]
    [hatti.shared-test]))
@@ -37,6 +38,7 @@
         'hatti.views.chart-test
         'hatti.views.dataview-test
         'hatti.views.map-test
+        'hatti.views.photos-test
         'hatti.views.record-test
         'hatti.views.table-test
         'hatti.shared-test))

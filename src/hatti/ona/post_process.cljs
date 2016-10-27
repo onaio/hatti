@@ -3,7 +3,7 @@
             [chimera.om.state :refer [transact!]]
             [chimera.urls :refer [url last-url-param]]
             [clojure.string :refer [join split]]
-            [hatti.constants :refer [_id _rank]]
+            [hatti.constants :refer [_attachments _id _rank]]
             [hatti.ona.forms :as forms]
             [hatti.ona.urls :as ona-urls]
             [cljsjs.jquery]
@@ -87,6 +87,7 @@
                      (updater (:full-name osm-field))))))))
 
 ;; IMAGE POST-PROCESSING
+
 (defn url-obj
   "Calculate full image and thumbnail urls given attachment information."
   [media-obj]
@@ -101,7 +102,7 @@
   "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
   [record attachments]
-  (let [attachments (or attachments (get record "_attachments"))
+  (let [attachments (or attachments (get record _attachments))
         fnames (map #(last-url-param (get % "filename")) attachments)
         fname->urlobj (zipmap fnames (map url-obj attachments))]
     ;; If urlobj isn't found, we'll just return filename
@@ -129,12 +130,12 @@
                               (:children rpt-field)
                               (get record key)
                               :attachments
-                              (get record "_attachments")))))]
+                              (get record _attachments)))))]
     (for [record data]
       (reduce integrate record repeat-fields))))
 
 (defn integrate-attachments!
-  "Inlines data from within _atatchments into each record within app-state."
+  "Inlines data from within _attachments into each record within app-state."
   [app-state flat-form & {:keys [app-data-keys]
                           :or {app-data-keys [:data]}}]
   (transact! app-state

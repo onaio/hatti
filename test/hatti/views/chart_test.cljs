@@ -19,7 +19,7 @@
 (def chart-get-mock #(let [c (chan)] (put! c {:body nil}) c))
 
 (defn- chart-container
-  "Returns a container in which a map component has been rendered.
+  "Returns a container in which a chart component has been rendered.
    `data` arg is directly passed into the component as its cursor."
   [form]
   (let [cont (new-container!)
