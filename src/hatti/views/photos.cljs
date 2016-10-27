@@ -6,6 +6,7 @@
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
             [hatti.constants :as constants]
+            [hatti.shared :as shared]
             [hatti.views :refer [photos-page]]
             [milia.utils.images :refer [resize-image]]
             [milia.utils.remote :as remote]))
@@ -165,11 +166,18 @@
      [:figcaption {"itemProp" "caption description"} title]]))
 
 (defmethod photos-page :default
-  [{:keys [data] {:keys [num_of_submissions]} :dataset-info} owner]
+  [{{:keys [num_of_submissions]} :dataset-info} owner]
   "Om component for the photos page."
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_]
+      ;; Use map-page data because it is not paged, like the table data
+      (select-keys @shared/app-state [:map-page :data]))
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
+      (om/set-state! owner :data (-> @shared/app-state :map-page :data)))
+    om/IRenderState
+    (render-state [_ {:keys [data]}]
       (let [photos (build-photos data)]
         (html
          [:div.tab-content
