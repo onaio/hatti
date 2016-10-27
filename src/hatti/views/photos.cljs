@@ -122,18 +122,17 @@
             result
             (map-indexed
              (fn [j attachment]
-               (let [download-url (get attachment constants/download-url)
-                     thumb (or (get attachment constants/small-download-url)
-                               download-url)
-                     thumb-resized (resize-image (make-url thumb)
-                                                 thumb-width-px
-                                                 thumb-width-px)]
+               (let [download-url (make-url (get attachment
+                                                 constants/download-url))
+                     thumbnail (resize-image download-url
+                                             thumb-width-px
+                                             thumb-width-px)]
                  {:src (resize-image (make-url download-url)
                                      width-px
                                      width-px)
-                  :original-src (make-url download-url)
-                  :msrc thumb-resized
-                  :thumb thumb-resized
+                  :original-src download-url
+                  :msrc thumbnail
+                  :thumb thumbnail
                   :title (format "%s/%s | Submission %s"
                                  (+ photo-index j) total rank)
                   :date (get datum constants/_submission_time)
