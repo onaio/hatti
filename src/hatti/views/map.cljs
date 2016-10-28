@@ -541,7 +541,7 @@
     (render [_]
       (let [form (om/get-shared owner [:flat-form])]
         (html
-         [:div {:id "map-holder"}
+         [:div#map-holder
           (om/build mapboxgl-map
                     cursor
                     {:opts opts})
