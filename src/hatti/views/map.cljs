@@ -7,6 +7,7 @@
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
                                                    map-styles
+                                                   mapboxgl-access-token
                                                    mapping-threshold]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
@@ -52,7 +53,8 @@
 
 (defn get-style-url
   "Returns selected map style URL."
-  [style url]
+  [style url & [access-token]]
+  (set! (.-accessToken js/mapboxgl) (or access-token mapboxgl-access-token))
   (or url (str "mapbox://styles/mapbox/" style "-v9")))
 
 ;;;;; EVENT HANDLERS
@@ -502,11 +504,8 @@
       (let [with-suffix
             #(if-not expanded % (str % " leaflet-control-layers-expanded"))
             mapboxgl-map (get-in cursor [:map-page :mapboxgl-map])
-            custom-styles
-            (apply merge
-                   (map (fn [{:keys [name url]}]
-                          {name [name url]})
-                        (om/get-shared owner [:map-config :custom-syles])))]
+            custom-styles (om/get-shared owner
+                                         [:map-config :custom-styles])]
         (html
          [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
           [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
@@ -517,17 +516,21 @@
            [:form.leaflet-control-layers-list
             [:div.leaflet-control-layers-base
              {:on-mouse-leave #(om/set-state! owner :expanded false)}
-             (for [[k [style-name url]] (merge styles custom-styles)]
+             (for [{:keys [name style url access-token]}
+                   (concat styles custom-styles)
+                   :let [style (or style name)]]
                [:label
                 [:input.leaflet-control-layers-selector
                  {:type "radio"
                   :name "leaflet-base-layers"
                   :on-click
                   (fn []
-                    (om/set-state! owner :current-style k)
-                    (.setStyle mapboxgl-map (get-style-url k url)))
-                  :checked (= k current-style)}]
-                [:span " " style-name]])]
+                    (om/set-state! owner :current-style style)
+                    (.setStyle mapboxgl-map (get-style-url style
+                                                           url
+                                                           access-token)))
+                  :checked (= style current-style)}]
+                [:span " " name]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]
             [:div.leaflet-control-layers-overlays]]]])))))
 
