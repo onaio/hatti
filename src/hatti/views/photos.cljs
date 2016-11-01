@@ -93,12 +93,15 @@
                     (get constants/photo)
                     download-url-kw
                     vector)
-            (reduce #(some->> (get datum %2) download-url-kw (conj %1) (into []))
+            (reduce #(some->> (get datum %2)
+                              download-url-kw
+                              (conj %1)
+                              (into []))
                     nil
                     photo-columns)
             (keep #(and
-                      (image-or-no-mimetype? %)
-                      (get % constants/download-url))
+                    (image-or-no-mimetype? %)
+                    (get % constants/download-url))
                   (get datum constants/_attachments)))]
     (and (seq attachments) (assoc datum :attachments attachments))))
 
