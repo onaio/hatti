@@ -25,7 +25,7 @@
 (def map-styles
   [{:style "basic" :name "Mapbox Basic"}
    {:style "outdoors" :name "Mapbox Outdoors"}
-   {:style "streets" :name "Mapbox"}
+   {:style "streets" :name "Mapbox Streets"}
    {:style "bright" :name "Mapbox Bright"}
    {:style "light" :name "Mapbox Light"}
    {:style "dark" :name "Mapbox Dark"}
