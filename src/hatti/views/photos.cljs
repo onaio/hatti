@@ -77,53 +77,54 @@
                    photos))
 
 (defn- image-or-no-mimetype?
-  "Return true if no mimetype or the mimetype begins with image."
+  "Return True if no mimetype or the mimetype begins with image. Otherwise
+   return nil."
   [attachment]
   (let [mimetype (get attachment constants/mimetype)]
-    (or (not mimetype) (= "image" (subs mimetype 0 5)))))
+    (or (not mimetype) (= "image" (subs mimetype 0 5)) nil)))
 
-;; This is not private so it can be tested
 (defn extract-images
-  "Return true if datum has at least 1 image."
-  [datum]
-  (or (and
-       (-> datum (get constants/photo) (get (keyword constants/download-url)))
-       datum)
-      (let [attachments (filter #(and
-                                  (get % constants/download-url)
-                                  (image-or-no-mimetype? %))
-                                (get datum constants/_attachments))]
-        (and (seq attachments)
-             (assoc datum constants/_attachments attachments)))))
+  "Take a datum and return the datum with a new key :attachements that has a
+   list of download URLs for all the attachments."
+  [datum photo-columns]
+  (let [download-url-kw (keyword constants/download-url)
+        attachments
+        (or (some-> datum
+                    (get constants/photo)
+                    download-url-kw
+                    vector)
+            (reduce #(some->> (get datum %2) download-url-kw (conj %1) (into []))
+                    nil
+                    photo-columns)
+            (keep #(and
+                      (image-or-no-mimetype? %)
+                      (get % constants/download-url))
+                  (get datum constants/_attachments)))]
+    (and (seq attachments) (assoc datum :attachments attachments))))
 
 (defn- build-photos
   "Build photos for photoswipe from a set of form data. Ignore submissions that
    do not have a photo attached. If the photo info is attached directly to the
    submission and not to the attachments list, use the information attached
    directly to the submission."
-  [data]
-  (let [data-with-attachments (keep extract-images data)
+  [data photo-columns]
+  (let [data-with-attachments (keep #(extract-images % photo-columns) data)
         total (reduce #(+ %1 (count (get %2 constants/_attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
            result []
            photo-index 1]
       (if (seq data-left)
-        (let [datum (first data-left)
+        (let [{:keys [attachments] :as datum} (first data-left)
               rank (get datum constants/_rank)
-              photo (get datum constants/photo)
-              download-url ((keyword constants/download-url) photo)
-              attachments (if download-url
-                            [(clojure.walk/stringify-keys photo)]
-                            (get datum constants/_attachments))]
+              photo (get datum constants/photo)]
           (recur
            (rest data-left)
            (concat
             result
             (map-indexed
              (fn [j attachment]
-               (let [download-url (make-url (get attachment
-                                                 constants/download-url))
+               (let [download-url (make-url attachment)
                      thumbnail (resize-image download-url
                                              thumb-width-px
                                              thumb-width-px)]
@@ -143,6 +144,11 @@
              attachments))
            (+ photo-index (count attachments))))
         result))))
+
+(defn- get-photo-columns
+  "Return the full-names of all columns with photo type."
+  [form]
+  (keep #(and (or (= "photo" (:type %)) nil) (:full-name %)) form))
 
 (defn- build-photo-gallery
   "Build markup with actions for a photo gallery."
@@ -165,19 +171,22 @@
      [:figcaption {"itemProp" "caption description"} title]]))
 
 (defmethod photos-page :default
-  [{{:keys [num_of_submissions]} :dataset-info} owner]
+  [{{:keys [num_of_submissions] :as dataset-info} :dataset-info} owner]
   "Om component for the photos page."
   (reify
     om/IInitState
     (init-state [_]
       ;; Use map-page data because it is not paged, like the table data
-      (select-keys @shared/app-state [:map-page :data]))
+      (assoc
+       (select-keys @shared/app-state [:map-page :data])
+       :photo-columns (get-photo-columns (om/get-shared owner [:flat-form]))))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       (om/set-state! owner :data (-> @shared/app-state :map-page :data)))
     om/IRenderState
-    (render-state [_ {:keys [data]}]
-      (let [photos (build-photos data)]
+    (render-state [_ {:keys [data photo-columns]}]
+      (let [form (om/get-shared owner [:flat-form])
+            photos (build-photos data photo-columns)]
         (html
          [:div.tab-content
           (cond
