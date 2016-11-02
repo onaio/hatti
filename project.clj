@@ -3,7 +3,7 @@
       [path]
       (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.6-photos-SNAPSHOT"
+(defproject onaio/hatti "0.3.6-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
