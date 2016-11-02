@@ -22,11 +22,12 @@
 (def mapboxgl-access-token
   "pk.eyJ1Ijoib25hIiwiYSI6IlVYbkdyclkifQ.0Bz-QOOXZZK01dq4MuMImQ")
 
-(def map-styles {"basic" ["Mapbox Basic"]
-                 "outdoors" ["Mapbox Outdoors"]
-                 "streets" ["MapBox"]
-                 "bright" ["Mapbox Bright"]
-                 "light" ["Mapbox Light"]
-                 "dark" ["Mapbox Dark"]
-                 "satellite-streets" ["Mapbox Satellite"]})
+(def map-styles
+  [{:style "basic" :name "Mapbox Basic"}
+   {:style "outdoors" :name "Mapbox Outdoors"}
+   {:style "streets" :name "Mapbox Streets"}
+   {:style "bright" :name "Mapbox Bright"}
+   {:style "light" :name "Mapbox Light"}
+   {:style "dark" :name "Mapbox Dark"}
+   {:style "satellite-streets" :name "Mapbox Satellite"}])
 (def mapping-threshold 10000)
