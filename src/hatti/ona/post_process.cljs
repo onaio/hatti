@@ -86,7 +86,7 @@
           (transact! app-state app-state-keys
                      (updater (:full-name osm-field))))))))
 
-;; IMAGE POST-PROCESSING
+;; IMAGE AND VIDEO POST-PROCESSING
 
 (defn url-obj
   "Calculate full image and thumbnail urls given attachment information."
@@ -111,7 +111,7 @@
 (defn integrate-attachments
   "Inlines media data from within _attachments into each record."
   [flat-form data & {:keys [attachments]}]
-  (let [image-fields (filter forms/image? flat-form)]
+  (let [image-fields (filter #(or (forms/video? %) (forms/image? %)) flat-form)]
     (for [record data]
       (let [attach-map (get-attach-map record attachments)]
         (reduce (fn [record img-field]

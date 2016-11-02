@@ -99,6 +99,10 @@
   [field]
   (field-type-in-set? #{"image" "photo"} field))
 
+(defn video?
+  [field]
+  (field-type-in-set? #{"video"} field))
+
 (defn osm?
   [field]
   (field-type-in-set? #{"osm"} field))
@@ -136,6 +140,7 @@
     (categorical? field) "column-categorical"
     (geofield? field)    "column-geofield"
     (image? field)       "column-image"
+    (video? field)       "column-video"
     (meta? field)        "column-metadata"
     :else                ""))
 
@@ -159,6 +164,7 @@
   ([field answer language compact?]
    (let [which (cond
                  (image? field) :img
+                 (video? field) :vid
                  (osm? field) :osm
                  (repeat? field) :rpt
                  (select-one? field) :sel1
@@ -181,6 +187,19 @@
                                  (get-label % language) " "))
                       string/join)))
        :img (let [image (:download_url answer)
+                  thumb (or (:small_download_url answer) image)
+                  fname (last-url-param (:filename answer))]
+              (cond
+                (or (nil? answer)
+                    (string? answer)) answer
+                compact?              (format
+                                       "<a href='%s' target='_blank'>
+                                      <i class='fa fa-external-link'></i>
+                                      %s </a>" image fname)
+                (nil? thumb)          answer
+                :else                 [:a {:href image :target "_blank"}
+                                       [:img {:width "80px" :src thumb}]]))
+       :vid (let [image (:download_url answer)
                   thumb (or (:small_download_url answer) image)
                   fname (last-url-param (:filename answer))]
               (cond
