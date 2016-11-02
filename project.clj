@@ -1,9 +1,10 @@
 (defn js-dir
-      "Prefix with full JavaScript directory."
-      [path]
-      (str "resources/public/js/lib/" path))
+  "Prefix with full JavaScript directory."
+  [path]
+  (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.9-SNAPSHOT"
+
+(defproject onaio/hatti "0.3.6-tableview-videos-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
