@@ -14,7 +14,7 @@
 
 (def data-pswp-id "data-pswp-id")
 (def pswp-gallery-class "pswp")
-(def width-px 800)
+(def width-px 1024)
 (def thumb-width-px 180)
 (def thumb-width-px-str (str thumb-width-px "px"))
 (def num-columns 3)
