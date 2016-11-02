@@ -8,7 +8,8 @@
             [hatti.constants :as constants]
             [hatti.shared :as shared]
             [hatti.views :refer [photos-page]]
-            [milia.utils.images :refer [resize-image]]
+            [chimera.urls :refer [url]]
+            [milia.utils.remote :refer [thumbor-server]]
             [milia.utils.remote :as remote]))
 
 (def data-pswp-id "data-pswp-id")
@@ -17,6 +18,17 @@
 (def thumb-width-px 180)
 (def thumb-width-px-str (str thumb-width-px "px"))
 (def num-columns 3)
+
+(defn- resize-image
+  "Return a URL for this image resized."
+  [image-url edge-px fill-color]
+  (str thumbor-server
+       (url  "unsafe"
+             "fit-in"
+             (str edge-px "x" edge-px)
+             "smart"
+             (format "filters:fill(%s)" fill-color)
+             image-url)))
 
 (defn- make-url
   "If not a fully qualified URL, remove the API namespace prefix from a URI
@@ -130,10 +142,8 @@
                (let [download-url (make-url attachment)
                      thumbnail (resize-image download-url
                                              thumb-width-px
-                                             thumb-width-px)]
-                 {:src (resize-image (make-url download-url)
-                                     width-px
-                                     width-px)
+                                             "fff")]
+                 {:src (resize-image (make-url download-url) width-px "000")
                   :original-src download-url
                   :msrc thumbnail
                   :thumb thumbnail
