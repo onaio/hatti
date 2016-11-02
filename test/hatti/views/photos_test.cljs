@@ -14,6 +14,7 @@
             [om.core :as om :include-macros true]))
 
 (def photos-form (take 4 fat-form))
+(def photos-column ["col1" "col2"])
 
 (defn- photo-container
   "Returns a container in which a photo component has been rendered.
@@ -33,27 +34,44 @@
 
 (deftest extract-images-restricts-properly
   (testing "return nil if photo but no download-url"
-    (is (= nil (extract-images {constants/photo {}}))))
+    (is (= nil (extract-images {constants/photo {}} photos-column))))
+
   (let [datum {constants/photo {(keyword constants/download-url) :url}}]
-    (testing "return argument if photo and download-url"
-      (is (= datum (extract-images datum)))))
+    (testing "return argument with attachments if photo and download-url"
+      (is (= (assoc datum :attachments [:url])
+             (extract-images datum photos-column)))))
+
   (testing "return nil if neither attachments or photo"
-    (is (= nil (extract-images {:key :value}))))
+    (is (= nil (extract-images {:key :value} photos-column))))
+
   (testing "return nil if no attachments"
-    (is (= nil (extract-images {constants/_attachments []}))))
+    (is (= nil (extract-images {constants/_attachments []} photos-column))))
+
   (testing "return nil if attachments and no download-url"
-    (is (= nil (extract-images {constants/_attachments [{:key :value}]}))))
+    (is (= nil (extract-images {constants/_attachments [{:key :value}]}
+                               photos-column))))
+
   (let [datum {constants/_attachments [{constants/download-url :url}]}]
     (testing "return argument if attachments and download-url"
-      (is (= datum (extract-images datum)))))
+      (is (= (assoc  datum :attachments [:url])
+             (extract-images datum photos-column)))))
+
   (let [datum {constants/_attachments [{constants/download-url :url}
                                        {:key :value}]}]
     (testing "return only attachments with download-url"
-      (is (= {constants/_attachments [{constants/download-url :url}]}
-             (extract-images datum)))))
+      (is (= (assoc datum :attachments [:url])
+             (extract-images datum photos-column)))))
+
   (let [datum {constants/_attachments [{constants/download-url :url}
                                        {constants/download-url :video-url
                                         constants/mimetype "video/mp4"}]}]
-    (testing "return only attachments with download-url"
-      (is (= {constants/_attachments [{constants/download-url :url}]}
-             (extract-images datum))))))
+    (testing "return only attachments with download-url excluding non-images"
+      (is (= (assoc datum :attachments [:url])
+             (extract-images datum photos-column)))))
+
+  (let [datum {constants/_attachments [{constants/download-url :url}]
+               (first photos-column) {(keyword constants/download-url) :url1}
+               (last photos-column) {(keyword constants/download-url) :url2}}]
+    (testing "prefer column URL to attachments"
+      (is (= (assoc datum :attachments [:url1 :url2])
+             (extract-images datum photos-column))))))
