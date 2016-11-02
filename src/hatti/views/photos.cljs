@@ -27,7 +27,7 @@
              "fit-in"
              (str edge-px "x" edge-px)
              "smart"
-             (format "filters:fill(000)" fill-color)
+             "filters:fill(000)"
              image-url)))
 
 (defn- make-url
@@ -124,7 +124,7 @@
    directly to the submission."
   [data photo-columns]
   (let [data-with-attachments (keep #(extract-images % photo-columns) data)
-        total (reduce #(+ %1 (count (get %2 constants/_attachments)))
+        total (reduce #(+ %1 (count (get %2 :attachments)))
                       0 data-with-attachments)]
     (loop [data-left data-with-attachments
            result []
