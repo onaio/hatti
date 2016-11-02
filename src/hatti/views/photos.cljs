@@ -21,13 +21,13 @@
 
 (defn- resize-image
   "Return a URL for this image resized."
-  [image-url edge-px fill-color]
+  [image-url edge-px]
   (str thumbor-server
        (url  "unsafe"
              "fit-in"
              (str edge-px "x" edge-px)
              "smart"
-             (format "filters:fill(%s)" fill-color)
+             (format "filters:fill(000)" fill-color)
              image-url)))
 
 (defn- make-url
@@ -141,9 +141,8 @@
              (fn [j attachment]
                (let [download-url (make-url attachment)
                      thumbnail (resize-image download-url
-                                             thumb-width-px
-                                             "fff")]
-                 {:src (resize-image (make-url download-url) width-px "000")
+                                             thumb-width-px)]
+                 {:src (resize-image (make-url download-url) width-px)
                   :original-src download-url
                   :msrc thumbnail
                   :thumb thumbnail
