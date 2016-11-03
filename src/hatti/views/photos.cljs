@@ -204,7 +204,8 @@
           (cond
             (or (zero? num_of_submissions)
                 (and (seq data) (empty? photos)))
-            [:p.alert.alert-warning "There are no photos in this dataset yet."]
+            [:p.alert.alert-warning.alert-photos
+             "There are no photos in this dataset yet."]
             (seq photos)
             [:div {:role "dialog"
                    :aria-hidden "true"
@@ -241,7 +242,8 @@
                [:div.pswp__caption
                 [:div.pswp__caption__center]]]]]
             :else
-            [:span [:i.fa.fa-spinner.fa-pulse] "Loading photos ..."])
+            [:p.alert.alert-photos
+             [:i.fa.fa-spinner.fa-pulse] "Loading photos ..."])
           [:div.gallery {"itemScope" ""
                          "itemType" "http://schema.org/ImageGallery"}
            [:table
