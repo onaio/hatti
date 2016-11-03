@@ -80,3 +80,25 @@
       (is (= (-> tags2 keys set)
              #{:building :addr:postcode :addr:street :name :building:levels
                :amenity :addr:housenumber :name:fr :addr:city})))))
+
+(deftest test-filter-media
+  (let [flat-form '({:type "video"}
+                    {:type "nothing"}
+                    {:type "image"}
+                    {:type "photo"}
+                    {:type "blah"})
+        flat-form-video '({:type "video"}
+                          {:type "blah"})
+        flat-form-images '({:type "nothing"}
+                           {:type "image"}
+                           {:type "photo"}
+                           {:type "blah"})]
+    (testing "filters for images and videos"
+      (is (= (post-process/filter-media flat-form)
+             '({:type "video"} {:type "image"} {:type "photo"}))))
+    (testing "filters for video"
+      (is (= (post-process/filter-media flat-form-video)
+             '({:type "video"}))))
+    (testing "filters for images"
+      (is (= (post-process/filter-media flat-form-images)
+             '({:type "image"} {:type "photo"}))))))

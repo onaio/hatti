@@ -108,10 +108,16 @@
     ;; If urlobj isn't found, we'll just return filename
     (fn [fname] (get fname->urlobj fname fname))))
 
+(defn filter-media
+  "Coll -> Coll"
+  [flat-form]
+  (filter #(or (forms/video? %) (forms/image? %)) flat-form))
+
 (defn integrate-attachments
-  "Inlines media data from within _attachments into each record."
+  "Inlines media data from within _attachments into each record.
+   Coll Coll -> Coll"
   [flat-form data & {:keys [attachments]}]
-  (let [image-fields (filter #(or (forms/video? %) (forms/image? %)) flat-form)]
+  (let [image-fields (filter-media flat-form)]
     (for [record data]
       (let [attach-map (get-attach-map record attachments)]
         (reduce (fn [record img-field]
