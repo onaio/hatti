@@ -82,6 +82,7 @@
   (let [img (.createElement js/document "img")
         container (new-container! "active-image")
         active-image-src "https://the-url"]
+    (.setAttribute img "class" "pswp__img")
     (.setAttribute img "src" (resize-image active-image-src 100))
     (dommy/append! (sel1 js/document "#active-image") img)
     (testing "strips last url"
