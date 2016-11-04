@@ -78,7 +78,6 @@
       (is (= (assoc datum :attachments [:url1 :url2])
              (extract-images datum photos-column))))))
 
-
 (deftest full-url-from-active-image-gets-url
   (let [img (.createElement js/document "img")
         container (new-container! "active-image")
