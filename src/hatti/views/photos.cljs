@@ -19,7 +19,7 @@
 (def thumb-width-px-str (str thumb-width-px "px"))
 (def num-columns 3)
 
-(defn- resize-image
+(defn resize-image
   "Return a URL for this image resized."
   [image-url edge-px]
   (str thumbor-server
@@ -46,39 +46,47 @@
     (format "%s <br/><small>Submitted at %s on %s <br/>Record ID: %s </small>"
             (.-title item) time date (.-id item))))
 
-;;; We use strings for some keywords below because keywords are forced to
-;;; lower-case.
+(defn full-url-from-active-image
+  []
+  (last
+   (re-find #"/(http.*)"
+            (.getAttribute
+             (.querySelector js/document "#active-image .pswp__img") "src"))))
+
+;;; We use strings instead of keywords below because keywords are forced to
+;;; lower-case. We use js-obj to avoid additional conversion costs.
 
 (defn- open-photoswipe
   "Initiate photoswipe using the index of the image that was just clicked on."
   [index photos]
   (let [pswp-element (first (.querySelectorAll js/document
                                                (str "." pswp-gallery-class)))
-        options {:index (int index)
-                 "getThumbBoundsFn"
-                 (fn [index]
-                   (let [thumbnail
-                         (first (.querySelectorAll
-                                 js/document
-                                 (format "[%s='%s']"
-                                         data-pswp-id
-                                         index)))
-                         page-y-scroll (+ (.-pageYOffset js/window)
-                                          (.. js/document
-                                              -documentElement
-                                              -scrollTop))
-                         rect (.getBoundingClientRect thumbnail)]
-                     (clj->js {:x (.-left rect)
-                               :y (+ (.-top rect) page-y-scroll)
-                               :w (.-width rect)})))
-                 "addCaptionHTMLFn"
-                 (fn [item caption-el is-fake]
-                   (set! (-> caption-el .-children first .-innerHTML)
-                         (build-caption item)))}
+        options (js-obj "index" (int index)
+                        "getThumbBoundsFn"
+                        (fn [index]
+                          (let [thumbnail
+                                (.querySelector js/document
+                                                (format "[%s='%s']"
+                                                        data-pswp-id
+                                                        index))
+                                page-y-scroll (+ (.-pageYOffset js/window)
+                                                 (.. js/document
+                                                     -documentElement
+                                                     -scrollTop))
+                                rect (.getBoundingClientRect thumbnail)]
+                            (js-obj "x" (.-left rect)
+                                    "y" (+ (.-top rect) page-y-scroll)
+                                    "w" (.-width rect))))
+                        "getImageURLForShare"
+                        (fn [share-button-data] (full-url-from-active-image))
+                        "addCaptionHTMLFn"
+                        (fn [item caption-el is-fake]
+                          (set! (-> caption-el .-children first .-innerHTML)
+                                (build-caption item))))
         gallery (js/PhotoSwipe. pswp-element
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
-                                (clj->js options))]
+                                options)]
     (.init gallery)))
 
 (defn- on-thumbnail-click
@@ -215,7 +223,7 @@
              [:div.pswp__scroll-wrap
               [:div.pswp__container
                [:div.pswp__item]
-               [:div.pswp__item]
+               [:div.pswp__item#active-image]
                [:div.pswp__item]]
               [:div.pswp__ui.pswp__ui--hidden
                [:div.pswp__top-bar
