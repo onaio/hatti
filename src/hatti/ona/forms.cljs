@@ -191,7 +191,7 @@
                              :else [:a {:href image :target "_blank"}
                                     (if (image? field)
                                       [:img {:width "80px" :src thumb}]
-                                      [:span [:i.fa.fa-play] "  " fname])]))
+                                      [:span [:i.fa.fa-file-video-o] "  " fname])]))
      (osm? field) (when answer
                     (let [kw->name name ; aliasing before overriding name
                           {:keys [name type osm-id]} answer
