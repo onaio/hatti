@@ -189,7 +189,9 @@
                                      %s </a>" image fname)
                              (nil? thumb) answer
                              :else [:a {:href image :target "_blank"}
-                                    [:img {:width "80px" :src thumb}]]))
+                                    (if (image? field)
+                                      [:img {:width "80px" :src thumb}]
+                                      [:span [:i.fa.fa-play] "  " fname])]))
      (osm? field) (when answer
                     (let [kw->name name ; aliasing before overriding name
                           {:keys [name type osm-id]} answer
