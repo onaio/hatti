@@ -5,6 +5,7 @@ pom.xml
 /resources/
 /target/
 .lein-deps-sum
+.lein-env
 .lein-repl-history
 .lein-plugins/
 *-init.clj
