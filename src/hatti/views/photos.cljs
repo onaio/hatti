@@ -155,7 +155,7 @@
                   :original-src download-url
                   :msrc thumbnail
                   :thumb thumbnail
-                  :title (format "%s/%s | ID %s"
+                  :title (format "%s/%s | ID: %s"
                                  (+ photo-index j) total id)
                   :date (get datum constants/_submission_time)
                   :id id

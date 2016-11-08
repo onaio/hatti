@@ -177,12 +177,11 @@
             (if data
               [:div
                (header-wrap
-                [:h4 {:class h4-cls} (str "Submission " cur-rank)
+                [:h4 {:class h4-cls} (str "ID: " instance-id)
                  (header-note view cursor)]
                 [:p
                  (str "Submitted at " (.format sdatetime "LT")
                       " on " (.format sdatetime "ll")) [:br]
-                 [:span (str "Record ID: " instance-id)]
                  (om/build edit-delete instance-id {:opts opts})
                  [:span.expand-meta.right
                   [:a {:href "#"
