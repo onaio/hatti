@@ -53,7 +53,7 @@
                                                         {:expand-meta? true}})
         expand-meta #(sel1 % :.expand-meta)]
     (testing "Submission XX title is present"
-      (is (re-matches #".*Submission 1.*" (dommy/text (sel1 s :h4)))))
+      (is (re-matches #".*ID: 0.*" (dommy/text (sel1 s :h4)))))
     (testing "Each Question / Answer pair is rendered"
       (is (every? (->> (sel s :span.answer) (map dommy/text) set)
                   qstn-answers))
@@ -103,8 +103,8 @@
         tbl-el (submission-container :table d gps-form owner)
         submission-time (get d "_submission_time")]
     (testing "Submission XX title is present for both"
-      (is (re-find #"Submission 1" (dommy/text (sel1 map-el :h4))))
-      (is (re-find #"Submission 1" (dommy/text (sel1 tbl-el :h4)))))
+      (is (re-find #"ID: 0" (dommy/text (sel1 map-el :h4))))
+      (is (re-find #"ID: 0" (dommy/text (sel1 tbl-el :h4)))))
     (testing "Map has a div.info-scroll, table has a table"
       (is (sel1 map-el :div.info-scroll))
       (is (sel1 tbl-el :table)))
