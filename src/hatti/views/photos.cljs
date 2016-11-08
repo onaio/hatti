@@ -43,8 +43,8 @@
   (let [datetime (.-date item)
         date (-> datetime js/moment (.format "MMM D, YYYY"))
         time (-> datetime js/moment (.format "h:mm A"))]
-    (format "%s <br/><small>Submitted at %s on %s <br/>Record ID: %s </small>"
-            (.-title item) time date (.-id item))))
+    (format "%s <br/><small>Submitted at %s on %s</small>"
+            (.-title item) time date)))
 
 (defn full-url-from-active-image
   []
@@ -147,17 +147,18 @@
             result
             (map-indexed
              (fn [j attachment]
-               (let [download-url (make-url attachment)
+               (let [id (get datum constants/_id)
+                     download-url (make-url attachment)
                      thumbnail (resize-image download-url
                                              thumb-width-px)]
                  {:src (resize-image (make-url download-url) width-px)
                   :original-src download-url
                   :msrc thumbnail
                   :thumb thumbnail
-                  :title (format "%s/%s | Submission %s"
-                                 (+ photo-index j) total rank)
+                  :title (format "%s/%s | ID %s"
+                                 (+ photo-index j) total id)
                   :date (get datum constants/_submission_time)
-                  :id (get datum constants/_id)
+                  :id id
                   :rank rank
                   :w width-px
                   :h width-px}))
