@@ -148,8 +148,15 @@
                                                            :views :active))]
                          (cond
                            (and (= view :map) no-geodata?)
-                           [:a {:class "inactive" :title "No geodata"}
-                            (name view)]
+                           ;; TODO add tooltips for disabled tabs here
+                           [:a.inactive
+                            (str (name view) " ")
+                            [:span.tooltip
+                             [:span.tip-info.tooltip
+                              (str
+                               " The Map tab is disabled because this form "
+                               "has no location questions.")]
+                             [:span.tip-question "?"]]]
                            :else
                            [:a
                             {:href (when active? (str "#/" (name view)))
