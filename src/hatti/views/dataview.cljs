@@ -53,16 +53,16 @@
    [:span.tooltip
     [:span.tip-info.tooltip
      (cond
-       is-encrypted? " This tab is disabled because this form is encrypted."
+       is-encrypted? "This tab is disabled because this form is encrypted."
        not-within-pricing-limits?
-       " This tab is disabled because you are over the pricing limits."
+       "This tab is disabled because you are over the pricing limits."
        :else
        (condp = view
-         :map (str " The Map tab is disabled because this form "
+         :map (str "The Map tab is disabled because this form "
                    "has no location questions.")
-         :photos (str " The Photos tab is disabled because this form has no "
+         :photos (str "The Photos tab is disabled because this form has no "
                       "photo questions.")
-         :table (str " The table tab is disabled because you do not have "
+         :table (str "The table tab is disabled because you do not have "
                      "permissions to view it.")
          "This tab is disabled."))]
     [:span.tip-question "?"]]])
