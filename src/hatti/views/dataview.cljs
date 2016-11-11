@@ -44,6 +44,29 @@
               :label "Settings"
               :component settings-page}})
 
+(defn- view->inactive-tab
+  "Build and set the tooltips for inactive views based on why they are
+   inactive."
+  [view label is-encrypted? not-within-pricing-limits?]
+  [:a.inactive
+   (str label " ")
+   [:span.tooltip
+    [:span.tip-info.tooltip
+     (cond
+       is-encrypted? " This tab is disabled because this form is encrypted."
+       not-within-pricing-limits?
+       " This tab is disabled because you are over the pricing limits."
+       :else
+       (condp = view
+         :map (str " The Map tab is disabled because this form "
+                   "has no location questions.")
+         :photos (str " The Photos tab is disabled because this form has no "
+                      "photo questions.")
+         :table (str " The table tab is disabled because you do not have "
+                     "permissions to view it.")
+         "This tab is disabled."))]
+    [:span.tip-question "?"]]])
+
 (defmethod dataview-actions :default
   [cursor owner]
   (om/component (html nil)))
@@ -126,42 +149,23 @@
 (defmethod tabbed-dataview :default
   [app-state owner opts]
   (reify
-    om/IInitState
-    (init-state [_]
-      (let [form (om/get-shared owner :flat-form)
-            geopoints? (-> app-state :dataset-info :instances_with_geopoints)
-            no-geodata? (not (or geopoints?
-                                 (some f/geopoint? form)
-                                 (some f/geofield? form)))]
-        (when (and no-geodata? (= :map (-> app-state :views :selected)))
-          (om/update! app-state [:views :selected] :table))
-        {:no-geodata? no-geodata?}))
-    om/IRenderState
-    (render-state [_ {:keys [no-geodata?]}]
-      (let [active-view (-> app-state :views :selected)
-            view->display #(if (= active-view %) "block" "none")
-            view->cls #(when (= active-view %) "clicked")
+    om/IRender
+    (render [_]
+      (let [{:keys [is-encrypted? is-within-pricing-limits?]
+             {:keys [active selected]} :views} app-state
+            view->display #(if (= selected %) "block" "none")
+            view->cls #(when (= selected %) "clicked")
             dataviews (->> app-state :views :all
                            (map dataview-map) (remove nil?))
             dv->link (fn [{:keys [view label]}]
-                       (let [active? (some #(= view %) (-> app-state
-                                                           :views :active))]
-                         (cond
-                           (and (= view :map) no-geodata?)
-                           ;; TODO add tooltips for disabled tabs here
-                           [:a.inactive
-                            (str (name view) " ")
-                            [:span.tooltip
-                             [:span.tip-info.tooltip
-                              (str
-                               " The Map tab is disabled because this form "
-                               "has no location questions.")]
-                             [:span.tip-question "?"]]]
-                           :else
-                           [:a
-                            {:href (when active? (str "#/" (name view)))
-                             :class (if active? (view->cls view)
-                                        "inactive")} label])))]
+                       (let [active? (some #(= view %) active)]
+                         (if active?
+                           [:a {:class (view->cls view)
+                                :href (str "#/" (name view))} label]
+                           (view->inactive-tab view
+                                               label
+                                               is-encrypted?
+                                               is-within-pricing-limits?))))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
@@ -172,6 +176,6 @@
           (for [{:keys [component view]} dataviews]
             [:div {:class (str "tab-page " (name view) "-page")
                    :style {:display (view->display view)}}
-             (when (= active-view view)
+             (when (= selected view)
                [:div.tab-content {:id (str "tab-content" (name view))}
                 (om/build component app-state {:opts opts})])])])))))
