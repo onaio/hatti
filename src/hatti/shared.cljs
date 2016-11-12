@@ -101,6 +101,17 @@
 
 ;; LANGUAGE
 
+(defn maybe-merge-languages!
+  "Merge languages into the app-state if form is multilingual"
+  [form]
+  (when (f/multilingual? form)
+    (let [langs (f/get-languages form)
+          default-lang (f/default-lang langs)
+          lang-state {:all langs
+                      :default default-lang
+                      :current default-lang}]
+      (merge-into-app-state! app-state [:languages] lang-state))))
+
 (defn language-cursor []
   (om/ref-cursor (:languages (om/root-cursor app-state))))
 
