@@ -147,13 +147,12 @@
 (defn get-label
   "Gets the label object out of a map with key :label (eg. a field).
    If multiple languages, and none specified, picks out alphabetically first."
-  ([labelled-obj] (get-label labelled-obj nil))
-  ([{:keys [label name]} & [language]]
-   (if-not (map? label)
-     (or label name)
-     (if (contains? (-> label keys set) language)
-       (label language)
-       (label (-> label keys sort first))))))
+  [{:keys [label name]} & [language]]
+  (if-not (map? label)
+    (or label name)
+    (if (contains? (-> label keys set) language)
+      (label language)
+      (label (-> label keys sort first)))))
 
 (defn format-answer
   "String representation for a particular field datapoint (answer).
