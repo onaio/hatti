@@ -101,16 +101,30 @@
 
 ;; LANGUAGE
 
-(defn language-cursor []
-  (om/ref-cursor (:languages (om/root-cursor app-state))))
+(defn maybe-merge-languages!
+  "Merge languages into the app-state if form is multilingual"
+  [form & [state]]
+  (when (f/multilingual? form)
+    (let [langs (f/get-languages form)
+          default-lang (f/default-lang langs)
+          lang-state {:all langs
+                      :default default-lang
+                      :current default-lang}]
+      (merge-into-app-state!
+       (or state app-state)
+       [:languages] lang-state))))
+
+(defn language-cursor [& [state]]
+  (om/ref-cursor (:languages (om/root-cursor (or state app-state)))))
 
 (defn language-selector
   "A language selector and a following divider."
-  [_ owner]
+  [_ owner {:keys [app-state]}]
   (reify
     om/IRender
     (render [_]
-      (let [{:keys [current all] :as ls} (om/observe owner (language-cursor))
+      (let [{:keys [current all] :as ls}
+            (om/observe owner (language-cursor app-state))
             get-update-handler (fn [language]
                                  (fn [event]
                                    (om/update! ls [:current] language)

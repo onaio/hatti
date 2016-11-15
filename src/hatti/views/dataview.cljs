@@ -76,14 +76,7 @@
   (reify
     om/IWillMount
     (will-mount [_]
-      (let [form (om/get-shared owner :flat-form)
-            langs (f/get-languages form)
-            default-lang (f/default-lang langs)
-            lang-state {:all langs
-                        :default default-lang
-                        :current default-lang}]
-        (when (f/multilingual? form)
-          (merge-into-app-state! shared/app-state [:languages] lang-state))))
+      (shared/maybe-merge-languages! (om/get-shared owner :flat-form)))
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
