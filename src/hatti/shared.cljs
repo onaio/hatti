@@ -119,12 +119,13 @@
 
 (defn language-selector
   "A language selector and a following divider."
-  [_ owner {:keys [app-state]}]
+  [_ owner {custom-app-state :app-state}]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [current all] :as ls}
-            (om/observe owner (language-cursor app-state))
+            (om/observe owner (language-cursor (or custom-app-state
+                                                   app-state)))
             get-update-handler (fn [language]
                                  (fn [event]
                                    (om/update! ls [:current] language)
