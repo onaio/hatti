@@ -495,6 +495,20 @@
     (when (pos? (count features))
       (.fitBounds map bbox #js {:padding "15" :linear true}))))
 
+(defn generate-hexgrid
+  [map layer-id & [geojson]]
+  (let [features (or (:features geojson)
+                     (.queryRenderedFeatures
+                       map (clj->js {:layers [layer-id]})))
+        layer-data (or geojson
+                       (clj->js
+                         {:type "FeatureCollection" :features features}))
+        bbox (.bbox js/turf (clj->js layer-data))
+        cellWidth 20
+        units "miles"
+        hexgrid (.hexGrid js/turf bbox cellWidth units)]
+    hexgrid)) 
+
 (defn geotype->marker-style
   "Get marker style for field type."
   [field]
@@ -525,7 +539,18 @@
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
       (om/set-state! owner :style style)
-      (om/set-state! owner :loaded? true))))
+      (om/set-state! owner :loaded? true)
+
+      (add-mapboxgl-source map "hexgrid"
+                           {:geojson (generate-hexgrid map id_string geojson)})
+      (add-mapboxgl-layer map "hexgrid"
+                          "fill"
+                          :paint {:fill-outline-color "#ccc"
+                                  :fill-color {:property "point_count"
+                                               :stops [[0 "transparent"]
+                                                       [1 "#eff3ff"]
+                                                       [100 "#08519c"]]}
+                                  :fill-opacity 0.7}))))
 
 (defn clear-map-styles
   "Set default style"
