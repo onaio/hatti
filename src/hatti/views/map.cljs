@@ -115,7 +115,7 @@
                   new-data  (first
                              (filter
                               #(= rank (get % _rank))
-                              (get-in @app-state [:data])))]
+                              (get-in @app-state [:map-page :data])))]
               (om/update! app-state [:map-page :submission-clicked]
                           {:data new-data
                            :marker (get (get-id-marker-map)
@@ -126,7 +126,7 @@
                   new-data (first
                             (filter
                              #(= id (get % _id))
-                             (get-in @app-state [:data])))]
+                             (get-in @app-state [:map-page :data])))]
               (om/update! app-state [:map-page :submission-clicked]
                           {:data new-data
                            :id id
