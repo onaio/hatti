@@ -132,39 +132,34 @@
    directly to the submission."
   [data photo-columns]
   (let [data-with-attachments (keep #(extract-images % photo-columns) data)
-        total (reduce #(+ %1 (count (get %2 :attachments)))
-                      0 data-with-attachments)]
-    (loop [data-left data-with-attachments
-           result []
-           photo-index 1]
-      (if (seq data-left)
-        (let [{:keys [attachments] :as datum} (first data-left)
-              rank (get datum constants/_rank)
-              photo (get datum constants/photo)]
-          (recur
-           (rest data-left)
-           (concat
-            result
-            (map-indexed
-             (fn [j attachment]
-               (let [id (get datum constants/_id)
-                     download-url (make-url attachment)
-                     thumbnail (resize-image download-url
-                                             thumb-width-px)]
-                 {:src (resize-image (make-url download-url) width-px)
-                  :original-src download-url
-                  :msrc thumbnail
-                  :thumb thumbnail
-                  :title (format "%s/%s | ID: %s"
-                                 (+ photo-index j) total id)
-                  :date (get datum constants/_submission_time)
-                  :id id
-                  :rank rank
-                  :w width-px
-                  :h width-px}))
-             attachments))
-           (+ photo-index (count attachments))))
-        result))))
+        attachment-totals (reductions #(+ %1 (count (get %2 :attachments)))
+                                      0 data-with-attachments)
+        total (last attachment-totals)]
+    (flatten
+     (for [photo-index (range (count data-with-attachments))
+           :let [{:keys [attachments] :as datum} (nth data-with-attachments
+                                                      photo-index)
+                 cumulative-sum (nth attachment-totals photo-index)
+                 date (get datum constants/_submission_time)
+                 id (get datum constants/_id)
+                 photo (get datum constants/photo)
+                 rank (get datum constants/_rank)]]
+       (map-indexed
+        (fn [j attachment]
+          (let [download-url (make-url attachment)
+                thumbnail (resize-image download-url
+                                        thumb-width-px)]
+            {:src (resize-image (make-url download-url) width-px)
+             :original-src download-url
+             :msrc thumbnail
+             :thumb thumbnail
+             :title (format "%s/%s | ID: %s" (+ 1 cumulative-sum j) total id)
+             :date date
+             :id id
+             :rank rank
+             :w width-px
+             :h width-px}))
+        attachments)))))
 
 (defn- get-photo-columns
   "Return the full-names of all columns with photo type."
