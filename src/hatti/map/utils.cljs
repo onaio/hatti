@@ -495,20 +495,6 @@
     (when (pos? (count features))
       (.fitBounds map bbox #js {:padding "15" :linear true}))))
 
-(defn generate-hexgrid
-  [map layer-id & [geojson]]
-  (let [features (or (:features geojson)
-                     (.queryRenderedFeatures
-                       map (clj->js {:layers [layer-id]})))
-        layer-data (or geojson
-                       (clj->js
-                         {:type "FeatureCollection" :features features}))
-        bbox (.bbox js/turf (clj->js layer-data))
-        cellWidth 20
-        units "miles"
-        hexgrid (.hexGrid js/turf bbox cellWidth units)]
-    hexgrid)) 
-
 (defn geotype->marker-style
   "Get marker style for field type."
   [field]
@@ -519,6 +505,61 @@
                          :layout {:line-join "round"
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
+
+(defn generate-hexgrid
+  "Generates hexbins with point count aggregation given rendered
+  layer-id or geojson"
+  [map layer-id & [geojson]]
+  (let [get-rendered-features #(.queryRenderedFeatures
+                                 map (clj->js {:layers [layer-id]}))
+        rendered-features (or geojson
+                              (clj->js
+                                {:type "FeatureCollection"
+                                 :features (get-rendered-features)}))
+        ;; Get bounding box for rendered features
+        bbox (.bbox js/turf (clj->js rendered-features))
+        cellWidth 2
+        units "kilometers"
+        ;; generete hexGrid with bounding box
+        hexgrid (.hexGrid js/turf bbox cellWidth units)
+        ;; collect point IDs within each polygon area
+        hex-collection (.collect js/turf hexgrid (clj->js rendered-features)
+                                 "_id" "points")
+        hexbins (js->clj hex-collection :keywordize-keys true)
+        ;; Count points on hexbins
+        features-w-count (for [{{:keys [points]} :properties :as feature}
+                               (:features hexbins)]
+                           (assoc feature :properties
+                                          {:point_count (count points)}))]
+    ;; return hexbins with updated point_count
+    (assoc hexbins :features features-w-count
+                   :properties {:total
+                                (-> rendered-features :features count)})))
+
+(defn show-hexbins
+  [map id_string geojson]
+  (let [id "hexgrid"
+        hexgrid (generate-hexgrid map id_string geojson)
+        _ (.log js/console (clj->js hexgrid))
+        total (-> hexgrid :properties :total)]
+    (add-mapboxgl-source map id {:geojson hexgrid})
+    (add-mapboxgl-layer map id
+                        "fill"
+                        :paint {:fill-outline-color
+                                              {:property "point_count"
+                                               :stops [[0 "transparent"]
+                                                       [total "#ccc"]]}
+                                :fill-color {:property "point_count"
+                                             :stops [[0 "transparent"]
+                                                     [1 "#eff3ff"]
+                                                     [total  "#08519c"]]}
+                                :fill-opacity 0.7})))
+
+(defn remove-hexbins
+  [map]
+  (let [id "hexgrid"]
+    (when (.getLayer map id) (.removeSource map id))
+    (when (.getLayer map id) (.removeLayer map id))))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
@@ -533,24 +574,16 @@
       (register-mapboxgl-mouse-events owner map event-chan id_string style)
       (set-mapboxgl-paint-property
        map id_string (get-style-properties style :normal :stops stops))
+      ;; add layer that acts as border for point type layers,
+      ;; otherwise remove the layer if it exists
       (if (= :point style)
         (add-mapboxgl-layer map id_string layer-type
                             :layer-id circle-border
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+      (show-hexbins map id_string geojson)
       (om/set-state! owner :style style)
-      (om/set-state! owner :loaded? true)
-
-      (add-mapboxgl-source map "hexgrid"
-                           {:geojson (generate-hexgrid map id_string geojson)})
-      (add-mapboxgl-layer map "hexgrid"
-                          "fill"
-                          :paint {:fill-outline-color "#ccc"
-                                  :fill-color {:property "point_count"
-                                               :stops [[0 "transparent"]
-                                                       [1 "#eff3ff"]
-                                                       [100 "#08519c"]]}
-                                  :fill-opacity 0.7}))))
+      (om/set-state! owner :loaded? true))))
 
 (defn clear-map-styles
   "Set default style"
