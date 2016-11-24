@@ -63,7 +63,11 @@
          :photos (str "The Photos tab is disabled because this form has no "
                       "photo questions.")
          :table (str "The table tab is disabled because you do not have "
-                     "permissions to view it.")
+                     "permission to view it.")
+         :chart (str "The charts tab is disabled because you do not have "
+                     "permission to view it.")
+         :saved-charts (str "The dashboards tab is disabled because "
+                            "you do not have permission to view it.")
          "This tab is disabled."))]
     [:span.tip-question "?"]]])
 
