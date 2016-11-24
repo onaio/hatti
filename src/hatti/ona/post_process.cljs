@@ -1,6 +1,7 @@
 (ns hatti.ona.post-process
   (:require [chimera.js-interop :refer [format]]
             [chimera.om.state :refer [transact!]]
+            [chimera.seq :refer [filter-first]]
             [chimera.urls :refer [url last-url-param]]
             [clojure.string :refer [join split]]
             [hatti.constants :refer [_attachments _id _rank]]
@@ -98,6 +99,21 @@
      :download_url file-url
      :small_download_url (str file-url "&suffix=small")}))
 
+(defn get-matching-name
+  "Gets and returns matching name for an attachment that was renamed by
+  appending a hash on the S3 server to avoid duplicating names.
+  e.g. if 1478203839187.jpg was renamed to 1478203839187_wijUzUf.jpg,
+  it returns 1478203839187_wijUzUf.jpg."
+  [fname fnames]
+  (if (string? fname)
+    (or
+     (filter-first
+      (fn [f]
+        (when (re-find (re-pattern (first (split fname #"\."))) f) f))
+      fnames)
+     fname)
+    fname))
+
 (defn get-attach-map
   "Helper function for integrate attachments; returns a function from
    a filename to a `url-obj` (see specs in `url-obj` function)."
@@ -106,7 +122,7 @@
         fnames (map #(last-url-param (get % "filename")) attachments)
         fname->urlobj (zipmap fnames (map url-obj attachments))]
     ;; If urlobj isn't found, we'll just return filename
-    (fn [fname] (get fname->urlobj fname fname))))
+    (fn [fname] (get fname->urlobj (get-matching-name fname fnames) fname))))
 
 (defn filter-media
   "Coll -> Coll"

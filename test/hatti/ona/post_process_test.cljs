@@ -102,3 +102,13 @@
     (testing "filters for images"
       (is (= (post-process/filter-media flat-form-images)
              '({:type "image"} {:type "photo"}))))))
+
+(deftest get-matching-name
+  (testing "get-matching-name finds matching filename using attachement name
+  from list ofattachments"
+    (is (= (post-process/get-matching-name
+            "1478203839187.jpg"
+            ["1474634658923_wiuyrXR.jpg"
+             "1478203839187_wijUzUf.jpg"
+             "1478404659734.jpg"])
+           "1478203839187_wijUzUf.jpg"))))
