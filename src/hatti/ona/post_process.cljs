@@ -108,8 +108,8 @@
   (if (string? fname)
     (or
      (filter-first
-      (fn [f]
-        (when (re-find (re-pattern (first (split fname #"\."))) f) f))
+      #(re-find
+        (re-pattern (first (split fname (re-pattern "\\.")))) %)
       fnames)
      fname)
     fname))
