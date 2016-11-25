@@ -305,7 +305,7 @@
 (defn get-tiles-endpoint
   "Generates tiles url with appropriate filters as query params"
   [tiles-server formid fields flat-form & [query]]
-  (str "https://tiles.ona.io" tiles-endpoint
+  (str tiles-server tiles-endpoint
        "?where=deleted_at is null and xform_id =" formid
        (generate-filter-string query flat-form)
        "&fields=" (string/join ",", fields)))
@@ -546,20 +546,22 @@
         total (-> rendered-features :features count)
         hexbins (js->clj hex-collection :keywordize-keys true)
         ;; Count points on hexbins
-        features-w-count (for [{{:keys [points]} :properties :as feature}
-                               (:features hexbins)]
-                           (assoc feature :properties
-                                  {:point_count (percent (count points)
-                                                         total)}))
-        features-w-count (filter #(not (-> features-w-count
-                                           :properties :point_count))
-                                 features-w-count)]
+        features-w-count (remove nil?
+                                 (for [{{:keys [points]} :properties :as
+                                        feature}
+                                       (:features hexbins)
+                                       :let [point_count
+                                             (percent (count points) total)]]
+                                   (when point_count
+                                     (assoc feature :properties
+                                            {:point_count point_count}))))]
     ;; return hexbins with updated point_count
     (assoc hexbins :features features-w-count
            :properties {:total
                         total})))
 
 (defn show-hexbins
+  "Renders hexbin layer on map."
   [map id_string geojson]
   (let [id "hexgrid"
         hexgrid (generate-hexgrid map id_string geojson)
@@ -579,6 +581,7 @@
                                 :fill-opacity 0.7})))
 
 (defn remove-hexbins
+  "Remove hexbins layer from map"
   [map]
   (let [id "hexgrid"]
     (when (.getLayer map id) (.removeSource map id))
