@@ -305,7 +305,7 @@
 (defn get-tiles-endpoint
   "Generates tiles url with appropriate filters as query params"
   [tiles-server formid fields flat-form & [query]]
-  (str tiles-server tiles-endpoint
+  (str "https://tiles.ona.io" tiles-endpoint
        "?where=deleted_at is null and xform_id =" formid
        (generate-filter-string query flat-form)
        "&fields=" (string/join ",", fields)))
@@ -506,35 +506,58 @@
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
+(defn to-fixed
+  [n number-of-decimal-places]
+  (when n
+    (-> n
+        (.toFixed number-of-decimal-places)
+        js/parseFloat)))
+
+(defn percent
+  [n total & {:keys [number-of-decimal-places]}]
+  (let [percentage (when (and (pos? n) (>= total n))
+                     (-> n
+                         (/ total)
+                         (* 100)
+                         float))]
+    (if number-of-decimal-places
+      (to-fixed percentage number-of-decimal-places)
+      percentage)))
+
 (defn generate-hexgrid
   "Generates hexbins with point count aggregation given rendered
   layer-id or geojson"
   [map layer-id & [geojson]]
   (let [get-rendered-features #(.queryRenderedFeatures
-                                 map (clj->js {:layers [layer-id]}))
+                                map (clj->js {:layers [layer-id]}))
         rendered-features (or geojson
                               (clj->js
-                                {:type "FeatureCollection"
-                                 :features (get-rendered-features)}))
+                               {:type "FeatureCollection"
+                                :features (get-rendered-features)}))
         ;; Get bounding box for rendered features
         bbox (.bbox js/turf (clj->js rendered-features))
-        cellWidth 2
+        cellWidth 60
         units "kilometers"
         ;; generete hexGrid with bounding box
         hexgrid (.hexGrid js/turf bbox cellWidth units)
         ;; collect point IDs within each polygon area
         hex-collection (.collect js/turf hexgrid (clj->js rendered-features)
                                  "_id" "points")
+        total (-> rendered-features :features count)
         hexbins (js->clj hex-collection :keywordize-keys true)
         ;; Count points on hexbins
         features-w-count (for [{{:keys [points]} :properties :as feature}
                                (:features hexbins)]
                            (assoc feature :properties
-                                          {:point_count (count points)}))]
+                                  {:point_count (percent (count points)
+                                                         total)}))
+        features-w-count (filter #(not (-> features-w-count
+                                           :properties :point_count))
+                                 features-w-count)]
     ;; return hexbins with updated point_count
     (assoc hexbins :features features-w-count
-                   :properties {:total
-                                (-> rendered-features :features count)})))
+           :properties {:total
+                        total})))
 
 (defn show-hexbins
   [map id_string geojson]
@@ -546,13 +569,13 @@
     (add-mapboxgl-layer map id
                         "fill"
                         :paint {:fill-outline-color
-                                              {:property "point_count"
-                                               :stops [[0 "transparent"]
-                                                       [total "#ccc"]]}
+                                {:property "point_count"
+                                 :stops [[0 "transparent"]
+                                         [100 "#ccc"]]}
                                 :fill-color {:property "point_count"
                                              :stops [[0 "transparent"]
                                                      [1 "#eff3ff"]
-                                                     [total  "#08519c"]]}
+                                                     [100  "#08519c"]]}
                                 :fill-opacity 0.7})))
 
 (defn remove-hexbins
@@ -581,7 +604,7 @@
                             :layer-id circle-border
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
-      (show-hexbins map id_string geojson)
+      ;;(show-hexbins map id_string geojson)
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 

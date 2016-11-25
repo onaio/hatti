@@ -439,25 +439,32 @@
     (will-receive-props [_ next-props]
       "will-recieve-props resets mapboxglmap
       swiches to geojson source if the map data has changed to geoshapes."
-      (let [{{old-map-data :data} :map-page} (om/get-props owner)
-            {{new-map-data :data} :map-page}  next-props
-            old-field (get-in (om/get-props owner) [:map-page :geofield])
-            new-field (get-in next-props [:map-page :geofield])]
-        (when (or (not= old-field new-field)
-                  (not= (count old-map-data) (count new-map-data))
-                  (not= old-map-data old-map-data))
-          (let [{:keys [flat-form]} (om/get-shared owner)
-                {:keys [mapboxgl-map layer-id geojson]}
-                (om/get-state owner)
-                new-geojson (mu/as-geojson new-map-data flat-form new-field)]
-            (when (and (not-empty new-field) (not= geojson new-geojson))
-              (when (.getLayer mapboxgl-map layer-id)
-                (.removeLayer mapboxgl-map layer-id)
-                (.removeSource mapboxgl-map layer-id))
-              (load-mapboxgl-helper app-state owner
-                                    :geojson new-geojson
-                                    :geofield new-field)
-              (put! shared/event-chan {:data-updated true}))))))))
+      (let [{{old-map-data :data
+              old-field :geofield} :map-page} (om/get-props owner)
+            {{new-map-data :data
+              new-field :geofield
+              show-hexbins? :show-hexbins?} :map-page}  next-props
+            {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
+            {:keys [flat-form]} (om/get-shared owner)
+
+            data-changed? (or (not= old-field new-field)
+                              (not= (count old-map-data) (count new-map-data))
+                              (not= old-map-data old-map-data))
+            new-geojson (if data-changed?
+                          (mu/as-geojson new-map-data flat-form new-field)
+                          geojson)]
+        (when data-changed?
+          (when (and (not-empty new-field) (not= geojson new-geojson))
+            (when (.getLayer mapboxgl-map layer-id)
+              (.removeLayer mapboxgl-map layer-id)
+              (.removeSource mapboxgl-map layer-id))
+            (load-mapboxgl-helper app-state owner
+                                  :geojson new-geojson
+                                  :geofield new-field)
+            (put! shared/event-chan {:data-updated true})))
+        (if show-hexbins?
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson)
+          (mu/remove-hexbins mapboxgl-map))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
@@ -476,7 +483,7 @@
         (let [with-suffix #(if-not (om/get-state owner :expanded) %
                                    (str % " leaflet-control-layers-expanded"))]
           (html
-           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "148px"}}
+           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "190px"}}
             [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                    :on-mouse-enter #(om/set-state! owner :expanded true)
                    :on-mouse-leave #(om/set-state! owner :expanded false)}
@@ -488,6 +495,27 @@
                   {:type "radio" :checked (= field geofield)
                    :on-click (click-fn #(om/update! geofield field))}]
                  (get-label field) [:br]])]]]))))))
+
+(defn map-hexbin-selector
+  [{{show-hexbins? :show-hexbins?} :map-page :as cursor} owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:active? false})
+    om/IRenderState
+    (render-state [_ {:keys [active?]}]
+      "Render layer selector component w/css + expansion technique from
+      leaflet layer control."
+      (html
+       [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "145px"}}
+        [:div.leaflet-control.leaflet-control-layers
+         [:a.leaflet-control-layers-toggle.hexbin-layer-toggle
+          {:title "Layers"
+           :on-click
+           (click-fn
+            #(om/update!
+              cursor [:map-page :show-hexbins?]
+              (not show-hexbins?)))}]]]))))
 
 (defn map-layer-selector
   [cursor owner]
@@ -551,6 +579,9 @@
           (om/build map-geofield-chooser
                     (get-in cursor [:map-page :geofield])
                     {:opts {:geofields (filter f/geofield? form)}})
+          (om/build map-hexbin-selector
+                    cursor
+                    {:opts opts})
           (om/build map-layer-selector
                     cursor
                     {:opts opts})
