@@ -506,24 +506,6 @@
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
-(defn to-fixed
-  [n number-of-decimal-places]
-  (when n
-    (-> n
-        (.toFixed number-of-decimal-places)
-        js/parseFloat)))
-
-(defn percent
-  [n total & {:keys [number-of-decimal-places]}]
-  (let [percentage (when (and (pos? n) (>= total n))
-                     (-> n
-                         (/ total)
-                         (* 100)
-                         float))]
-    (if number-of-decimal-places
-      (to-fixed percentage number-of-decimal-places)
-      percentage)))
-
 (defn generate-hexgrid
   "Generates hexbins with point count aggregation given rendered
   layer-id or geojson"
@@ -550,34 +532,34 @@
                                  (for [{{:keys [points]} :properties :as
                                         feature}
                                        (:features hexbins)
-                                       :let [point_count
-                                             (percent (count points) total)]]
-                                   (when point_count
+                                       :let [point-count (count points)]]
+                                   (when (pos? point-count)
                                      (assoc feature :properties
-                                            {:point_count point_count}))))]
-    ;; return hexbins with updated point_count
+                                            {:point-count point-count}))))
+        point-counts (for [f features-w-count]
+                       (-> f :properties :point-count))]
+    ;; return hexbins with updated point-count
     (assoc hexbins :features features-w-count
-           :properties {:total
-                        total})))
+           :properties {:min-count (apply min point-counts)
+                        :max-count (apply max point-counts)})))
 
 (defn show-hexbins
   "Renders hexbin layer on map."
   [map id_string geojson]
   (let [id "hexgrid"
         hexgrid (generate-hexgrid map id_string geojson)
-        _ (.log js/console (clj->js hexgrid))
-        total (-> hexgrid :properties :total)]
+        {:keys [min-count max-count]} (:properties hexgrid)]
     (add-mapboxgl-source map id {:geojson hexgrid})
     (add-mapboxgl-layer map id
                         "fill"
                         :paint {:fill-outline-color
-                                {:property "point_count"
+                                {:property "point-count"
                                  :stops [[0 "transparent"]
-                                         [100 "#ccc"]]}
-                                :fill-color {:property "point_count"
+                                         [max-count "#ccc"]]}
+                                :fill-color {:property "point-count"
                                              :stops [[0 "transparent"]
-                                                     [1 "#eff3ff"]
-                                                     [100  "#08519c"]]}
+                                                     [min-count "#eff3ff"]
+                                                     [max-count  "#08519c"]]}
                                 :fill-opacity 0.7})))
 
 (defn remove-hexbins
