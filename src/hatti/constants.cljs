@@ -31,3 +31,4 @@
    {:style "dark" :name "Mapbox Dark"}
    {:style "satellite-streets" :name "Mapbox Satellite"}])
 (def mapping-threshold 10000)
+(def hexbin-cell-width 60)

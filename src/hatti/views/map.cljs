@@ -6,6 +6,7 @@
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
+                                                   hexbin-cell-width
                                                    map-styles
                                                    mapboxgl-access-token
                                                    mapping-threshold]]
@@ -357,7 +358,8 @@
       (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)
-    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
+    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)
+    (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))))
 
 (defn mapboxgl-map
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
@@ -386,13 +388,15 @@
       "will-recieve-props resets mapboxglmap
       swiches to geojson source if the map data has changed to geoshapes."
       (let [{{old-map-data :data
-              old-field :geofield} :map-page} (om/get-props owner)
+              old-field :geofield
+              {old-cell-width :cell-width} :hexbins} :map-page}
+            (om/get-props owner)
             {{new-map-data :data
               new-field :geofield
-              show-hexbins? :show-hexbins?} :map-page}  next-props
+              {show-hexbins? :show?
+               new-cell-width :cell-width} :hexbins} :map-page}  next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
-
             data-changed? (or (not= old-field new-field)
                               (not= (count old-map-data) (count new-map-data))
                               (not= old-map-data old-map-data))
@@ -408,9 +412,14 @@
                                   :geojson new-geojson
                                   :geofield new-field)
             (put! shared/event-chan {:data-updated true})))
+        ;; Render hexbins hexbins when show-hexbins? toggled
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson)
-          (mu/remove-hexbins mapboxgl-map))))))
+          (mu/remove-hexbins mapboxgl-map))
+        ;; Rerender hexbins when cell-widh changed
+        (when (not= old-cell-width new-cell-width)
+          (mu/remove-hexbins mapboxgl-map)
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson new-cell-width))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
@@ -429,7 +438,7 @@
         (let [with-suffix #(if-not (om/get-state owner :expanded) %
                                    (str % " leaflet-control-layers-expanded"))]
           (html
-           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "190px"}}
+           [:div.leaflet-left.leaflet-bottom.geofield-selector
             [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                    :on-mouse-enter #(om/set-state! owner :expanded true)
                    :on-mouse-leave #(om/set-state! owner :expanded false)}
@@ -443,25 +452,46 @@
                  (get-label field) [:br]])]]]))))))
 
 (defn map-hexbin-selector
-  [{{show-hexbins? :show-hexbins?} :map-page :as cursor} owner]
+  [{{{:keys [show?]} :hexbins} :map-page :as cursor} owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:active? false})
     om/IRenderState
-    (render-state [_ {:keys [active?]}]
-      "Render layer selector component w/css + expansion technique from
+    (render-state [_ _]
+      "Render hexbin selector component w/css + expansion technique from
       leaflet layer control."
       (html
-       [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "145px"}}
+       [:div.leaflet-left.leaflet-bottom.hexbin-selector
         [:div.leaflet-control.leaflet-control-layers
-         [:a.leaflet-control-layers-toggle.hexbin-layer-toggle
-          {:title "Layers"
+         [:a
+          {:title "Hexbins Layer"
+           :class (str "hexbin-layer-toggle" (when show? " active"))
            :on-click
            (click-fn
             #(om/update!
-              cursor [:map-page :show-hexbins?]
-              (not show-hexbins?)))}]]]))))
+              cursor [:map-page :hexbins :show?]
+              (not show?)))}]]]))))
+
+(defn map-hexbin-slider
+  [{{{:keys [show? cell-width]} :hexbins} :map-page :as cursor} owner]
+  (reify
+    om/IRenderState
+    (render-state [_ _]
+      "Render layer selector component w/css + expansion technique from
+      leaflet layer control."
+      (html
+       (when show?
+         (let [cell-size (or cell-width hexbin-cell-width)
+               update-cell-width (fn [e]
+                                   (om/update!
+                                    cursor [:map-page :hexbins :cell-width]
+                                    (.. e -target -value)))]
+           [:div.map-overlay.mapboxgl-ctrl-bottom-left
+            [:div.map-overlay-inner
+             [:label "Cell Width: "
+              [:span#slider-value (str cell-size "Kms")]]
+             [:input#slider
+              {:type "range" :min "10" :max "600" :step "10"
+               :value (str cell-size)
+               :on-change update-cell-width}]]]))))))
 
 (defn map-layer-selector
   [cursor owner]
@@ -481,7 +511,7 @@
             custom-styles (om/get-shared owner
                                          [:map-config :custom-styles])]
         (html
-         [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
+         [:div.leaflet-left.leaflet-bottom.layer-selector
           [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                  :aria-haspopup "true"}
            [:a.leaflet-control-layers-toggle
@@ -526,6 +556,9 @@
                     (get-in cursor [:map-page :geofield])
                     {:opts {:geofields (filter f/geofield? form)}})
           (om/build map-hexbin-selector
+                    cursor
+                    {:opts opts})
+          (om/build map-hexbin-slider
                     cursor
                     {:opts opts})
           (om/build map-layer-selector

@@ -4,7 +4,8 @@
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
             [hatti.constants :refer [_id _rank
-                                     mapboxgl-access-token tiles-endpoint]]
+                                     mapboxgl-access-token tiles-endpoint
+                                     hexbin-cell-width]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]
             [om.core :as om :include-macros true]))
@@ -509,23 +510,23 @@
 (defn generate-hexgrid
   "Generates hexbins with point count aggregation given rendered
   layer-id or geojson"
-  [map layer-id & [geojson]]
+  [map layer-id geojson cell-width]
   (let [get-rendered-features #(.queryRenderedFeatures
                                 map (clj->js {:layers [layer-id]}))
         rendered-features (or geojson
                               (clj->js
                                {:type "FeatureCollection"
                                 :features (get-rendered-features)}))
+        js-rendered-features (clj->js rendered-features)
         ;; Get bounding box for rendered features
-        bbox (.bbox js/turf (clj->js rendered-features))
-        cellWidth 60
+        bbox (.bbox js/turf js-rendered-features)
+        cellWidth (or cell-width hexbin-cell-width)
         units "kilometers"
         ;; generete hexGrid with bounding box
         hexgrid (.hexGrid js/turf bbox cellWidth units)
         ;; collect point IDs within each polygon area
-        hex-collection (.collect js/turf hexgrid (clj->js rendered-features)
+        hex-collection (.collect js/turf hexgrid  js-rendered-features
                                  "_id" "points")
-        total (-> rendered-features :features count)
         hexbins (js->clj hex-collection :keywordize-keys true)
         ;; Count points on hexbins
         features-w-count (remove nil?
@@ -545,9 +546,9 @@
 
 (defn show-hexbins
   "Renders hexbin layer on map."
-  [map id_string geojson]
+  [map id_string geojson & [cell-width]]
   (let [id "hexgrid"
-        hexgrid (generate-hexgrid map id_string geojson)
+        hexgrid (generate-hexgrid map id_string geojson cell-width)
         {:keys [min-count max-count]} (:properties hexgrid)]
     (add-mapboxgl-source map id {:geojson hexgrid})
     (add-mapboxgl-layer map id
@@ -589,7 +590,6 @@
                             :layer-id circle-border
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
-      ;;(show-hexbins map id_string geojson)
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 
@@ -599,3 +599,11 @@
   (set-mapboxgl-paint-property
    (om/get-state owner :mapboxgl-map) (om/get-state owner :layer-id)
    (get-style-properties (om/get-state owner :style) :normal)))
+
+(defn set-zoom-level
+  "Update map zoom level in local component state on zoom event."
+  [owner]
+  (let [{:keys [mapboxgl-map zoom]} (om/get-state owner)
+        next-zoom (.getZoom mapboxgl-map)]
+    (when (not= zoom next-zoom)
+      (om/set-state! owner :zoom next-zoom))))
