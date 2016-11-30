@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [clojure.string :refer [split]]
             [chimera.js-interop :refer [safe-regex]]
+            [chimera.seq :refer [in?]]
             [om.core :as om :include-macros true]
             [hatti.charting :refer [evenly-spaced-bins]]
             [hatti.constants :refer [_id]]
@@ -200,3 +201,15 @@
                    (all-but-nil-selected visible-answers))
             ;; else: some things are clicked -> leave alone
             toggled))))))
+
+(defn get-selected-ids
+  "Returns selected ids from view-by data"
+  [view-by]
+  (let [{:keys [answer->selected? id->answers]} view-by
+        into-map #(into {} %)
+        selected-answers
+        (->> answer->selected? (filter (fn [[_ v]] v)) into-map keys)
+        selected-ids
+        (->> id->answers (filter (fn [[k v]] (in? selected-answers v)))
+             into-map keys)]
+    selected-ids))
