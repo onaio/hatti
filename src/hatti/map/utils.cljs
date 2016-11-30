@@ -1,6 +1,7 @@
 (ns hatti.map.utils
   (:use [cljs.reader :only [read-string]])
-  (:require [clojure.string :as string]
+  (:require [chimera.seq :refer [in?]]
+            [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
             [hatti.constants :refer [_id _rank
@@ -507,61 +508,75 @@
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
+(defn filter-selected-features
+  "Filter features and return only selected features. Returns all features
+  features if selected-ids is nil. "
+  [features selected-ids]
+  (if selected-ids
+    (filter (fn [{{:keys [_id]} :properties}] (in? selected-ids _id)) features)
+    features))
+
+(defn count-hexbin-points
+  "Counts points collected into hexbins."
+  [hexbins]
+  (for [{{:keys [points]} :properties :as feature} (:features hexbins)
+        :let [point-count (count points)]]
+    (when (pos? point-count)
+      (assoc feature :properties {:point-count point-count}))))
+
 (defn generate-hexgrid
   "Generates hexbins with point count aggregation given rendered
-  layer-id or geojson"
-  [map layer-id geojson cell-width]
+  layer-id or geojson."
+  [map layer-id geojson {:keys [cell-width selected-ids]}]
   (let [get-rendered-features #(.queryRenderedFeatures
                                 map (clj->js {:layers [layer-id]}))
         rendered-features (or geojson
-                              (clj->js
-                               {:type "FeatureCollection"
-                                :features (get-rendered-features)}))
+                              {:type "FeatureCollection"
+                               :features (get-rendered-features)})
+        rendered-features (update-in
+                           rendered-features
+                           [:features]
+                           #(filter-selected-features % selected-ids))
         js-rendered-features (clj->js rendered-features)
         ;; Get bounding box for rendered features
         bbox (.bbox js/turf js-rendered-features)
         cellWidth (or cell-width hexbin-cell-width)
         units "kilometers"
-        ;; generete hexGrid with bounding box
+        ;; Generete dynaminc hexgrid using  bounding box
         hexgrid (.hexGrid js/turf bbox cellWidth units)
-        ;; collect point IDs within each polygon area
-        hex-collection (.collect js/turf hexgrid  js-rendered-features
-                                 "_id" "points")
+        ;; Collect point ids within each polygon area
+        hex-collection (.collect js/turf
+                                 hexgrid js-rendered-features "_id" "points")
         hexbins (js->clj hex-collection :keywordize-keys true)
-        ;; Count points on hexbins
-        features-w-count (remove nil?
-                                 (for [{{:keys [points]} :properties :as
-                                        feature}
-                                       (:features hexbins)
-                                       :let [point-count (count points)]]
-                                   (when (pos? point-count)
-                                     (assoc feature :properties
-                                            {:point-count point-count}))))
+        ;; Count points on hexbins and remove empty bins.
+        features-w-count (remove nil? (count-hexbin-points hexbins))
         point-counts (for [f features-w-count]
                        (-> f :properties :point-count))]
-    ;; return hexbins with updated point-count
-    (assoc hexbins :features features-w-count
+    ;; return hexbins with updated point-counts
+    (assoc hexbins
+           :features features-w-count
            :properties {:min-count (apply min point-counts)
                         :max-count (apply max point-counts)})))
 
 (defn show-hexbins
   "Renders hexbin layer on map."
-  [map id_string geojson & [cell-width]]
+  [map id_string geojson opts]
   (let [id "hexgrid"
-        hexgrid (generate-hexgrid map id_string geojson cell-width)
+        hexgrid (generate-hexgrid map id_string geojson opts)
         {:keys [min-count max-count]} (:properties hexgrid)]
-    (add-mapboxgl-source map id {:geojson hexgrid})
-    (add-mapboxgl-layer map id
-                        "fill"
-                        :paint {:fill-outline-color
-                                {:property "point-count"
-                                 :stops [[0 "transparent"]
-                                         [max-count "#ccc"]]}
-                                :fill-color {:property "point-count"
-                                             :stops [[0 "transparent"]
-                                                     [min-count "#eff3ff"]
-                                                     [max-count  "#08519c"]]}
-                                :fill-opacity 0.7})))
+    (when (and min-count max-count)
+      (add-mapboxgl-source map id {:geojson hexgrid})
+      (add-mapboxgl-layer map id
+                          "fill"
+                          :paint {:fill-outline-color
+                                  {:property "point-count"
+                                   :stops [[0 "transparent"]
+                                           [max-count "#ccc"]]}
+                                  :fill-color {:property "point-count"
+                                               :stops [[0 "transparent"]
+                                                       [min-count "#eff3ff"]
+                                                       [max-count  "#08519c"]]}
+                                  :fill-opacity 0.7}))))
 
 (defn remove-hexbins
   "Remove hexbins layer from map"

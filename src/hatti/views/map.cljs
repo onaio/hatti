@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [clojure.string :as string]
             [chimera.js-interop :refer [json->cljs]]
+            [chimera.seq :refer [in?]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
@@ -389,20 +390,40 @@
       swiches to geojson source if the map data has changed to geoshapes."
       (let [{{old-map-data :data
               old-field :geofield
-              {old-cell-width :cell-width} :hexbins} :map-page}
+              {old-cell-width :cell-width} :hexbins
+              old-viewby :view-by} :map-page}
             (om/get-props owner)
             {{new-map-data :data
               new-field :geofield
               {show-hexbins? :show?
-               new-cell-width :cell-width} :hexbins} :map-page}  next-props
+               new-cell-width :cell-width} :hexbins
+              new-viewby :view-by} :map-page}  next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
             data-changed? (or (not= old-field new-field)
                               (not= (count old-map-data) (count new-map-data))
                               (not= old-map-data old-map-data))
+            view-by-changed? (not= old-viewby new-viewby)
             new-geojson (if data-changed?
                           (mu/as-geojson new-map-data flat-form new-field)
-                          geojson)]
+                          geojson)
+            selected-ids (when (and show-hexbins? view-by-changed?)
+                           (let [{:keys [answer->selected? id->answers]}
+                                 new-viewby
+                                 into-map #(into {} %)
+                                 selected-answers (->> answer->selected?
+                                                       (filter (fn [[_ v]] v))
+                                                       into-map keys)
+                                 selected-ids (->> id->answers
+                                                   (filter
+                                                    (fn [[k v]]
+                                                      (in? selected-answers v)))
+                                                   into-map keys)]
+
+                             selected-ids))
+            hexbin-opts {:cell-width new-cell-width
+                         :selected-ids selected-ids}]
+        ;; Update layers if data changes
         (when data-changed?
           (when (and (not-empty new-field) (not= geojson new-geojson))
             (when (.getLayer mapboxgl-map layer-id)
@@ -412,14 +433,16 @@
                                   :geojson new-geojson
                                   :geofield new-field)
             (put! shared/event-chan {:data-updated true})))
-        ;; Render hexbins hexbins when show-hexbins? toggled
+        ;; Render hexbins when show? is toggled
         (if show-hexbins?
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson)
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)
           (mu/remove-hexbins mapboxgl-map))
-        ;; Rerender hexbins when cell-widh changed
-        (when (not= old-cell-width new-cell-width)
+        ;; Re-render hexbins when cell-width changed
+        (when (and show-hexbins?
+                   (or (not= old-cell-width new-cell-width)
+                       view-by-changed?))
           (mu/remove-hexbins mapboxgl-map)
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson new-cell-width))))))
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
