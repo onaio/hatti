@@ -205,11 +205,14 @@
 (defn get-selected-ids
   "Returns selected ids from view-by data"
   [view-by]
-  (let [{:keys [answer->selected? id->answers]} view-by
+  (let [{:keys [answer->selected? id->answers answer->color]} view-by
         into-map #(into {} %)
         selected-answers
         (->> answer->selected? (filter (fn [[_ v]] v)) into-map keys)
         selected-ids
         (->> id->answers (filter (fn [[k v]] (in? selected-answers v)))
-             into-map keys)]
-    selected-ids))
+             into-map keys)
+        color (when (= 1 (count selected-answers))
+                (get answer->color (first selected-answers)))]
+    {:selected-ids selected-ids
+     :cell-color color}))

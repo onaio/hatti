@@ -563,7 +563,8 @@
   [map id_string geojson opts]
   (let [id "hexgrid"
         hexgrid (generate-hexgrid map id_string geojson opts)
-        {:keys [min-count max-count]} (:properties hexgrid)]
+        {:keys [min-count max-count]} (:properties hexgrid)
+        max-color (or (:cell-color opts) "#08519c")]
     (when (and min-count max-count)
       (add-mapboxgl-source map id {:geojson hexgrid})
       (add-mapboxgl-layer map id
@@ -575,7 +576,7 @@
                                   :fill-color {:property "point-count"
                                                :stops [[0 "transparent"]
                                                        [min-count "#eff3ff"]
-                                                       [max-count  "#08519c"]]}
+                                                       [max-count max-color]]}
                                   :fill-opacity 0.7}))))
 
 (defn remove-hexbins

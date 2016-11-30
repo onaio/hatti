@@ -390,13 +390,12 @@
       (let [{{old-map-data :data
               old-field :geofield
               {old-cell-width :cell-width} :hexbins
-              old-viewby :view-by} :map-page}
-            (om/get-props owner)
+              old-viewby :view-by} :map-page} (om/get-props owner)
             {{new-map-data :data
               new-field :geofield
               {show-hexbins? :show?
                new-cell-width :cell-width} :hexbins
-              new-viewby :view-by} :map-page}  next-props
+              new-viewby :view-by} :map-page} next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
             data-changed? (or (not= old-field new-field)
@@ -407,10 +406,9 @@
                           geojson)
             view-by-changed? (not= old-viewby new-viewby)
             cell-width-changed (not= old-cell-width new-cell-width)
-            selected-ids (when (and show-hexbins? view-by-changed?)
-                           (vb/get-selected-ids new-viewby))
-            hexbin-opts {:cell-width new-cell-width
-                         :selected-ids selected-ids}]
+            opts (when (and show-hexbins? view-by-changed?)
+                   (vb/get-selected-ids new-viewby))
+            hexbin-opts (assoc opts :cell-width new-cell-width)]
         ;; Update layers if data changes
         (when data-changed?
           (when (and (not-empty new-field) (not= geojson new-geojson))
@@ -421,11 +419,11 @@
                                   :geojson new-geojson
                                   :geofield new-field)
             (put! shared/event-chan {:data-updated true})))
-        ;; Render hexbins when show? is toggled
+        ;; Render hexbins when show? is toggled.
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)
           (mu/remove-hexbins mapboxgl-map))
-        ;; Re-render hexbins when cell-width changed
+        ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed view-by-changed?))
           (mu/remove-hexbins mapboxgl-map)
@@ -476,9 +474,8 @@
            :class (str "hexbin-layer-toggle" (when show? " active"))
            :on-click
            (click-fn
-            #(om/update!
-              cursor [:map-page :hexbins :show?]
-              (not show?)))}]]]))))
+            #(om/update! cursor
+                         [:map-page :hexbins :show?] (not show?)))}]]]))))
 
 (defn map-hexbin-slider
   [{{{:keys [show? cell-width]} :hexbins} :map-page :as cursor} owner]
@@ -497,7 +494,7 @@
            [:div.map-overlay.mapboxgl-ctrl-bottom-left
             [:div.map-overlay-inner
              [:label "Cell Width: "
-              [:span#slider-value (str cell-size "Kms")]]
+              [:span#slider-value (str cell-size " Kms")]]
              [:input#slider
               {:type "range" :min "10" :max "600" :step "10"
                :value (str cell-size)
