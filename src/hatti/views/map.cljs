@@ -410,15 +410,15 @@
                    (vb/get-selected-ids new-viewby))
             hexbin-opts (assoc opts :cell-width new-cell-width)]
         ;; Update layers if data changes
-        (when data-changed?
-          (when (and (not-empty new-field) (not= geojson new-geojson))
-            (when (.getLayer mapboxgl-map layer-id)
-              (.removeLayer mapboxgl-map layer-id)
-              (.removeSource mapboxgl-map layer-id))
-            (load-mapboxgl-helper app-state owner
-                                  :geojson new-geojson
-                                  :geofield new-field)
-            (put! shared/event-chan {:data-updated true})))
+        (when (and data-changed? (not-empty new-field)
+                   (not= geojson new-geojson))
+          (when (.getLayer mapboxgl-map layer-id)
+            (.removeLayer mapboxgl-map layer-id)
+            (.removeSource mapboxgl-map layer-id))
+          (load-mapboxgl-helper app-state owner
+                                :geojson new-geojson
+                                :geofield new-field)
+          (put! shared/event-chan {:data-updated true}))
         ;; Render hexbins when show? is toggled.
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)

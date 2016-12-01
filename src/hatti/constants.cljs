@@ -31,4 +31,8 @@
    {:style "dark" :name "Mapbox Dark"}
    {:style "satellite-streets" :name "Mapbox Satellite"}])
 (def mapping-threshold 10000)
+
 (def hexbin-cell-width 60)
+(def min-count-color "#0f5f6f8")
+(def max-count-color "#08519c")
+

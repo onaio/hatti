@@ -4,9 +4,9 @@
             [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.constants :refer [_id _rank
-                                     mapboxgl-access-token tiles-endpoint
-                                     hexbin-cell-width]]
+            [hatti.constants :as constants
+             :refer  [_id _rank mapboxgl-access-token tiles-endpoint
+                      hexbin-cell-width]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]
             [om.core :as om :include-macros true]))
@@ -538,13 +538,14 @@
                            [:features]
                            #(filter-selected-features % selected-ids))
         js-rendered-features (clj->js rendered-features)
-        ;; Get bounding box for rendered features
+        ;; Get bounding box for rendered features.
+
         bbox (.bbox js/turf js-rendered-features)
         cellWidth (or cell-width hexbin-cell-width)
         units "kilometers"
-        ;; Generete dynaminc hexgrid using  bounding box
+        ;; Generete dynaminc hexgrid using  bounding box.
         hexgrid (.hexGrid js/turf bbox cellWidth units)
-        ;; Collect point ids within each polygon area
+        ;; Collect point ids within each polygon area.
         hex-collection (.collect js/turf
                                  hexgrid js-rendered-features "_id" "points")
         hexbins (js->clj hex-collection :keywordize-keys true)
@@ -552,7 +553,7 @@
         features-w-count (remove nil? (count-hexbin-points hexbins))
         point-counts (for [f features-w-count]
                        (-> f :properties :point-count))]
-    ;; return hexbins with updated point-counts
+    ;; Return hexbins with updated point-counts.
     (assoc hexbins
            :features features-w-count
            :properties {:min-count (apply min point-counts)
@@ -564,7 +565,10 @@
   (let [id "hexgrid"
         hexgrid (generate-hexgrid map id_string geojson opts)
         {:keys [min-count max-count]} (:properties hexgrid)
-        max-color (or (:cell-color opts) "#08519c")]
+        max-color (or (:cell-color opts) constants/max-count-color)
+        min-color (if (= min-count max-count)
+                    max-color
+                    constants/min-count-color)]
     (when (and min-count max-count)
       (add-mapboxgl-source map id {:geojson hexgrid})
       (add-mapboxgl-layer map id
@@ -572,12 +576,12 @@
                           :paint {:fill-outline-color
                                   {:property "point-count"
                                    :stops [[0 "transparent"]
-                                           [max-count "#ccc"]]}
+                                           [max-count "white"]]}
                                   :fill-color {:property "point-count"
                                                :stops [[0 "transparent"]
-                                                       [min-count "#eff3ff"]
+                                                       [min-count min-color]
                                                        [max-count max-color]]}
-                                  :fill-opacity 0.7}))))
+                                  :fill-opacity 0.5}))))
 
 (defn remove-hexbins
   "Remove hexbins layer from map"
