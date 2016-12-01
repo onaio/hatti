@@ -390,12 +390,15 @@
       (let [{{old-map-data :data
               old-field :geofield
               {old-cell-width :cell-width} :hexbins
-              old-viewby :view-by} :map-page} (om/get-props owner)
+              old-viewby :view-by
+              old-style :style} :map-page} (om/get-props owner)
             {{new-map-data :data
               new-field :geofield
               {show-hexbins? :show?
-               new-cell-width :cell-width} :hexbins
-              new-viewby :view-by} :map-page} next-props
+               new-cell-width :cell-width
+               hide-points? :hide-points?} :hexbins
+              new-viewby :view-by
+              new-style :style} :map-page} next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
             data-changed? (or (not= old-field new-field)
@@ -404,8 +407,9 @@
             new-geojson (if data-changed?
                           (mu/as-geojson new-map-data flat-form new-field)
                           geojson)
-            view-by-changed? (not= old-viewby new-viewby)
-            cell-width-changed (not= old-cell-width new-cell-width)
+            view-by-changed? (and (not= old-viewby new-viewby)
+                                  (not (nil? old-viewby)))
+            cell-width-changed? (not= old-cell-width new-cell-width)
             opts (when (and show-hexbins? view-by-changed?)
                    (vb/get-selected-ids new-viewby))
             hexbin-opts (assoc opts :cell-width new-cell-width)]
@@ -425,9 +429,16 @@
           (mu/remove-hexbins mapboxgl-map))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
-                   (or cell-width-changed view-by-changed?))
+                   (or cell-width-changed? view-by-changed?))
           (mu/remove-hexbins mapboxgl-map)
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))))))
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))
+        ;; Show/hide layers if show/hexbins toggled
+        (when show-hexbins?
+          (let [visibility (if hide-points? "none" "visible")]
+            (.setLayoutProperty
+             mapboxgl-map layer-id "visibility" visibility)
+            (.setLayoutProperty
+             mapboxgl-map "point-casting" "visibility" visibility)))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
@@ -478,27 +489,48 @@
                          [:map-page :hexbins :show?] (not show?)))}]]]))))
 
 (defn map-hexbin-slider
-  [{{{:keys [show? cell-width]} :hexbins} :map-page :as cursor} owner]
+  [{{{:keys [show? cell-width hide-points?]} :hexbins} :map-page :as cursor}
+   owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:slider-value 3})
     om/IRenderState
-    (render-state [_ _]
+    (render-state [_ {:keys [slider-value]}]
       "Render layer selector component w/css + expansion technique from
       leaflet layer control."
       (html
        (when show?
-         (let [cell-size (or cell-width hexbin-cell-width)
+         (let [values {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}
+               cell-size (or cell-width (get values slider-value))
                update-cell-width (fn [e]
-                                   (om/update!
-                                    cursor [:map-page :hexbins :cell-width]
-                                    (.. e -target -value)))]
+                                   (let
+                                    [v (js/parseInt (.. e -target -value))]
+                                     (om/set-state! owner :slider-value v)
+                                     (om/update!
+                                      cursor
+                                      [:map-page :hexbins :cell-width]
+                                      (get values v))))
+               below-1km? (> 1 cell-size)]
            [:div.map-overlay.mapboxgl-ctrl-bottom-left
             [:div.map-overlay-inner
-             [:label "Cell Width: "
-              [:span#slider-value (str cell-size " Kms")]]
-             [:input#slider
-              {:type "range" :min "10" :max "600" :step "10"
-               :value (str cell-size)
-               :on-change update-cell-width}]]]))))))
+             [:label.slider "Cell Width: "
+              [:span#slider-value (str (if below-1km?
+                                         (* 1000 cell-size)
+                                         cell-size)
+                                       (if below-1km? " Meters" " Km"))]]
+             [:input.slider#slider
+              {:type "range" :min "0" :max "8" :step "1"
+               :value slider-value
+               :on-change update-cell-width}]
+             [:input.show-points#show-points
+              {:type "checkbox"
+               :checked (when-not hide-points? "checked")
+               :on-change #(om/update!
+                            cursor
+                            [:map-page :hexbins :hide-points?]
+                            (not hide-points?))}]
+             [:label {:for "show-points"} "Show points"]]]))))))
 
 (defn map-layer-selector
   [cursor owner]
@@ -539,7 +571,8 @@
                     (om/set-state! owner :current-style style)
                     (.setStyle mapboxgl-map (get-style-url style
                                                            url
-                                                           access-token)))
+                                                           access-token))
+                    (om/update! cursor [:map-page :style] style))
                   :checked (= style current-style)}]
                 [:span " " name]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]

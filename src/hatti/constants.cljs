@@ -33,6 +33,6 @@
 (def mapping-threshold 10000)
 
 (def hexbin-cell-width 60)
-(def min-count-color "#0f5f6f8")
+(def min-count-color "#f2f5fc")
 (def max-count-color "#08519c")
 
