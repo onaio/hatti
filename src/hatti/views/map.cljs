@@ -421,9 +421,7 @@
         ;; Update layers if data changes
         (when (and data-changed? (not-empty new-field)
                    (not= geojson new-geojson))
-          (when (.getLayer mapboxgl-map layer-id)
-            (.removeLayer mapboxgl-map layer-id)
-            (.removeSource mapboxgl-map layer-id))
+          (mu/remove-layer mapboxgl-map layer-id)
           (load-mapboxgl-helper app-state owner
                                 :geojson new-geojson
                                 :geofield new-field)
@@ -431,11 +429,11 @@
         ;; Render hexbins when show? is toggled.
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)
-          (mu/remove-hexbins mapboxgl-map))
+          (mu/remove-layer mapboxgl-map "hexbins"))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed? view-by-changed?))
-          (mu/remove-hexbins mapboxgl-map)
+          (mu/remove-layer mapboxgl-map "hexbins")
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))
         ;; Show/hide layers if show/hexbins toggled
         (when show-hexbins?
@@ -507,14 +505,16 @@
       (when (om/get-state owner :zoom->bin?)
         (when-let [map (-> next-props :map-page :mapboxgl-map)]
           (let [zoom (.getZoom map)
-                value (cond
-                        (<= 0 zoom 2) 0
-                        (<= 3 zoom 5) 1
-                        (<= 6 zoom 8) 2
-                        (<= 9 zoom 11) 3
-                        (<= 12 zoom 14) 4
-                        (<= 15 zoom 17) 5
-                        (<= 18 zoom 20) 6)]
+                value (condp #(<= %2 %1) zoom
+                        -1 nil
+                        2  0
+                        5  1
+                        8  2
+                        11 3
+                        14 4
+                        17 5
+                        20 6
+                        nil)]
             (om/set-state! owner :slider-value value)))))
     om/IWillUpdate
     (will-update [_ _ {:keys [slider-value value->size]}]
@@ -537,10 +537,9 @@
            [:div.map-overlay.mapboxgl-ctrl-bottom-left
             [:div.map-overlay-inner
              [:label.slider "Cell Width: "
-              [:span#slider-value (str (if below-1km?
-                                         (* 1000 cell-size)
-                                         cell-size)
-                                       (if below-1km? " Meters" " Km"))]]
+              [:span#slider-value
+               (str (cond-> cell-size below-1km? (* 1000))
+                    (if below-1km? " Meters" " Km"))]]
              [:input.slider#slider
               {:type "range" :min "0" :max "8" :step "1"
                :value slider-value

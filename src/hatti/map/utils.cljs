@@ -512,9 +512,8 @@
   "Filter features and return only selected features. Returns all features
   features if selected-ids is nil. "
   [features selected-ids]
-  (if selected-ids
-    (filter (fn [{{:keys [_id]} :properties}] (in? selected-ids _id)) features)
-    features))
+  (cond->> features selected-ids
+           (filter (fn [{{:keys [_id]} :properties}] (in? selected-ids _id)))))
 
 (defn count-hexbin-points
   "Counts points collected into hexbins."
@@ -583,12 +582,10 @@
                                                        [max-count max-color]]}
                                   :fill-opacity 0.5}))))
 
-(defn remove-hexbins
-  "Remove hexbins layer from map"
-  [map]
-  (let [id "hexgrid"]
-    (when (.getLayer map id) (.removeSource map id))
-    (when (.getLayer map id) (.removeLayer map id))))
+(defn remove-layer
+  "Remove layer from map and it's source from map."
+  [map id]
+  (when (.getLayer map id) (.removeSource map id) (.removeLayer map id)))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
