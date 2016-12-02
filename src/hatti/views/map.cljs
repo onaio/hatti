@@ -3,6 +3,7 @@
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [clojure.string :as string]
             [chimera.js-interop :refer [json->cljs]]
+            [chimera.seq :refer [in?]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [hatti.constants :as constants :refer [_id _rank
@@ -337,14 +338,18 @@
         fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
                                (not (om/get-state owner :zoomed?)))
-                      (if-let [current-zoom (om/get-state owner :zoom)]
-                        (.setZoom mapboxgl-map current-zoom)
+                      (if (and (om/get-state owner :zoom)
+                               (om/get-state owner :loaded?))
+                        (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))
                         (mu/fitMapBounds
-                          mapboxgl-map (:id_string dataset-info) geojson))
+                         mapboxgl-map (:id_string dataset-info) geojson))
                       (om/set-state! owner :zoomed? true)))]
+    ;; Handle Map Events
     (.on mapboxgl-map "style.load" load-layers)
     (.on mapboxgl-map "render" #(fitBounds
                                  (om/get-state owner [:geojson])))
+    (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))
+
     ;; Handles change in geojson source when geofield is changed
     (when (and geojson (-> geojson :features count pos?))
       (if (or (.loaded mapboxgl-map) (om/get-state owner [:loaded?]))
@@ -359,8 +364,7 @@
       (om/set-state! owner :geojson geojson))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)
-    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)
-    (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))))
+    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
 
 (defn mapboxgl-map
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.
@@ -495,23 +499,40 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:slider-value 3})
+      {:slider-value 0
+       :zoom->bin? true
+       :value->size {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}})
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
+      (when (om/get-state owner :zoom->bin?)
+        (when-let [map (-> next-props :map-page :mapboxgl-map)]
+          (let [zoom (.getZoom map)
+                value (cond
+                        (<= 0 zoom 2) 0
+                        (<= 3 zoom 5) 1
+                        (<= 6 zoom 8) 2
+                        (<= 9 zoom 11) 3
+                        (<= 12 zoom 14) 4
+                        (<= 15 zoom 17) 5
+                        (<= 18 zoom 20) 6)]
+            (om/set-state! owner :slider-value value)))))
+    om/IWillUpdate
+    (will-update [_ _ {:keys [slider-value value->size]}]
+      (om/update! cursor [:map-page :hexbins :cell-width]
+                  (get value->size slider-value)))
     om/IRenderState
-    (render-state [_ {:keys [slider-value]}]
+    (render-state [_ {:keys [slider-value value->size]}]
       "Render layer selector component w/css + expansion technique from
       leaflet layer control."
       (html
        (when show?
-         (let [values {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}
-               cell-size (or cell-width (get values slider-value))
+         (let [cell-size (or cell-width (get value->size slider-value))
                update-cell-width (fn [e]
                                    (let
                                     [v (js/parseInt (.. e -target -value))]
-                                     (om/set-state! owner :slider-value v)
-                                     (om/update!
-                                      cursor
-                                      [:map-page :hexbins :cell-width]
-                                      (get values v))))
+                                     (om/update-state!
+                                      owner #(assoc % :zoom->bin? false
+                                                    :slider-value v))))
                below-1km? (> 1 cell-size)]
            [:div.map-overlay.mapboxgl-ctrl-bottom-left
             [:div.map-overlay-inner
