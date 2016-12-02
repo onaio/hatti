@@ -6,7 +6,7 @@
             [cljsjs.leaflet]
             [hatti.constants :as constants
              :refer  [_id _rank mapboxgl-access-token tiles-endpoint
-                      hexbin-cell-width]]
+                      hexbin-cell-width hexgrid-id]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]
             [om.core :as om :include-macros true]))
@@ -561,16 +561,15 @@
 (defn show-hexbins
   "Renders hexbin layer on map."
   [map id_string geojson opts]
-  (let [id "hexgrid"
-        hexgrid (generate-hexgrid map id_string geojson opts)
+  (let [hexgrid (generate-hexgrid map id_string geojson opts)
         {:keys [min-count max-count]} (:properties hexgrid)
         max-color (or (:cell-color opts) constants/max-count-color)
         min-color (if (= min-count max-count)
                     max-color
                     constants/min-count-color)]
     (when (and min-count max-count)
-      (add-mapboxgl-source map id {:geojson hexgrid})
-      (add-mapboxgl-layer map id
+      (add-mapboxgl-source map hexgrid-id {:geojson hexgrid})
+      (add-mapboxgl-layer map hexgrid-id
                           "fill"
                           :paint {:fill-outline-color
                                   {:property "point-count"
@@ -580,12 +579,13 @@
                                                :stops [[0 "transparent"]
                                                        [min-count min-color]
                                                        [max-count max-color]]}
-                                  :fill-opacity 0.5}))))
+                                  :fill-opacity 0.6}))))
 
 (defn remove-layer
   "Remove layer from map and it's source from map."
   [map id]
-  (when (.getLayer map id) (.removeSource map id) (.removeLayer map id)))
+  (when (.getLayer map id)
+    (.removeSource map id) (.removeLayer map id)))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
@@ -595,6 +595,7 @@
         stops (om/get-state owner :stops)
         circle-border "point-casting"]
     (when (or (-> geojson :features count pos?) tiles-url)
+      (om/set-state! owner :loaded? false)
       (add-mapboxgl-source map id_string map-data)
       (add-mapboxgl-layer map id_string layer-type :layout layout)
       (register-mapboxgl-mouse-events owner map event-chan id_string style)

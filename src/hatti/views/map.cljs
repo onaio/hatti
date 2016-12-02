@@ -6,11 +6,12 @@
             [chimera.seq :refer [in?]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :as constants :refer [_id _rank
-                                                   hexbin-cell-width
-                                                   map-styles
-                                                   mapboxgl-access-token
-                                                   mapping-threshold]]
+            [hatti.constants :refer [_id _rank
+                                     hexbin-cell-width
+                                     hexgrid-id
+                                     map-styles
+                                     mapboxgl-access-token
+                                     mapping-threshold]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.utils.style :refer [grey]]
@@ -429,11 +430,11 @@
         ;; Render hexbins when show? is toggled.
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)
-          (mu/remove-layer mapboxgl-map "hexbins"))
+          (mu/remove-layer mapboxgl-map hexgrid-id))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed? view-by-changed?))
-          (mu/remove-layer mapboxgl-map "hexbins")
+          (mu/remove-layer mapboxgl-map hexgrid-id)
           (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))
         ;; Show/hide layers if show/hexbins toggled
         (when show-hexbins?

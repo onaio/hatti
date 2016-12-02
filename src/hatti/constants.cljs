@@ -32,6 +32,7 @@
    {:style "satellite-streets" :name "Mapbox Satellite"}])
 (def mapping-threshold 10000)
 
+(def hexgrid-id "hexgrid")
 (def hexbin-cell-width 60)
 (def min-count-color "#f2f5fc")
 (def max-count-color "#08519c")
