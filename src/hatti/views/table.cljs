@@ -130,28 +130,33 @@
 
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
-  ([form] (flat-form->sg-columns form true))
-  ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
-   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-         columns (for [field (all-fields form :is-filtered-dataview?
-                                         is-filtered-dataview?)]
-                   (let [{:keys [name type full-name]
-                          {:keys [hxl]} :instance} field
-                         label (if get-label? (get-label field language) name)
-                         column-class (get-column-class field)]
-                     {:id name
-                      :field full-name
-                      :type type
-                      :name (column-name-html-string column-class label hxl)
-                      :toolTip label
-                      :sortable true
-                      :formatter (partial formatter field language)
-                      :headerCssClass (when has-hxl? "hxl-min-height")
-                      :cssClass column-class
-                      :minWidth 50
-                      :hxl hxl}))]
-     (clj->js (conj columns (actions-column owner has-hxl?))))))
+  [form & {:keys [hide-actions-column?
+                  is-filtered-dataview?
+                  get-label?
+                  language
+                  owner]
+           :or {get-label? true}}]
+  (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
+        columns (for [field (all-fields form :is-filtered-dataview?
+                                        is-filtered-dataview?)]
+                  (let [{:keys [name type full-name]
+                         {:keys [hxl]} :instance} field
+                        label (if get-label? (get-label field language) name)
+                        column-class (get-column-class field)]
+                    {:id name
+                     :field full-name
+                     :type type
+                     :name (column-name-html-string column-class label hxl)
+                     :toolTip label
+                     :sortable true
+                     :formatter (partial formatter field language)
+                     :headerCssClass (when has-hxl? "hxl-min-height")
+                     :cssClass column-class
+                     :minWidth 50
+                     :hxl hxl}))]
+    (clj->js (conj columns
+                   (when-not hide-actions-column?
+                     (actions-column owner has-hxl?))))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -212,16 +217,19 @@
    Returns [grid dataview]."
   [data form current-language is-filtered-dataview? owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
-  (let [columns (flat-form->sg-columns
-                 form true current-language
+  (let [{{{:keys [num-displayed-records
+                  total-page-count]} :paging
+          :keys [hide-actions-column?]} :table-page} @shared/app-state
+        columns (flat-form->sg-columns
+                 form
+                 :language current-language
+                 :hide-actions-column? hide-actions-column?
                  :is-filtered-dataview? is-filtered-dataview?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
-        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)
-        {{{:keys [num-displayed-records total-page-count]} :paging} :table-page}
-        @shared/app-state]
+        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
     ;; dataview / grid hookup
     (bind-external-sg-grid-event-handlers grid grid-event-handlers)
     (bind-external-sg-grid-dataview-handlers dataview dataview-event-handlers)
@@ -327,9 +335,13 @@
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
                            {:new-columns
-                            (flat-form->sg-columns flat-form
-                                                   (= :label %)
-                                                   new-language)})]
+                            (flat-form->sg-columns
+                             flat-form
+                             :get-label? (= :label %)
+                             :hide-actions-column? (-> @shared/app-state
+                                                       :table-page
+                                                       :hide-actions-column?)
+                             :language new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! name-or-label))
