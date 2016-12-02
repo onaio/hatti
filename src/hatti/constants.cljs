@@ -35,4 +35,3 @@
 (def hexbin-cell-width 60)
 (def min-count-color "#f2f5fc")
 (def max-count-color "#08519c")
-

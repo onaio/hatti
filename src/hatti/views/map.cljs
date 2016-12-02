@@ -337,9 +337,10 @@
         fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
                                (not (om/get-state owner :zoomed?)))
-                      (mu/fitMapBounds mapboxgl-map
-                                       (:id_string dataset-info)
-                                       geojson)
+                      (if-let [current-zoom (om/get-state owner :zoom)]
+                        (.setZoom mapboxgl-map current-zoom)
+                        (mu/fitMapBounds
+                          mapboxgl-map (:id_string dataset-info) geojson))
                       (om/set-state! owner :zoomed? true)))]
     (.on mapboxgl-map "style.load" load-layers)
     (.on mapboxgl-map "render" #(fitBounds
