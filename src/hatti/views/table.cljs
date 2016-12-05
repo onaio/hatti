@@ -29,11 +29,12 @@
 (defn get-extra-fields
   "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name _id :label "ID" :name _id :type
-                       "integer"}]]
-    (if is-filtered-dataview?
-      extra-field
-      (conj extra-field forms/submission-time-field))))
+  (let [id-field  [{:full-name _id
+                    :label "ID"
+                    :name _id
+                    :type "integer"}]]
+    (cond-> id-field
+      (not is-filtered-dataview?) (conj forms/submission-time-field))))
 
 (defn all-fields
   "Given a (flat-)form, returns fields for table display.
@@ -137,7 +138,8 @@
                   owner]
            :or {get-label? true}}]
   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-        columns (for [field (all-fields form :is-filtered-dataview?
+        columns (for [field (all-fields form
+                                        :is-filtered-dataview?
                                         is-filtered-dataview?)]
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
@@ -154,9 +156,9 @@
                      :cssClass column-class
                      :minWidth 50
                      :hxl hxl}))]
-    (clj->js (conj columns
-                   (when-not hide-actions-column?
-                     (actions-column owner has-hxl?))))))
+    (clj->js (cond-> columns
+               (not hide-actions-column?)
+               (conj (actions-column owner has-hxl?))))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -174,26 +176,6 @@
        :enableTextSelectionOnCells true
        :rowHeight 40
        :syncColumnCellResize false})
-
-(defn freeze-action-column!
-  "Fixes the first column on slick table on horizontal scroll"
-  []
-  (let [actions (.getElementsByClassName js/document "record-actions")
-        sg-viewport (first (.getElementsByClassName js/document
-                                                    "slick-viewport"))]
-    (doseq [action actions]
-      (let [leftOffset (js/parseInt (.-offsetLeft action))]
-        (.addEventListener sg-viewport "scroll"
-                           (fn []
-                             (let [sl (.-scrollLeft  sg-viewport)
-                                   set-border! #(set!
-                                                 (.-borderRight
-                                                  (.-style action)) %)]
-                               (if (zero? sl)
-                                 (set-border! "1px dotted #ededed")
-                                 (set-border! "1px solid silver"))
-                               (set! (.-left (.-style action))
-                                     (str (+ sl leftOffset) "px")))))))))
 
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
@@ -260,7 +242,6 @@
                     (when (= id data-id)
                       (put! shared/event-chan
                             {:submission-to-rank rank})))))
-
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
@@ -280,9 +261,12 @@
   (let [event-chan (shared/event-tap)]
     (go
       (while true
-        (let [e (<! event-chan)
-              {:keys [submission-to-rank submission-clicked submission-unclicked
-                      filter-by new-columns re-render]} e
+        (let [{:keys [submission-to-rank
+                      submission-clicked
+                      submission-unclicked
+                      filter-by
+                      new-columns
+                      re-render]} (<! event-chan)
               update-data! (partial om/update! app-state
                                     [:table-page :submission-clicked :data])
               get-submission-data (fn [field value]
@@ -323,7 +307,7 @@
 
 ;; OM COMPONENTS
 (defmethod label-changer :default
-  [_ owner]
+  [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
   (reify
     om/IInitState
     (init-state [_] {:name-or-label :label})
@@ -338,9 +322,7 @@
                             (flat-form->sg-columns
                              flat-form
                              :get-label? (= :label %)
-                             :hide-actions-column? (-> @shared/app-state
-                                                       :table-page
-                                                       :hide-actions-column?)
+                             :hide-actions-column? hide-actions-column?
                              :language new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
@@ -376,18 +358,18 @@
               :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
 (defmethod table-header :default
-  [app-state owner]
+  [cursor owner]
   (om/component
    (html
     [:div.topbar
      [:div {:id pager-id}]
-     (om/build label-changer nil)
-     (om/build table-search app-state)
+     (om/build label-changer cursor)
+     (om/build table-search cursor)
      [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
-  [data owner slick-grid-event-handlers]
   "Initializes grid + dataview, and stores them in owner's state."
+  [data owner slick-grid-event-handlers]
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
           current-language (:current
@@ -424,7 +406,7 @@
     (om/set-state! owner :resize-handler resize-handler)))
 
 (defmethod table-page :default
-  [{{:keys [active]} :views :as app-state}
+  [{{:keys [active]} :views :as cursor}
    owner
    {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
@@ -459,10 +441,10 @@
         (let [{:keys [data dataset-info]
                {:keys [prevent-scrolling-in-table-view? submission-clicked]}
                :table-page}
-              app-state
+              cursor
               {:keys [num_of_submissions]} dataset-info
               no-data? (empty? data)
-              with-info #(merge % {:dataset-info dataset-info})]
+              with-info #(merge cursor %)]
           (when active?
             (html
              [:div.table-view
@@ -476,7 +458,7 @@
                           {:opts (merge
                                   (select-keys opts #{:delete-record! :role})
                                   {:view :table})}))
-              (om/build table-header app-state)
+              (om/build table-header cursor)
               [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
                  [:p.alert.alert-warning "No data"]
@@ -486,10 +468,10 @@
       (did-mount [_]
         (when active?
           (set-window-resize-handler owner)
-          (let [data (get-in app-state [:data])]
+          (let [data (get-in cursor [:data])]
             (when-let [[grid dataview]
                        (init-grid! data owner slick-grid-event-handlers)]
-              (handle-table-events app-state grid dataview)))))
+              (handle-table-events cursor grid dataview)))))
       om/IWillUnmount
       (will-unmount [_]
         (.removeEventListener js/window
@@ -508,7 +490,7 @@
                            (init-grid! new-data
                                        owner
                                        slick-grid-event-handlers)]
-                  (handle-table-events app-state grid dataview))
+                  (handle-table-events cursor grid dataview))
                 (do ; data has changed
                   (.invalidateAllRows grid)
                   (.setItems dataview (clj->js new-data) _id)
