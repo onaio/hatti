@@ -396,15 +396,13 @@
       (let [{{old-map-data :data
               old-field :geofield
               {old-cell-width :cell-width} :hexbins
-              old-viewby :view-by
-              old-style :style} :map-page} (om/get-props owner)
+              old-viewby :view-by} :map-page} (om/get-props owner)
             {{new-map-data :data
               new-field :geofield
               {show-hexbins? :show?
                new-cell-width :cell-width
                hide-points? :hide-points?} :hexbins
-              new-viewby :view-by
-              new-style :style} :map-page} next-props
+              new-viewby :view-by} :map-page} next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
             data-changed? (or (not= old-field new-field)
@@ -500,29 +498,34 @@
     (init-state [_]
       {:slider-value 0
        :zoom->bin? true
-       :value->size {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}})
+       :value->size {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}
+       :max-bin 6})
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
-      (when (om/get-state owner :zoom->bin?)
-        (when-let [map (-> next-props :map-page :mapboxgl-map)]
-          (let [zoom (.getZoom map)
-                value (condp #(<= %2 %1) zoom
-                        -1 nil
-                        2  0
-                        5  1
-                        8  2
-                        11 3
-                        14 4
-                        17 5
-                        20 6
-                        nil)]
-            (om/set-state! owner :slider-value value)))))
+      (let [map (-> next-props :map-page :mapboxgl-map)
+            zoom (when map (.getZoom map))
+            value (condp #(<= %2 %1) zoom
+                    -1 nil
+                    2  0
+                    5  1
+                    8  2
+                    11 3
+                    14 4
+                    17 5
+                    20 6
+                    nil)]
+        (when (om/get-state owner :zoom->bin?)
+          (om/set-state! owner :slider-value value))
+      ;; allow 1km and 500m binning on zoom levels above 10
+        (if (> zoom 10)
+          (om/set-state! owner :max-bin 8)
+          (om/set-state! owner :max-bin 6))))
     om/IWillUpdate
     (will-update [_ _ {:keys [slider-value value->size]}]
       (om/update! cursor [:map-page :hexbins :cell-width]
                   (get value->size slider-value)))
     om/IRenderState
-    (render-state [_ {:keys [slider-value value->size]}]
+    (render-state [_ {:keys [slider-value value->size max-bin]}]
       "Render layer selector component w/css + expansion technique from
       leaflet layer control."
       (html
@@ -542,7 +545,7 @@
                (str (cond-> cell-size below-1km? (* 1000))
                     (if below-1km? " Meters" " Km"))]]
              [:input.slider#slider
-              {:type "range" :min "0" :max "8" :step "1"
+              {:type "range" :min "0" :max (str max-bin) :step "1"
                :value slider-value
                :on-change update-cell-width}]
              [:input.show-points#show-points
