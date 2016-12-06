@@ -6,7 +6,7 @@
             [dommy.core :as dommy]
             [hatti.shared :refer [app-state]]
             [hatti.views :refer [map-viewby-legend map-geofield-chooser]]
-            [hatti.views.map]
+            [hatti.views.map :refer [mapboxgl-map]]
             [hatti.utils.style :refer [grey]]
             [hatti.map.utils :as mu]
             [hatti.map.viewby :as vb]
@@ -92,3 +92,6 @@
       (is (= (dommy/text geo-c) (apply str (map :label geofields)))))
     (testing "radio corresponding to geofield is selected"
       (is (-> (sel :input) last (dommy/attr :checked))))))
+
+(deftest map-renders-hexgrid
+  (let [c (map-container mapboxgl-map)]))

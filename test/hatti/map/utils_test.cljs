@@ -41,12 +41,15 @@
     (is (re-find #"leaflet-container" (dommy/attr map-id "class")))
     (is (not= nil (sel1 map-id :.leaflet-map-pane)))
     (is (not= nil (sel1 map-id :.leaflet-control-zoom)))
-    (is (not= nil (sel1 map-id :.leaflet-control-layers))))
+    (is (not= nil (sel1 map-id :.leaflet-control-layers)))))
 
-  #_(testing "all mapbox-tile layers are loaded"
-      (is (= (map :name mu/mapbox-tiles)
-             (map (comp s/trim dommy/text)
-                  (-> map-id (sel1 :.leaflet-control-layers) (sel :label)))))))
+(deftest generate-hexgrid-layer
+  (let [geojson (test-geojson 30)
+        _ (.log js/console (clj->js geojson))]
+
+    (testing "turf aggregation generates hexgrid geojson"
+      (is
+       (mu/generate-hexgrid nil nil geojson nil)))))
 
 (deftest loading-and-marker-actions
   (let [chan (chan)
