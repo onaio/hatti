@@ -402,6 +402,7 @@
               {show-hexbins? :show?
                new-cell-width :cell-width
                hide-points? :hide-points?} :hexbins
+              {show-heatmap? :show?} :heatmap
               new-viewby :view-by} :map-page} next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
             {:keys [flat-form]} (om/get-shared owner)
@@ -416,7 +417,7 @@
             cell-width-changed? (not= old-cell-width new-cell-width)
             opts (when (and show-hexbins? view-by-changed?)
                    (vb/get-selected-ids new-viewby))
-            hexbin-opts (assoc opts :cell-width new-cell-width)]
+            layer-opts (assoc opts :cell-width new-cell-width)]
         ;; Update layers if data changes
         (when (and data-changed? (not-empty new-field)
                    (not= geojson new-geojson))
@@ -426,14 +427,18 @@
                                 :geofield new-field)
           (put! shared/event-chan {:data-updated true}))
         ;; Render hexbins when show? is toggled.
+        (if show-heatmap?
+          (mu/show-heatmap mapboxgl-map layer-id new-geojson layer-opts)
+          (mu/remove-layer mapboxgl-map "heatmap"))
+        ;; Render hexbins when show? is toggled.
         (if show-hexbins?
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts)
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts)
           (mu/remove-layer mapboxgl-map hexgrid-id))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed? view-by-changed?))
           (mu/remove-layer mapboxgl-map hexgrid-id)
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson hexbin-opts))
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts))
         ;; Show/hide layers if show/hexbins toggled
         (when show-hexbins?
           (let [visibility (if hide-points? "none" "visible")]
@@ -473,7 +478,8 @@
                  (get-label field) [:br]])]]]))))))
 
 (defn map-hexbin-selector
-  [{{{:keys [show?]} :hexbins} :map-page :as cursor} owner]
+  [{{{show-hexbins? :show?} :hexbins
+     {show-heatmap? :show?} :heatmap} :map-page :as cursor} owner]
   (reify
     om/IRenderState
     (render-state [_ _]
@@ -484,11 +490,18 @@
         [:div.leaflet-control.leaflet-control-layers
          [:a
           {:title "Hexbins Layer"
-           :class (str "hexbin-layer-toggle" (when show? " active"))
+           :class (str "layer-toggle hexbin" (when show-hexbins? " active"))
            :on-click
            (click-fn
             #(om/update! cursor
-                         [:map-page :hexbins :show?] (not show?)))}]]]))))
+                         [:map-page :hexbins :show?] (not show-hexbins?)))}]
+         [:a
+          {:title "Heatmap Layer"
+           :class (str "layer-toggle heatmap" (when show-heatmap? " active"))
+           :on-click
+           (click-fn
+            #(om/update! cursor
+                         [:map-page :heatmap :show?] (not show-heatmap?)))}]]]))))
 
 (defn map-hexbin-slider
   [{{{:keys [show? cell-width hide-points?]} :hexbins} :map-page :as cursor}
