@@ -617,7 +617,7 @@
                                         :cluster true
                                         :clusterRadius 20
                                         :clusterMaxZoom 15})
-    (for [[i [point-count color]] layers]
+    (doseq [[i [point-count color]] layers]
       (add-mapboxgl-layer map
                           "heatmap"
                           "circle"
@@ -640,8 +640,8 @@
 (defn remove-layer
   "Remove layer from map and it's source from map."
   [map id]
-  (when (.getLayer map id)
-    (.removeSource map id) (.removeLayer map id)))
+  (when (.getLayer map id) (.removeLayer map id))
+  (when (.getSource map id) (.removeSource map id)))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."

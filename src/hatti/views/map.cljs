@@ -429,7 +429,10 @@
         ;; Render hexbins when show? is toggled.
         (if show-heatmap?
           (mu/show-heatmap mapboxgl-map layer-id new-geojson layer-opts)
-          (mu/remove-layer mapboxgl-map "heatmap"))
+          (do
+            (mu/remove-layer mapboxgl-map "heatmap")
+            (doseq [i (range 5)]
+              (mu/remove-layer mapboxgl-map (str "cluster-" i)))))
         ;; Render hexbins when show? is toggled.
         (if show-hexbins?
           (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts)
@@ -494,14 +497,16 @@
            :on-click
            (click-fn
             #(om/update! cursor
-                         [:map-page :hexbins :show?] (not show-hexbins?)))}]
+                         [:map-page :hexbins :show?]
+                         (not show-hexbins?)))}]
          [:a
           {:title "Heatmap Layer"
            :class (str "layer-toggle heatmap" (when show-heatmap? " active"))
            :on-click
            (click-fn
             #(om/update! cursor
-                         [:map-page :heatmap :show?] (not show-heatmap?)))}]]]))))
+                         [:map-page :heatmap :show?]
+                         (not show-heatmap?)))}]]]))))
 
 (defn map-hexbin-slider
   [{{{:keys [show? cell-width hide-points?]} :hexbins} :map-page :as cursor}
