@@ -3,12 +3,15 @@
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [clojure.string :as string]
             [chimera.js-interop :refer [json->cljs]]
+            [chimera.seq :refer [in?]]
             [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
-            [hatti.constants :as constants :refer [_id _rank
-                                                   map-styles
-                                                   mapboxgl-access-token
-                                                   mapping-threshold]]
+            [hatti.constants :refer [_id _rank
+                                     hexbin-cell-width
+                                     hexgrid-id
+                                     map-styles
+                                     mapboxgl-access-token
+                                     mapping-threshold]]
             [hatti.ona.forms :as f :refer [format-answer get-label get-icon]]
             [hatti.utils :refer [click-fn]]
             [hatti.utils.style :refer [grey]]
@@ -310,69 +313,16 @@
         (om/build submission-view cursor {:opts (merge opts
                                                        {:view :map})})))))
 
-(defn- load-geojson-helper
-  "Helper for map-and-markers component (see below); loads geojson onto map.
-   If map doesn't exists in local-state, creates it and puts it there.
-   geojson, feature-layer, id-marker-map in local state are also updated."
-  [owner geojson]
-  (let [leaflet-map (or (om/get-state owner :leaflet-map)
-                        (mu/create-map (om/get-node owner)
-                                       (om/get-shared owner :map-config)))
-        {:keys [feature-layer id->marker]}
-        (mu/load-geo-json leaflet-map geojson shared/event-chan :rezoom? true)]
-    (om/set-state! owner :leaflet-map leaflet-map)
-    (om/set-state! owner :feature-layer feature-layer)
-    (om/set-state! owner :id-marker-map id->marker)
-    (om/set-state! owner :geojson geojson)))
-
-(defmethod map-and-markers :default [app-state owner]
-  "Map and markers. Initializes leaflet map + adds geojson data to it.
-   Cursor is at :map-page"
-  (reify
-    om/IRenderState
-    (render-state [_ _]
-      "render-state simply renders an emtpy div that leaflet will render into."
-      (html [:div {:id "map"}]))
-    om/IDidMount
-    (did-mount [_]
-      "did-mount loads geojson on map, and starts the event handling loop."
-      (let [{{:keys [data]} :map-page} app-state
-            form (om/get-shared owner :flat-form)
-            geojson (mu/as-geojson data form)
-            rerender! #(mu/re-render-map! (om/get-state owner :leaflet-map)
-                                          (om/get-state owner :feature-layer))]
-        (load-geojson-helper owner geojson)
-        (handle-map-events app-state
-                           {:re-render! rerender!
-                            :get-id-marker-map
-                            #(om/get-state owner :id-marker-map)})))
-    om/IWillReceiveProps
-    (will-receive-props [_ next-props]
-      "will-recieve-props resets leaflet geojson if the map data has changed."
-      (let [{{old-data :data} :map-page} (om/get-props owner)
-            {{new-data :data} :map-page} next-props
-            old-field (get-in (om/get-props owner) [:map-page :geofield])
-            new-field (get-in next-props [:map-page :geofield])]
-        (when (or (not= old-field new-field)
-                  (not= (count old-data) (count new-data))
-                  (not= old-data new-data))
-          (let [{:keys [flat-form]} (om/get-shared owner)
-                {:keys [leaflet-map feature-layer geojson]} (om/get-state owner)
-                new-geojson (mu/as-geojson new-data flat-form new-field)]
-            (when (not= geojson new-geojson)
-              (when leaflet-map (.removeLayer leaflet-map feature-layer))
-              (load-geojson-helper owner new-geojson)
-              (put! shared/event-chan {:data-updated true}))))))))
-
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info] {:keys [tiles-server]} :map-page
-    :as app-state} owner & {:keys [geojson geofield]}]
+  [{:keys [dataset-info] {:keys [tiles-server]} :map-page :as app-state}
+   owner & {:keys [geojson geofield]}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
         {:keys [flat-form]} (om/get-shared owner)
+
         ;; Only use tiles server endpoint as source loading a large dataset,
         ;;otherwise genereated geojson will be rendered on map.
         tiles-endpoint (when (and (> (:num_of_submissions dataset-info)
@@ -385,18 +335,24 @@
                        mapboxgl-map shared/event-chan id_string
                        :tiles-url tiles-endpoint
                        :geojson geojson
-                       :geofield geofield :owner owner)
+                       :geofield geofield
+                       :owner owner)
                       (om/set-state! owner :zoomed? false))
         fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
                                (not (om/get-state owner :zoomed?)))
-                      (mu/fitMapBounds mapboxgl-map
-                                       (:id_string dataset-info)
-                                       geojson)
+                      (if (and (om/get-state owner :zoom)
+                               (om/get-state owner :loaded?))
+                        (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))
+                        (mu/fitMapBounds
+                         mapboxgl-map (:id_string dataset-info) geojson))
                       (om/set-state! owner :zoomed? true)))]
+    ;; Handle Map Events
     (.on mapboxgl-map "style.load" load-layers)
     (.on mapboxgl-map "render" #(fitBounds
                                  (om/get-state owner [:geojson])))
+    (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))
+
     ;; Handles change in geojson source when geofield is changed
     (when (and geojson (-> geojson :features count pos?))
       (if (or (.loaded mapboxgl-map) (om/get-state owner [:loaded?]))
@@ -426,38 +382,75 @@
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
-      (let [re-render! #(identity "")]
-        (load-mapboxgl-helper app-state owner)
-        (handle-map-events
-         app-state
-         (merge
-          (select-keys opts [:chart-get :data-get])
-          {:owner owner
-           :re-render! re-render!
-           :get-id-marker-map  #(om/get-state owner :id-marker-map)}))))
+      (load-mapboxgl-helper app-state owner)
+      (handle-map-events
+       app-state
+       (merge
+        (select-keys opts [:chart-get :data-get])
+        {:owner owner
+         :get-id-marker-map  #(om/get-state owner :id-marker-map)})))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets mapboxglmap
-      swiches to geojson source if the map data has changed to geoshapes."
-      (let [{{old-map-data :data} :map-page} (om/get-props owner)
-            {{new-map-data :data} :map-page}  next-props
-            old-field (get-in (om/get-props owner) [:map-page :geofield])
-            new-field (get-in next-props [:map-page :geofield])]
-        (when (or (not= old-field new-field)
-                  (not= (count old-map-data) (count new-map-data))
-                  (not= old-map-data old-map-data))
-          (let [{:keys [flat-form]} (om/get-shared owner)
-                {:keys [mapboxgl-map layer-id geojson]}
-                (om/get-state owner)
-                new-geojson (mu/as-geojson new-map-data flat-form new-field)]
-            (when (and (not-empty new-field) (not= geojson new-geojson))
-              (when (.getLayer mapboxgl-map layer-id)
-                (.removeLayer mapboxgl-map layer-id)
-                (.removeSource mapboxgl-map layer-id))
-              (load-mapboxgl-helper app-state owner
-                                    :geojson new-geojson
-                                    :geofield new-field)
-              (put! shared/event-chan {:data-updated true}))))))))
+      switches to geojson source if the map data has changed to geoshapes."
+      (let [{{old-map-data :data
+              old-field :geofield
+              {old-cell-width :cell-width} :hexbins
+              old-viewby :view-by} :map-page} (om/get-props owner)
+            {{new-map-data :data
+              new-field :geofield
+              {show-hexbins? :show?
+               new-cell-width :cell-width
+               hide-points? :hide-points?} :hexbins
+              {show-heatmap? :show?} :heatmap
+              new-viewby :view-by} :map-page} next-props
+            {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
+            {:keys [flat-form]} (om/get-shared owner)
+            data-changed? (or (not= old-field new-field)
+                              (not= (count old-map-data) (count new-map-data))
+                              (not= old-map-data old-map-data))
+            new-geojson (if data-changed?
+                          (mu/as-geojson new-map-data flat-form new-field)
+                          geojson)
+            view-by-changed? (and (not= old-viewby new-viewby)
+                                  (not (nil? old-viewby)))
+            cell-width-changed? (not= old-cell-width new-cell-width)
+            opts (when (and show-hexbins? view-by-changed?)
+                   (vb/get-selected-ids new-viewby))
+            layer-opts (assoc opts
+                              :cell-width new-cell-width
+                              :hide-points? hide-points?)]
+        ;; Update layers if data changes
+        (when (and data-changed? (not-empty new-field)
+                   (not= geojson new-geojson))
+          (mu/remove-layer mapboxgl-map layer-id)
+          (load-mapboxgl-helper app-state owner
+                                :geojson new-geojson
+                                :geofield new-field)
+          (put! shared/event-chan {:data-updated true}))
+        ;; update map state with layer options
+        (om/set-state! owner :layer-opts layer-opts)
+        ;; Render heatmap layer when show? :heatmap is toggled.
+        (if show-heatmap?
+          (mu/show-heatmap owner mapboxgl-map layer-id new-geojson layer-opts)
+          (do
+            (mu/remove-layer mapboxgl-map "heatmap")
+            (doseq [i (range 5)]
+              (mu/remove-layer mapboxgl-map (str "cluster-" i)))
+            (om/set-state! owner :show-heatmap? false)))
+        ;; Render hexbins layer when show? :hexbin is toggled.
+        (if show-hexbins?
+          (mu/show-hexbins owner mapboxgl-map
+                           layer-id new-geojson layer-opts)
+          (do
+            (mu/remove-layer mapboxgl-map hexgrid-id)
+            (om/set-state! owner :show-hexbins? false)))
+        ;; Re-render hexbins when cell-width or view-by are changed.
+        (when (and show-hexbins?
+                   (or cell-width-changed? view-by-changed?))
+          (mu/remove-layer mapboxgl-map hexgrid-id)
+          (mu/show-hexbins owner mapboxgl-map layer-id
+                           new-geojson layer-opts))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
@@ -476,7 +469,7 @@
         (let [with-suffix #(if-not (om/get-state owner :expanded) %
                                    (str % " leaflet-control-layers-expanded"))]
           (html
-           [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "148px"}}
+           [:div.leaflet-left.leaflet-bottom.geofield-selector
             [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                    :on-mouse-enter #(om/set-state! owner :expanded true)
                    :on-mouse-leave #(om/set-state! owner :expanded false)}
@@ -488,6 +481,101 @@
                   {:type "radio" :checked (= field geofield)
                    :on-click (click-fn #(om/update! geofield field))}]
                  (get-label field) [:br]])]]]))))))
+
+(defn map-hexbin-selector
+  [{{{show-hexbins? :show?} :hexbins
+     {show-heatmap? :show?} :heatmap} :map-page :as cursor} owner]
+  (reify
+    om/IRenderState
+    (render-state [_ _]
+      "Render hexbin selector component w/css + expansion technique from
+      leaflet layer control."
+      (html
+       [:div.leaflet-left.leaflet-bottom.hexbin-selector
+        [:div.leaflet-control.leaflet-control-layers
+         [:a
+          {:title "Hexbins Layer"
+           :class (str "layer-toggle hexbin" (when show-hexbins? " active"))
+           :on-click
+           (click-fn
+            #(om/update! cursor
+                         [:map-page :hexbins :show?]
+                         (not show-hexbins?)))}]
+         [:a
+          {:title "Heatmap Layer"
+           :class (str "layer-toggle heatmap" (when show-heatmap? " active"))
+           :on-click
+           (click-fn
+            #(om/update! cursor
+                         [:map-page :heatmap :show?]
+                         (not show-heatmap?)))}]]]))))
+
+(defn map-hexbin-slider
+  [{{{:keys [show? cell-width hide-points?]} :hexbins} :map-page :as cursor}
+   owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:slider-value 0
+       :zoom->bin? true
+       :value->size {0 500 1 250 2 100 3 50 4 25 5 10 6 5 7 1 8 0.5}
+       :max-bin 6})
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
+      (let [map (-> next-props :map-page :mapboxgl-map)
+            zoom (when map (.getZoom map))
+            value (condp #(<= %2 %1) zoom
+                    -1 nil
+                    2  0
+                    5  1
+                    8  2
+                    11 3
+                    14 4
+                    17 5
+                    20 6
+                    nil)]
+        (when (om/get-state owner :zoom->bin?)
+          (om/set-state! owner :slider-value value))
+      ;; allow 1km and 500m binning on zoom levels above 10
+        (if (> zoom 10)
+          (om/set-state! owner :max-bin 8)
+          (om/set-state! owner :max-bin 6))))
+    om/IWillUpdate
+    (will-update [_ _ {:keys [slider-value value->size]}]
+      (om/update! cursor [:map-page :hexbins :cell-width]
+                  (get value->size slider-value)))
+    om/IRenderState
+    (render-state [_ {:keys [slider-value value->size max-bin]}]
+      "Render layer selector component w/css + expansion technique from
+      leaflet layer control."
+      (html
+       (when show?
+         (let [cell-size (or cell-width (get value->size slider-value))
+               update-cell-width (fn [e]
+                                   (let
+                                    [v (js/parseInt (.. e -target -value))]
+                                     (om/update-state!
+                                      owner #(assoc % :zoom->bin? false
+                                                    :slider-value v))))
+               below-1km? (> 1 cell-size)]
+           [:div.map-overlay.mapboxgl-ctrl-bottom-left
+            [:div.map-overlay-inner
+             [:label.slider "Cell Width: "
+              [:span#slider-value
+               (str (cond-> cell-size below-1km? (* 1000))
+                    (if below-1km? " Meters" " Km"))]]
+             [:input.slider#slider
+              {:type "range" :min "0" :max (str max-bin) :step "1"
+               :value slider-value
+               :on-change update-cell-width}]
+             [:input.show-points#show-points
+              {:type "checkbox"
+               :checked (when-not hide-points? "checked")
+               :on-change #(om/update!
+                            cursor
+                            [:map-page :hexbins :hide-points?]
+                            (not hide-points?))}]
+             [:label {:for "show-points"} "Show points"]]]))))))
 
 (defn map-layer-selector
   [cursor owner]
@@ -507,7 +595,7 @@
             custom-styles (om/get-shared owner
                                          [:map-config :custom-styles])]
         (html
-         [:div.leaflet-left.leaflet-bottom {:style {:margin-bottom "105px"}}
+         [:div.leaflet-left.leaflet-bottom.layer-selector
           [:div {:class (with-suffix "leaflet-control leaflet-control-layers")
                  :aria-haspopup "true"}
            [:a.leaflet-control-layers-toggle
@@ -528,7 +616,8 @@
                     (om/set-state! owner :current-style style)
                     (.setStyle mapboxgl-map (get-style-url style
                                                            url
-                                                           access-token)))
+                                                           access-token))
+                    (om/update! cursor [:map-page :style] style))
                   :checked (= style current-style)}]
                 [:span " " name]])]
             [:div.leaflet-control-layers-separator {:style {:display "none"}}]
@@ -551,6 +640,12 @@
           (om/build map-geofield-chooser
                     (get-in cursor [:map-page :geofield])
                     {:opts {:geofields (filter f/geofield? form)}})
+          (om/build map-hexbin-selector
+                    cursor
+                    {:opts opts})
+          (om/build map-hexbin-slider
+                    cursor
+                    {:opts opts})
           (om/build map-layer-selector
                     cursor
                     {:opts opts})

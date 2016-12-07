@@ -1,10 +1,12 @@
 (ns hatti.map.utils
   (:use [cljs.reader :only [read-string]])
-  (:require [clojure.string :as string]
+  (:require [chimera.seq :refer [in?]]
+            [clojure.string :as string]
             [cljs.core.async :refer [put!]]
             [cljsjs.leaflet]
-            [hatti.constants :refer [_id _rank
-                                     mapboxgl-access-token tiles-endpoint]]
+            [hatti.constants :as constants
+             :refer  [_id _rank mapboxgl-access-token tiles-endpoint
+                      hexbin-cell-width hexgrid-id]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]
             [om.core :as om :include-macros true]))
@@ -313,17 +315,26 @@
 (defn add-mapboxgl-source
   "Add map source. This is called with either tiles-url or geoson which
   determins the source type (Vector or  GeosJSON). "
-  [map id_string {:keys [tiles-url geojson]}]
-  (let [tiles #js [tiles-url]
+  [map id_string {:keys [tiles-url geojson
+                         cluster clusterRadius clusterMaxZoom]
+                  :or {cluster false}}]
+  (let [geojson-source-defn {:type "geojson"
+                             :data geojson
+                             :cluster cluster}
         source (cond
-                 geojson (clj->js {:type "geojson" :data geojson})
-                 tiles #js {:type "vector" :tiles tiles})]
+                 geojson (clj->js (cond-> geojson-source-defn
+                                    clusterRadius
+                                    (assoc :clusterRadius clusterRadius)
+                                    clusterMaxZoom
+                                    (assoc :clusterMaxZoom clusterMaxZoom)))
+                 tiles-url (clj->js {:type "vector"
+                                     :tiles [tiles-url]}))]
     (when-not (.getSource map id_string)
       (.addSource map id_string source))))
 
 (defn add-mapboxgl-layer
   "Add map layer from available sources."
-  [map id_string layer-type & {:keys [layer-id layout paint]}]
+  [map id_string layer-type & {:keys [layer-id layout paint filter]}]
   (let [l-id (or layer-id id_string)
         layer-def {:id l-id
                    :type layer-type
@@ -331,7 +342,8 @@
                    :source-layer "logger_instance_geom"}
         layer (clj->js (cond-> layer-def
                          paint (assoc :paint paint)
-                         layout (assoc :layout layout)))]
+                         layout (assoc :layout layout)
+                         filter (assoc :filter filter)))]
     (when-not (.getLayer map l-id)
       (.addLayer map layer id_string))))
 
@@ -506,24 +518,164 @@
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
+(defn filter-selected-features
+  "Filter features and return only selected features. Returns all features
+  features if selected-ids is nil. "
+  [features selected-ids]
+  (cond->> features selected-ids
+           (filter (fn [{{:keys [_id]} :properties}] (in? selected-ids _id)))))
+
+(defn count-hexbin-points
+  "Counts points collected into hexbins."
+  [hexbins]
+  (for [{{:keys [points]} :properties :as feature} (:features hexbins)
+        :let [point-count (count points)]]
+    (when (pos? point-count)
+      (assoc feature :properties {:point-count point-count}))))
+
+(defn get-rendered-features
+  [map layer-id & {:keys [geojson selected-ids]}]
+  "Returns geojson object of features rendered on map."
+  (let [get-rendered-features #(.queryRenderedFeatures
+                                map (clj->js {:layers [layer-id]}))
+        rendered-features (or geojson
+                              {:type "FeatureCollection"
+                               :features (get-rendered-features)})]
+    (update-in
+     rendered-features
+     [:features]
+     #(filter-selected-features % selected-ids))))
+
+(defn generate-hexgrid
+  "Generates hexbins with point count aggregation given rendered
+  layer-id or geojson."
+  [map layer-id geojson {:keys [cell-width selected-ids]}]
+  (let [rendered-features (get-rendered-features
+                           map layer-id
+                           :geojson geojson
+                           :selected-ids selected-ids)
+        js-rendered-features (clj->js rendered-features)
+        ;; Get bounding box for rendered features.
+        bbox (.bbox js/turf js-rendered-features)
+        cellWidth (or cell-width hexbin-cell-width)
+        units "kilometers"
+        ;; Generete dynaminc hexgrid using  bounding box.
+        hexgrid (.hexGrid js/turf bbox cellWidth units)
+        ;; Collect point ids within each polygon area.
+        hex-collection (.collect js/turf
+                                 hexgrid js-rendered-features "_id" "points")
+        hexbins (js->clj hex-collection :keywordize-keys true)
+        ;; Count points on hexbins and remove empty bins.
+        features-w-count (remove nil? (count-hexbin-points hexbins))
+        point-counts (for [f features-w-count]
+                       (-> f :properties :point-count))]
+    ;; Return hexbins with updated point-counts.
+    (assoc hexbins
+           :features features-w-count
+           :properties {:min-count (apply min point-counts)
+                        :max-count (apply max point-counts)})))
+
+(defn show-hexbins
+  "Renders hexbin layer on map."
+  [owner map id_string geojson opts]
+  (let [hexgrid (generate-hexgrid map id_string geojson opts)
+        {:keys [min-count max-count]} (:properties hexgrid)
+        max-color (or (:cell-color opts) constants/max-count-color)
+        min-color (if (= min-count max-count)
+                    max-color
+                    constants/min-count-color)
+        visibility (if (:hide-points? opts)
+                     "none" "visible")]
+    (when (and min-count max-count)
+      (add-mapboxgl-source map hexgrid-id {:geojson hexgrid})
+      (add-mapboxgl-layer map hexgrid-id
+                          "fill"
+                          :paint {:fill-outline-color
+                                  {:property "point-count"
+                                   :stops [[0 "transparent"]
+                                           [max-count "white"]]}
+                                  :fill-color {:property "point-count"
+                                               :stops [[0 "transparent"]
+                                                       [min-count min-color]
+                                                       [max-count max-color]]}
+                                  :fill-opacity 0.6})
+      (.setLayoutProperty
+       map id_string "visibility" visibility)
+      (.setLayoutProperty
+       map "point-casting" "visibility" visibility)
+      (om/set-state! owner :show-hexbins? true))))
+
+(defn show-heatmap
+  "Renders heatmap layer on map."
+  [owner map id_string geojson {:keys [selected-ids]}]
+  (let [rendered-features (get-rendered-features
+                           map id_string
+                           :geojson geojson
+                           :selected-ids selected-ids)
+        layers (map-indexed (fn [idx item] [idx item])
+                            [[0 "blue"]
+                             [10 "cyan"]
+                             [50 "green"]
+                             [100 "orange"]
+                             [200 "red"]])
+        layer-count (count layers)]
+    (add-mapboxgl-source map "heatmap" {:geojson rendered-features
+                                        :cluster true
+                                        :clusterRadius 20
+                                        :clusterMaxZoom 15})
+    (doseq [[i [point-count color]] layers]
+      (add-mapboxgl-layer map
+                          "heatmap"
+                          "circle"
+                          :layer-id (str "cluster-" i)
+                          :paint {:circle-color color
+                                  :circle-radius 70
+                                  :circle-blur 1
+                                  :circle-opacity 0.7}
+                          :filter (if (= i (dec layer-count))
+                                    [">=" "point_count" point-count]
+                                    ["all"
+                                     [">="  "point_count"  point-count]
+                                     ["<"  "point_count"
+                                      (->> i
+                                           inc
+                                           (nth layers)
+                                           second
+                                           first)]])))
+    (om/set-state! owner :show-heatmap? true)))
+
+(defn remove-layer
+  "Remove layer from map and it's source from map."
+  [map id]
+  (when (.getLayer map id) (.removeLayer map id))
+  (when (.getSource map id) (.removeSource map id)))
+
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
   [map event-chan id_string &
    {:keys [geofield owner tiles-url geojson] :as map-data}]
   (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
-        stops (om/get-state owner :stops)
+        {:keys [stops layer-opts show-hexbins? show-heatmap?]}
+        (om/get-state owner)
         circle-border "point-casting"]
     (when (or (-> geojson :features count pos?) tiles-url)
+      (om/set-state! owner :loaded? false)
       (add-mapboxgl-source map id_string map-data)
       (add-mapboxgl-layer map id_string layer-type :layout layout)
       (register-mapboxgl-mouse-events owner map event-chan id_string style)
       (set-mapboxgl-paint-property
        map id_string (get-style-properties style :normal :stops stops))
+      ;; add layer that acts as border for point type layers,
+      ;; otherwise remove the layer if it exists
       (if (= :point style)
         (add-mapboxgl-layer map id_string layer-type
                             :layer-id circle-border
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+      (when show-hexbins? (show-hexbins owner map id_string geojson
+                                        layer-opts))
+      (when show-heatmap? (show-heatmap owner map id_string geojson
+                                        layer-opts))
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 
@@ -533,3 +685,11 @@
   (set-mapboxgl-paint-property
    (om/get-state owner :mapboxgl-map) (om/get-state owner :layer-id)
    (get-style-properties (om/get-state owner :style) :normal)))
+
+(defn set-zoom-level
+  "Update map zoom level in local component state on zoom event."
+  [owner]
+  (let [{:keys [mapboxgl-map zoom]} (om/get-state owner)
+        next-zoom (.getZoom mapboxgl-map)]
+    (when (not= zoom next-zoom)
+      (om/set-state! owner :zoom next-zoom))))

@@ -41,12 +41,7 @@
     (is (re-find #"leaflet-container" (dommy/attr map-id "class")))
     (is (not= nil (sel1 map-id :.leaflet-map-pane)))
     (is (not= nil (sel1 map-id :.leaflet-control-zoom)))
-    (is (not= nil (sel1 map-id :.leaflet-control-layers))))
-
-  #_(testing "all mapbox-tile layers are loaded"
-      (is (= (map :name mu/mapbox-tiles)
-             (map (comp s/trim dommy/text)
-                  (-> map-id (sel1 :.leaflet-control-layers) (sel :label)))))))
+    (is (not= nil (sel1 map-id :.leaflet-control-layers)))))
 
 (deftest loading-and-marker-actions
   (let [chan (chan)
