@@ -43,14 +43,6 @@
     (is (not= nil (sel1 map-id :.leaflet-control-zoom)))
     (is (not= nil (sel1 map-id :.leaflet-control-layers)))))
 
-(deftest generate-hexgrid-layer
-  (let [geojson (test-geojson 30)
-        _ (.log js/console (clj->js geojson))]
-
-    (testing "turf aggregation generates hexgrid geojson"
-      (is
-       (mu/generate-hexgrid nil nil geojson nil)))))
-
 (deftest loading-and-marker-actions
   (let [chan (chan)
         N 10
