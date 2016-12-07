@@ -577,13 +577,15 @@
 
 (defn show-hexbins
   "Renders hexbin layer on map."
-  [map id_string geojson opts]
+  [owner map id_string geojson opts]
   (let [hexgrid (generate-hexgrid map id_string geojson opts)
         {:keys [min-count max-count]} (:properties hexgrid)
         max-color (or (:cell-color opts) constants/max-count-color)
         min-color (if (= min-count max-count)
                     max-color
-                    constants/min-count-color)]
+                    constants/min-count-color)
+        visibility (if (:hide-points? opts)
+                     "none" "visible")]
     (when (and min-count max-count)
       (add-mapboxgl-source map hexgrid-id {:geojson hexgrid})
       (add-mapboxgl-layer map hexgrid-id
@@ -596,11 +598,16 @@
                                                :stops [[0 "transparent"]
                                                        [min-count min-color]
                                                        [max-count max-color]]}
-                                  :fill-opacity 0.6}))))
+                                  :fill-opacity 0.6})
+      (.setLayoutProperty
+       map id_string "visibility" visibility)
+      (.setLayoutProperty
+       map "point-casting" "visibility" visibility)
+      (om/set-state! owner :show-hexbins? true))))
 
 (defn show-heatmap
   "Renders heatmap layer on map."
-  [map id_string geojson {:keys [selected-ids]}]
+  [owner map id_string geojson {:keys [selected-ids]}]
   (let [rendered-features (get-rendered-features
                            map id_string
                            :geojson geojson
@@ -609,7 +616,7 @@
                             [[0 "blue"]
                              [10 "cyan"]
                              [50 "green"]
-                             [100 "yellow"]
+                             [100 "orange"]
                              [200 "red"]])
         layer-count (count layers)]
     (add-mapboxgl-source map "heatmap" {:geojson rendered-features
@@ -634,7 +641,8 @@
                                            inc
                                            (nth layers)
                                            second
-                                           first)]])))))
+                                           first)]])))
+    (om/set-state! owner :show-heatmap? true)))
 
 (defn remove-layer
   "Remove layer from map and it's source from map."
@@ -647,7 +655,8 @@
   [map event-chan id_string &
    {:keys [geofield owner tiles-url geojson] :as map-data}]
   (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
-        stops (om/get-state owner :stops)
+        {:keys [stops layer-opts show-hexbins? show-heatmap?]}
+        (om/get-state owner)
         circle-border "point-casting"]
     (when (or (-> geojson :features count pos?) tiles-url)
       (om/set-state! owner :loaded? false)
@@ -663,6 +672,10 @@
                             :layer-id circle-border
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+      (when show-hexbins? (show-hexbins owner map id_string geojson
+                                        layer-opts))
+      (when show-heatmap? (show-heatmap owner map id_string geojson
+                                        layer-opts))
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 

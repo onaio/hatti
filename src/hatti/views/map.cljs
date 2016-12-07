@@ -316,12 +316,13 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info] {:keys [tiles-server]} :map-page
-    :as app-state} owner & {:keys [geojson geofield]}]
+  [{:keys [dataset-info] {:keys [tiles-server]} :map-page :as app-state}
+   owner & {:keys [geojson geofield]}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
         {:keys [flat-form]} (om/get-shared owner)
+
         ;; Only use tiles server endpoint as source loading a large dataset,
         ;;otherwise genereated geojson will be rendered on map.
         tiles-endpoint (when (and (> (:num_of_submissions dataset-info)
@@ -334,7 +335,8 @@
                        mapboxgl-map shared/event-chan id_string
                        :tiles-url tiles-endpoint
                        :geojson geojson
-                       :geofield geofield :owner owner)
+                       :geofield geofield
+                       :owner owner)
                       (om/set-state! owner :zoomed? false))
         fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
@@ -380,19 +382,17 @@
     om/IDidMount
     (did-mount [_]
       "did-mount loads geojson on map, and starts the event handling loop."
-      (let [re-render! #(identity "")]
-        (load-mapboxgl-helper app-state owner)
-        (handle-map-events
-         app-state
-         (merge
-          (select-keys opts [:chart-get :data-get])
-          {:owner owner
-           :re-render! re-render!
-           :get-id-marker-map  #(om/get-state owner :id-marker-map)}))))
+      (load-mapboxgl-helper app-state owner)
+      (handle-map-events
+       app-state
+       (merge
+        (select-keys opts [:chart-get :data-get])
+        {:owner owner
+         :get-id-marker-map  #(om/get-state owner :id-marker-map)})))
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       "will-recieve-props resets mapboxglmap
-      swiches to geojson source if the map data has changed to geoshapes."
+      switches to geojson source if the map data has changed to geoshapes."
       (let [{{old-map-data :data
               old-field :geofield
               {old-cell-width :cell-width} :hexbins
@@ -417,7 +417,9 @@
             cell-width-changed? (not= old-cell-width new-cell-width)
             opts (when (and show-hexbins? view-by-changed?)
                    (vb/get-selected-ids new-viewby))
-            layer-opts (assoc opts :cell-width new-cell-width)]
+            layer-opts (assoc opts
+                              :cell-width new-cell-width
+                              :hide-points? hide-points?)]
         ;; Update layers if data changes
         (when (and data-changed? (not-empty new-field)
                    (not= geojson new-geojson))
@@ -426,27 +428,29 @@
                                 :geojson new-geojson
                                 :geofield new-field)
           (put! shared/event-chan {:data-updated true}))
-        ;; Render hexbins when show? is toggled.
+        ;; update map state with layer options
+        (om/set-state! owner :layer-opts layer-opts)
+        ;; Render heatmap layer when show? :heatmap is toggled.
         (if show-heatmap?
-          (mu/show-heatmap mapboxgl-map layer-id new-geojson layer-opts)
+          (mu/show-heatmap owner mapboxgl-map layer-id new-geojson layer-opts)
           (do
             (mu/remove-layer mapboxgl-map "heatmap")
             (doseq [i (range 5)]
-              (mu/remove-layer mapboxgl-map (str "cluster-" i)))))
-        ;; Render hexbins when show? is toggled.
+              (mu/remove-layer mapboxgl-map (str "cluster-" i)))
+            (om/set-state! owner :show-heatmap? false)))
+        ;; Render hexbins layer when show? :hexbin is toggled.
         (if show-hexbins?
-          (let [visibility (if hide-points? "none" "visible")]
-            (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts)
-            (.setLayoutProperty
-             mapboxgl-map layer-id "visibility" visibility)
-            (.setLayoutProperty
-             mapboxgl-map "point-casting" "visibility" visibility))
-          (mu/remove-layer mapboxgl-map hexgrid-id))
+          (mu/show-hexbins owner mapboxgl-map
+                           layer-id new-geojson layer-opts)
+          (do
+            (mu/remove-layer mapboxgl-map hexgrid-id)
+            (om/set-state! owner :show-hexbins? false)))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed? view-by-changed?))
           (mu/remove-layer mapboxgl-map hexgrid-id)
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts))))))
+          (mu/show-hexbins owner mapboxgl-map layer-id
+                           new-geojson layer-opts))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]
