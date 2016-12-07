@@ -435,20 +435,18 @@
               (mu/remove-layer mapboxgl-map (str "cluster-" i)))))
         ;; Render hexbins when show? is toggled.
         (if show-hexbins?
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts)
+          (let [visibility (if hide-points? "none" "visible")]
+            (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts)
+            (.setLayoutProperty
+             mapboxgl-map layer-id "visibility" visibility)
+            (.setLayoutProperty
+             mapboxgl-map "point-casting" "visibility" visibility))
           (mu/remove-layer mapboxgl-map hexgrid-id))
         ;; Re-render hexbins when cell-width or view-by are changed.
         (when (and show-hexbins?
                    (or cell-width-changed? view-by-changed?))
           (mu/remove-layer mapboxgl-map hexgrid-id)
-          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts))
-        ;; Show/hide layers if show/hexbins toggled
-        (when show-hexbins?
-          (let [visibility (if hide-points? "none" "visible")]
-            (.setLayoutProperty
-             mapboxgl-map layer-id "visibility" visibility)
-            (.setLayoutProperty
-             mapboxgl-map "point-casting" "visibility" visibility)))))))
+          (mu/show-hexbins mapboxgl-map layer-id new-geojson layer-opts))))))
 
 (defmethod map-geofield-chooser :default
   [geofield owner {:keys [geofields]}]

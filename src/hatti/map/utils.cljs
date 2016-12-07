@@ -556,7 +556,6 @@
                            :selected-ids selected-ids)
         js-rendered-features (clj->js rendered-features)
         ;; Get bounding box for rendered features.
-
         bbox (.bbox js/turf js-rendered-features)
         cellWidth (or cell-width hexbin-cell-width)
         units "kilometers"
