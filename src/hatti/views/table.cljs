@@ -259,156 +259,156 @@
     (resizeColumns grid)
     [grid dataview]))
 
-;; EVENT LOOPS
-(defn handle-table-events
-  "Event loop for the table view. Processes a tap of share/event-chan,
+    ;; EVENT LOOPS
+    (defn handle-table-events
+      "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
-  [app-state grid dataview]
-  (let [event-chan (shared/event-tap)]
-    (go
-      (while true
-        (let [{:keys [submission-to-rank
-                      submission-clicked
-                      submission-unclicked
-                      filter-by
-                      new-columns
-                      re-render]} (<! event-chan)
-              update-data! (partial om/update! app-state
-                                    [:table-page :submission-clicked :data])
-              get-submission-data (fn [field value]
-                                    (first
-                                     (filter #(= value (get % field))
-                                             (get-in @app-state [:data]))))]
-          (when submission-to-rank
-            (let [rank submission-to-rank
-                  submission (get-submission-data _rank rank)]
-              (update-data! submission)))
-          (when submission-clicked
-            (update-data! submission-clicked))
-          (when submission-unclicked
-            (update-data! nil))
-          (when new-columns
-            (.setColumns grid new-columns)
-            (resizeColumns grid)
-            (.render grid))
-          (when filter-by
-            (.setFilterArgs dataview (clj->js {:query filter-by}))
-            (.refresh dataview))
-          (when (= re-render :table)
-            ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
-            ;; table
-            (go (<! (timeout 20))
-                (.resizeCanvas grid)
-                (.invalidateAllRows grid)
+      [app-state grid dataview]
+      (let [event-chan (shared/event-tap)]
+        (go
+          (while true
+            (let [{:keys [submission-to-rank
+                          submission-clicked
+                          submission-unclicked
+                          filter-by
+                          new-columns
+                          re-render]} (<! event-chan)
+                  update-data! (partial om/update! app-state
+                                        [:table-page :submission-clicked :data])
+                  get-submission-data (fn [field value]
+                                        (first
+                                         (filter #(= value (get % field))
+                                                 (get-in @app-state [:data]))))]
+              (when submission-to-rank
+                (let [rank submission-to-rank
+                      submission (get-submission-data _rank rank)]
+                  (update-data! submission)))
+              (when submission-clicked
+                (update-data! submission-clicked))
+              (when submission-unclicked
+                (update-data! nil))
+              (when new-columns
+                (.setColumns grid new-columns)
                 (resizeColumns grid)
-                (.render grid)
-                (init-sg-pager grid dataview))))))))
+                (.render grid))
+              (when filter-by
+                (.setFilterArgs dataview (clj->js {:query filter-by}))
+                (.refresh dataview))
+              (when (= re-render :table)
+                ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
+                ;; table
+                (go (<! (timeout 20))
+                    (.resizeCanvas grid)
+                    (.invalidateAllRows grid)
+                    (resizeColumns grid)
+                    (.render grid)
+                    (init-sg-pager grid dataview))))))))
 
-(defn- render-options
-  [options owner colset!]
-  (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
-                             (colset! k))]
-    (for [[k v] options]
-      [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
+    (defn- render-options
+      [options owner colset!]
+      (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
+                                 (colset! k))]
+        (for [[k v] options]
+          [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
-;; OM COMPONENTS
-(defmethod label-changer :default
-  [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
-  (reify
-    om/IInitState
-    (init-state [_] {:name-or-label :label})
-    om/IRenderState
-    (render-state [_ {:keys [name-or-label language]}]
-      (let [options {:label [:strong "Label"]
-                     :name  [:strong "Name"]}
-            {:keys [flat-form]} (om/get-shared owner)
-            new-language (:current (om/observe owner (shared/language-cursor)))
-            colset! #(put! shared/event-chan
-                           {:new-columns
-                            (flat-form->sg-columns
-                             flat-form
-                             :get-label? (= :label %)
-                             :hide-actions-column? hide-actions-column?
-                             :language new-language)})]
-        (when (not= new-language language)
-          (om/set-state! owner :language new-language)
-          (colset! name-or-label))
-        (html
-         [:div.label-changer
-          [:span.label-changer-label "Show:"]
-          [:div#header-display-dropdown.drop-hover
-           [:span (options name-or-label) [:i.fa.fa-angle-down]]
-           [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
+    ;; OM COMPONENTS
+    (defmethod label-changer :default
+      [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
+      (reify
+        om/IInitState
+        (init-state [_] {:name-or-label :label})
+        om/IRenderState
+        (render-state [_ {:keys [name-or-label language]}]
+          (let [options {:label [:strong "Label"]
+                         :name  [:strong "Name"]}
+                {:keys [flat-form]} (om/get-shared owner)
+                new-language (:current (om/observe owner (shared/language-cursor)))
+                colset! #(put! shared/event-chan
+                               {:new-columns
+                                (flat-form->sg-columns
+                                 flat-form
+                                 :get-label? (= :label %)
+                                 :hide-actions-column? hide-actions-column?
+                                 :language new-language)})]
+            (when (not= new-language language)
+              (om/set-state! owner :language new-language)
+              (colset! name-or-label))
+            (html
+             [:div.label-changer
+              [:span.label-changer-label "Show:"]
+              [:div#header-display-dropdown.drop-hover
+               [:span (options name-or-label) [:i.fa.fa-angle-down]]
+               [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
 
-(defn delayed-search
-  "Delayed search fires a query-event on event-chan if the value of the input
+    (defn delayed-search
+      "Delayed search fires a query-event on event-chan if the value of the input
    doesn't change within 150 ms (ie, user is still typing).
    Call on-change or on-key-up, with (.-target event) as first argument."
-  [input query-event-key]
-  (let [query (.-value input)]
-    ;; Wait 150 ms for input value to stabilize. Empirically felt good, plus
-    ;; 200 ms wait is when people start noticing change in interfaces
-    (go (<! (timeout 150))
-        (when (= query (.-value input))
-          (put! shared/event-chan {query-event-key query})))))
+      [input query-event-key]
+      (let [query (.-value input)]
+        ;; Wait 150 ms for input value to stabilize. Empirically felt good, plus
+        ;; 200 ms wait is when people start noticing change in interfaces
+        (go (<! (timeout 150))
+            (when (= query (.-value input))
+              (put! shared/event-chan {query-event-key query})))))
 
-(defmethod table-search :default
-  [_ owner]
-  (om/component
-   (html
-    [:div.table-search
-     [:i.fa.fa-search]
-     [:input {:type "text"
-              :placeholder "Search"
-              :on-change #(delayed-search (.-target %) :filter-by)}]])))
+    (defmethod table-search :default
+      [_ owner]
+      (om/component
+       (html
+        [:div.table-search
+         [:i.fa.fa-search]
+         [:input {:type "text"
+                  :placeholder "Search"
+                  :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
-(defmethod table-header :default
-  [cursor owner]
-  (om/component
-   (html
-    [:div.topbar
-     [:div {:id pager-id}]
-     (om/build label-changer cursor)
-     (om/build table-search cursor)
-     [:div {:style {:clear "both"}}]])))
+    (defmethod table-header :default
+      [cursor owner]
+      (om/component
+       (html
+        [:div.topbar
+         [:div {:id pager-id}]
+         (om/build label-changer cursor)
+         (om/build table-search cursor)
+         [:div {:style {:clear "both"}}]])))
 
-(defn- init-grid!
-  "Initializes grid + dataview, and stores them in owner's state."
-  [data owner slick-grid-event-handlers]
-  (when (seq data)
-    (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-          current-language (:current
-                            (om/observe owner (shared/language-cursor)))
-          [grid dataview] (sg-init data
-                                   flat-form
-                                   current-language
-                                   is-filtered-dataview?
-                                   owner
-                                   slick-grid-event-handlers)]
-      (om/set-state! owner :grid grid)
-      (om/set-state! owner :dataview dataview)
-      [grid dataview])))
+    (defn- init-grid!
+      "Initializes grid + dataview, and stores them in owner's state."
+      [data owner slick-grid-event-handlers]
+      (when (seq data)
+        (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
+              current-language (:current
+                                (om/observe owner (shared/language-cursor)))
+              [grid dataview] (sg-init data
+                                       flat-form
+                                       current-language
+                                       is-filtered-dataview?
+                                       owner
+                                       slick-grid-event-handlers)]
+          (om/set-state! owner :grid grid)
+          (om/set-state! owner :dataview dataview)
+          [grid dataview])))
 
-(defn get-table-view-height
-  []
-  (- (-> "body"
-         js/document.querySelector
-         .-clientHeight)
-     (-> ".tab-page"
-         js/document.querySelector
-         .getBoundingClientRect
-         .-top)))
+    (defn get-table-view-height
+      []
+      (- (-> "body"
+             js/document.querySelector
+             .-clientHeight)
+         (-> ".tab-page"
+             js/document.querySelector
+             .getBoundingClientRect
+             .-top)))
 
-(defn set-window-resize-handler
-  [owner]
-  (let [resize-handler (fn [event]
-                         (om/set-state! owner
-                                        :table-view-height
-                                        (get-table-view-height)))]
-    (.addEventListener js/window
-                       "resize"
-                       resize-handler)
-    (om/set-state! owner :resize-handler resize-handler)))
+    (defn set-window-resize-handler
+      [owner]
+      (let [resize-handler (fn [event]
+                             (om/set-state! owner
+                                            :table-view-height
+                                            (get-table-view-height)))]
+        (.addEventListener js/window
+                           "resize"
+                           resize-handler)
+        (om/set-state! owner :resize-handler resize-handler)))
 
 (defmethod table-page :default
   [{{:keys [active]} :views :as cursor}
@@ -481,6 +481,7 @@
         (.removeEventListener js/window
                               "resize"
                               (om/get-state owner :resize-handler)))
+
       om/IWillReceiveProps
       (will-receive-props [_ next-props]
         "Reset SlickGrid data if the table data has changed."
