@@ -279,10 +279,13 @@
   [id]
   (set! (.-accessToken js/mapboxgl) mapboxgl-access-token)
   (let [Map (.-Map js/mapboxgl)
-        Navigation (.-Navigation js/mapboxgl)
+        NavigationControl (.-NavigationControl js/mapboxgl)
+        ScaleControl (.-ScaleControl js/mapboxgl)
         m (Map. #js {:container id
                      :style "mapbox://styles/mapbox/streets-v9"})]
-    (.addControl m (Navigation. #js {:position "bottom-left"}))))
+    (.addControl
+     m (ScaleControl. #js {:maxWidth 100 :unit "metric"}) "bottom-left")
+    (.addControl m (NavigationControl.) "bottom-left")))
 
 (defn get-filter
   "Gets query filter and returns filters based on field type"
@@ -334,13 +337,14 @@
 
 (defn add-mapboxgl-layer
   "Add map layer from available sources."
-  [map id_string layer-type & {:keys [layer-id layout paint filter]}]
+  [map id_string layer-type & {:keys [layer-id layout paint filter
+                                      tiles-url]}]
   (let [l-id (or layer-id id_string)
         layer-def {:id l-id
                    :type layer-type
-                   :source id_string
-                   :source-layer "logger_instance_geom"}
+                   :source id_string}
         layer (clj->js (cond-> layer-def
+                         tiles-url (assoc :source-layer "logger_instance_geom")
                          paint (assoc :paint paint)
                          layout (assoc :layout layout)
                          filter (assoc :filter filter)))]
@@ -661,7 +665,9 @@
     (when (or (-> geojson :features count pos?) tiles-url)
       (om/set-state! owner :loaded? false)
       (add-mapboxgl-source map id_string map-data)
-      (add-mapboxgl-layer map id_string layer-type :layout layout)
+      (add-mapboxgl-layer map id_string layer-type
+                          :layout layout
+                          :tiles-url tiles-url)
       (register-mapboxgl-mouse-events owner map event-chan id_string style)
       (set-mapboxgl-paint-property
        map id_string (get-style-properties style :normal :stops stops))
@@ -670,6 +676,7 @@
       (if (= :point style)
         (add-mapboxgl-layer map id_string layer-type
                             :layer-id circle-border
+                            :tiles-url tiles-url
                             :paint {:circle-color "#fff" :circle-radius 6})
         (when (.getLayer map circle-border) (.removeLayer map circle-border)))
       (when show-hexbins? (show-hexbins owner map id_string geojson
