@@ -333,10 +333,9 @@
         (html
          [:div.label-changer
           [:span.label-changer-label "Show:"]
-          [:div {:class "drop-hover" :id "header-display-dropdown"}
+          [:div#header-display-dropdown.drop-hover
            [:span (options name-or-label) [:i.fa.fa-angle-down]]
-           [:ul {:class "submenu no-dot"}
-            (render-options options owner colset!)]]])))))
+           [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
 
 (defn delayed-search
   "Delayed search fires a query-event on event-chan if the value of the input
