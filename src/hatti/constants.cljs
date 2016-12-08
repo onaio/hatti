@@ -19,6 +19,7 @@
 ;; Map configs
 (def tiles-endpoint
   "/services/postgis/logger_instance/geom/vector-tiles/{z}/{x}/{y}.pbf")
+(def vector-source-layer "logger_instance_geom")
 (def mapboxgl-access-token
   "pk.eyJ1Ijoib25hIiwiYSI6IlVYbkdyclkifQ.0Bz-QOOXZZK01dq4MuMImQ")
 

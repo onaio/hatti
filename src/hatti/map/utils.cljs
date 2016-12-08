@@ -6,7 +6,7 @@
             [cljsjs.leaflet]
             [hatti.constants :as constants
              :refer  [_id _rank mapboxgl-access-token tiles-endpoint
-                      hexbin-cell-width hexgrid-id]]
+                      hexbin-cell-width hexgrid-id vector-source-layer]]
             [hatti.ona.forms :as f]
             [hatti.utils :refer [indexed]]
             [om.core :as om :include-macros true]))
@@ -344,7 +344,7 @@
                    :type layer-type
                    :source id_string}
         layer (clj->js (cond-> layer-def
-                         tiles-url (assoc :source-layer "logger_instance_geom")
+                         tiles-url (assoc :source-layer vector-source-layer)
                          paint (assoc :paint paint)
                          layout (assoc :layout layout)
                          filter (assoc :filter filter)))]
