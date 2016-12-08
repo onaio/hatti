@@ -84,11 +84,13 @@
 (defn formatter
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
-  [field language row cell value columnDef dataContext]
+  [field language field-key row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field clj-value
+    (forms/format-answer field
+                         clj-value
                          :language language
-                         :compact? true)))
+                         :compact? true
+                         :field-key field-key)))
 
 (defmethod action-buttons :default
   [owner]
@@ -147,14 +149,15 @@
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
                         label (if get-label? (get-label field language) name)
-                        column-class (get-column-class field)]
+                        column-class (get-column-class field)
+                        field-key (if get-label? :name :label)]
                     {:id name
                      :field full-name
                      :type type
                      :name (column-name-html-string column-class label hxl)
                      :toolTip label
                      :sortable true
-                     :formatter (partial formatter field language)
+                     :formatter (partial formatter field language field-key)
                      :headerCssClass (when has-hxl? "hxl-min-height")
                      :cssClass column-class
                      :minWidth 50

@@ -200,17 +200,18 @@
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
    Optional: compact? should be true if a short string needs to be returned."
-  [field answer & {:keys [compact? label language]}]
+  [field answer & {:keys [language compact? label field-key]
+                   :or {field-key :name}}]
   (cond
     (string/blank? answer) no-answer
     (select-one? field) (let [option (->> (:children field)
-                                          (filter #(= answer (:name %)))
+                                          (filter #(= answer (field-key %)))
                                           first)
                               formatted (get-label option language)]
                           (or formatted answer))
     (select-all? field) (let [names (set (string/split answer #" "))]
                           (->> (:children field)
-                               (filter #(contains? names (:name %)))
+                               (filter #(contains? names (field-key %)))
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
     (time-based? field) (-> answer js/moment (.format "ll"))
