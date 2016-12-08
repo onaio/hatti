@@ -317,7 +317,7 @@
     om/IRenderState
     (render-state [_ {:keys [name-or-label language]}]
       (let [options {:label [:strong "Label"]
-                     :name [:strong "Name"]}
+                     :name  [:strong "Name"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
@@ -464,8 +464,7 @@
               [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
                  [:p.alert.alert-warning "No data"]
-                 [:span
-                  [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
+                 [:span [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
       om/IDidMount
       (did-mount [_]
         (when active?
