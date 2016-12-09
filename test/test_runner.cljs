@@ -1,4 +1,4 @@
-(ns test-runner
+(ns test.test-runner
   (:require
    [cljs.test :as test :refer-macros [run-tests] :refer [report]]
    [hatti.test-utils]
