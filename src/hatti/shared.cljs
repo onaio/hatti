@@ -66,7 +66,6 @@
                  :chart-data {}}
     :dataset-info {}
     :data []
-    :field-key :label
     :status {:total-records 0 :loading? true}
     :languages {:current nil :all []}
     :api-url "//api.ona.io/api/v1/"}))
