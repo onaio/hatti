@@ -260,97 +260,95 @@
     [grid dataview]))
 
     ;; EVENT LOOPS
-    (defn handle-table-events
-      "Event loop for the table view. Processes a tap of share/event-chan,
+(defn handle-table-events
+  "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
-      [app-state grid dataview]
-      (let [event-chan (shared/event-tap)]
-        (go
-          (while true
-            (let [{:keys [submission-to-rank
-                          submission-clicked
-                          submission-unclicked
-                          filter-by
-                          new-columns
-                          re-render]} (<! event-chan)
-                  update-data! (partial om/update! app-state
-                                        [:table-page :submission-clicked :data])
-                  get-submission-data (fn [field value]
-                                        (first
-                                         (filter #(= value (get % field))
-                                                 (get-in @app-state [:data]))))]
-              (when submission-to-rank
-                (let [rank submission-to-rank
-                      submission (get-submission-data _rank rank)]
-                  (update-data! submission)))
-              (when submission-clicked
-                (update-data! submission-clicked))
-              (when submission-unclicked
-                (update-data! nil))
-              (when new-columns
-                (.setColumns grid new-columns)
+  [app-state grid dataview]
+  (let [event-chan (shared/event-tap)]
+    (go
+      (while true
+        (let [{:keys [submission-to-rank
+                      submission-clicked
+                      submission-unclicked
+                      filter-by
+                      new-columns
+                      re-render]} (<! event-chan)
+              update-data! (partial om/update! app-state
+                                    [:table-page :submission-clicked :data])
+              get-submission-data (fn [field value]
+                                    (first
+                                     (filter #(= value (get % field))
+                                             (get-in @app-state [:data]))))]
+          (when submission-to-rank
+            (let [rank submission-to-rank
+                  submission (get-submission-data _rank rank)]
+              (update-data! submission)))
+          (when submission-clicked
+            (update-data! submission-clicked))
+          (when submission-unclicked
+            (update-data! nil))
+          (when new-columns
+            (.setColumns grid new-columns)
+            (resizeColumns grid)
+            (.render grid))
+          (when filter-by
+            (.setFilterArgs dataview (clj->js {:query filter-by}))
+            (.refresh dataview))
+          (when (= re-render :table)
+            ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
+            ;; table
+            (go (<! (timeout 20))
+                (.resizeCanvas grid)
+                (.invalidateAllRows grid)
                 (resizeColumns grid)
-                (.render grid))
-              (when filter-by
-                (.setFilterArgs dataview (clj->js {:query filter-by}))
-                (.refresh dataview))
-              (when (= re-render :table)
-                ;; need tiny wait (~16ms requestAnimationFrame delay) to re-render
-                ;; table
-                (go (<! (timeout 20))
-                    (.resizeCanvas grid)
-                    (.invalidateAllRows grid)
-                    (resizeColumns grid)
-                    (.render grid)
-                    (init-sg-pager grid dataview))))))))
+                (.render grid)
+                (init-sg-pager grid dataview))))))))
 
-    (defn- render-options
-      [options owner colset!]
-      (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
-                                 (colset! k))]
-        (for [[k v] options]
-          [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
+(defn- render-options
+  [options owner colset!]
+  (let [choose-display-key (fn [k] (om/set-state! owner :field-key k)
+                             (colset! k))]
+    (for [[k v] options]
+      [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
-    ;; OM COMPONENTS
-    (defmethod label-changer :default
-      [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
-      (reify
-        om/IInitState
-        (init-state [_] {:name-or-label :label})
-        om/IRenderState
-        (render-state [_ {:keys [name-or-label language]}]
-          (let [options {:label [:strong "Label"]
-                         :name  [:strong "Name"]}
-                {:keys [flat-form]} (om/get-shared owner)
-                new-language (:current (om/observe owner (shared/language-cursor)))
-                colset! #(put! shared/event-chan
-                               {:new-columns
-                                (flat-form->sg-columns
-                                 flat-form
-                                 :get-label? (= :label %)
-                                 :hide-actions-column? hide-actions-column?
-                                 :language new-language)})]
-            (when (not= new-language language)
-              (om/set-state! owner :language new-language)
-              (colset! name-or-label))
-            (html
-             [:div.label-changer
-              [:span.label-changer-label "Show:"]
-              [:div#header-display-dropdown.drop-hover
-               [:span (options name-or-label) [:i.fa.fa-angle-down]]
-               [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
+;; OM COMPONENTS
+(defmethod label-changer :default
+  [_ owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:field-key :label})
+    om/IRenderState
+    (render-state [_ {:keys [field-key language]}]
+      (let [options {:label [:strong "Label"]
+                     :name  [:strong "Name"]}
+            {:keys [flat-form]} (om/get-shared owner)
+            new-language (:current (om/observe owner (shared/language-cursor)))
+            colset! #(put! shared/event-chan
+                           {:new-columns
+                            (flat-form->sg-columns flat-form
+                                                   (= :label %)
+                                                   new-language)})]
+        (when (not= new-language language)
+          (om/set-state! owner :language new-language)
+          (colset! field-key))
+        (html
+         [:div.label-changer
+          [:span.label-changer-label "Show:"]
+          [:div#header-display-dropdown.drop-hover
+           [:span (options field-key) [:i.fa.fa-angle-down]]
+           [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
 
-    (defn delayed-search
-      "Delayed search fires a query-event on event-chan if the value of the input
+(defn delayed-search
+  "Delayed search fires a query-event on event-chan if the value of the input
    doesn't change within 150 ms (ie, user is still typing).
    Call on-change or on-key-up, with (.-target event) as first argument."
-      [input query-event-key]
-      (let [query (.-value input)]
-        ;; Wait 150 ms for input value to stabilize. Empirically felt good, plus
-        ;; 200 ms wait is when people start noticing change in interfaces
-        (go (<! (timeout 150))
-            (when (= query (.-value input))
-              (put! shared/event-chan {query-event-key query})))))
+  [input query-event-key]
+  (let [query (.-value input)]
+    ;; Wait 150 ms for input value to stabilize. Empirically felt good, plus
+    ;; 200 ms wait is when people start noticing change in interfaces
+    (go (<! (timeout 150))
+        (when (= query (.-value input))
+          (put! shared/event-chan {query-event-key query})))))
 
     (defmethod table-search :default
       [_ owner]

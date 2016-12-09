@@ -112,9 +112,9 @@
   (let [form (forms/flatten-form single-language-form)
         q-sel1 (first (filter forms/select-one? form))
         q-selm (first (filter forms/select-all? form))
-        q-int (first (filter forms/numeric? form))
+        q-int  (first (filter forms/numeric? form))
         q-text (first (filter forms/text? form))
-        q-img (merge q-text {:type "image"})
+        q-img  (merge q-text {:type "image"})
         q-repeat (merge q-text {:type "repeat"})]
     (testing "select one answers are formatted properly"
       (let [rand-option (rand-nth (:children q-sel1))]
