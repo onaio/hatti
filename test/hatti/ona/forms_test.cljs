@@ -134,7 +134,9 @@
         (is (has-label? first-option
                         (forms/format-answer q-selm (:name first-option))))
         (is (has-label? first-option
-                        (forms/format-answer q-selm (:label first-option))))
+                        (forms/format-answer q-selm
+                                             (:label first-option)
+                                             :field-key :label)))
         (is (has-label? (first two-options)
                         (forms/format-answer q-selm two-answers)))
         (is (has-label? (second two-options)
