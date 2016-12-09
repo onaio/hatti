@@ -121,7 +121,9 @@
         (is (= (forms/format-answer q-sel1 (:name rand-option))
                (:label rand-option)))
         (is (= (forms/format-answer q-sel1 nil) forms/no-answer))
-        (is (= (forms/format-answer q-sel1 (:label rand-option) :field-key :label)
+        (is (= (forms/format-answer q-sel1
+                                    (:label rand-option)
+                                    :field-key :label)
                (:label rand-option)))))
     (testing "select all answers are formatted properly"
       (let [first-option (first (:children q-selm))
