@@ -422,6 +422,8 @@
         (if show-heatmap?
           (mu/show-heatmap owner mapboxgl-map layer-id new-geojson layer-opts)
           (do
+            (when (.loaded mapboxgl-map)
+              (mu/show-hide-points mapboxgl-map layer-id))
             (mu/remove-layer mapboxgl-map "heatmap")
             (doseq [i (range 5)]
               (mu/remove-layer mapboxgl-map (str "cluster-" i)))
@@ -431,6 +433,8 @@
           (mu/show-hexbins owner mapboxgl-map
                            layer-id new-geojson layer-opts)
           (do
+            (when (.loaded mapboxgl-map)
+              (mu/show-hide-points mapboxgl-map layer-id))
             (mu/remove-layer mapboxgl-map hexgrid-id)
             (om/set-state! owner :show-hexbins? false)))
         ;; Re-render hexbins when cell-width or view-by are changed.

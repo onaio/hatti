@@ -579,6 +579,15 @@
            :properties {:min-count (apply min point-counts)
                         :max-count (apply max point-counts)})))
 
+(defn show-hide-points
+  "Show/or hide geopoints. Hide geopoints if hide-points is true."
+  [map layer-id & [hide-points?]]
+  (let [visibility (if hide-points? "none" "visible")]
+    (.setLayoutProperty
+     map layer-id "visibility" visibility)
+    (.setLayoutProperty
+     map "point-casting" "visibility" visibility)))
+
 (defn show-hexbins
   "Renders hexbin layer on map."
   [owner map id_string geojson opts]
@@ -587,9 +596,7 @@
         max-color (or (:cell-color opts) constants/max-count-color)
         min-color (if (= min-count max-count)
                     max-color
-                    constants/min-count-color)
-        visibility (if (:hide-points? opts)
-                     "none" "visible")]
+                    constants/min-count-color)]
     (when (and min-count max-count)
       (add-mapboxgl-source map hexgrid-id {:geojson hexgrid})
       (add-mapboxgl-layer map hexgrid-id
@@ -603,10 +610,7 @@
                                                        [min-count min-color]
                                                        [max-count max-color]]}
                                   :fill-opacity 0.6})
-      (.setLayoutProperty
-       map id_string "visibility" visibility)
-      (.setLayoutProperty
-       map "point-casting" "visibility" visibility)
+      (show-hide-points map id_string (:hide-points? opts))
       (om/set-state! owner :show-hexbins? true))))
 
 (defn show-heatmap
@@ -646,6 +650,7 @@
                                            (nth layers)
                                            second
                                            first)]])))
+    (show-hide-points map id_string true)
     (om/set-state! owner :show-heatmap? true)))
 
 (defn remove-layer
