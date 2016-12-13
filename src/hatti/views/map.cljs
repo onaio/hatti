@@ -160,23 +160,11 @@
             (put! shared/event-chan
                   {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
-(defn handle-re-render
-  "Handles the re-render event"
-  [app-state {:keys [re-render!]}]
-  (let [event-chan (shared/event-tap)]
-    (go
-      (while true
-        (let [{:keys [re-render] :as e} (<! event-chan)]
-          (when (= re-render :map)
-            (go (<! (timeout 16))
-                (re-render!))))))))
-
 (defn handle-map-events
   "Creates multiple channels and delegates events to them."
   [app-state opts]
   (handle-viewby-events app-state opts)
   (handle-submission-events app-state opts)
-  (handle-re-render app-state opts)
   (handle-data-updates app-state))
 
 ;;;;; OM COMPONENTS
@@ -434,6 +422,8 @@
         (if show-heatmap?
           (mu/show-heatmap owner mapboxgl-map layer-id new-geojson layer-opts)
           (do
+            (when (.loaded mapboxgl-map)
+              (mu/show-hide-points mapboxgl-map layer-id))
             (mu/remove-layer mapboxgl-map "heatmap")
             (doseq [i (range 5)]
               (mu/remove-layer mapboxgl-map (str "cluster-" i)))
@@ -443,6 +433,8 @@
           (mu/show-hexbins owner mapboxgl-map
                            layer-id new-geojson layer-opts)
           (do
+            (when (.loaded mapboxgl-map)
+              (mu/show-hide-points mapboxgl-map layer-id))
             (mu/remove-layer mapboxgl-map hexgrid-id)
             (om/set-state! owner :show-hexbins? false)))
         ;; Re-render hexbins when cell-width or view-by are changed.
@@ -558,12 +550,12 @@
                                       owner #(assoc % :zoom->bin? false
                                                     :slider-value v))))
                below-1km? (> 1 cell-size)]
-           [:div.map-overlay.mapboxgl-ctrl-bottom-left
+           [:div.map-overlay
             [:div.map-overlay-inner
              [:label.slider "Cell Width: "
               [:span#slider-value
                (str (cond-> cell-size below-1km? (* 1000))
-                    (if below-1km? " Meters" " Km"))]]
+                    (if below-1km? " Meters" " km"))]]
              [:input.slider#slider
               {:type "range" :min "0" :max (str max-bin) :step "1"
                :value slider-value
