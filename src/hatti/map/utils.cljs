@@ -621,10 +621,9 @@
                            :geojson geojson
                            :selected-ids selected-ids)
         layers (map-indexed (fn [idx item] [idx item])
-                            [[0 "blue"]
-                             [10 "cyan"]
-                             [50 "green"]
-                             [100 "orange"]
+                            [[0 "green"]
+                             [30 "#ffeda0"]
+                             [80 "orange"]
                              [200 "red"]])
         layer-count (count layers)]
     (add-mapboxgl-source map "heatmap" {:geojson rendered-features
