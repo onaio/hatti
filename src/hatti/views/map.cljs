@@ -389,7 +389,8 @@
               new-field :geofield
               {show-hexbins? :show?
                new-cell-width :cell-width
-               hide-points? :hide-points?} :hexbins
+               hide-points? :hide-points?
+               extrusion? :extrusion?} :hexbins
               {show-heatmap? :show?} :heatmap
               new-viewby :view-by} :map-page} next-props
             {:keys [mapboxgl-map layer-id geojson]} (om/get-state owner)
@@ -407,7 +408,8 @@
                    (vb/get-selected-ids new-viewby))
             layer-opts (assoc opts
                               :cell-width new-cell-width
-                              :hide-points? hide-points?)]
+                              :hide-points? hide-points?
+                              :extrusion? extrusion?)]
         ;; Update layers if data changes
         (when (and data-changed? (not-empty new-field)
                    (not= geojson new-geojson))
@@ -503,8 +505,8 @@
                          (not show-heatmap?)))}]]]))))
 
 (defn map-hexbin-slider
-  [{{{:keys [show? cell-width hide-points?]} :hexbins} :map-page :as cursor}
-   owner]
+  [{{{:keys [show? cell-width hide-points? extrusion?]} :hexbins} :map-page
+    :as cursor} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -567,7 +569,15 @@
                             cursor
                             [:map-page :hexbins :hide-points?]
                             (not hide-points?))}]
-             [:label {:for "show-points"} "Show points"]]]))))))
+             [:label {:for "show-points"} "Show points"]
+             [:input.show-points#3D
+              {:type "checkbox"
+               :checked (when extrusion? "checked")
+               :on-change #(om/update!
+                            cursor
+                            [:map-page :hexbins :extrusion?]
+                            (not extrusion?))}]
+             [:label {:for "#3D"} "3D"]]]))))))
 
 (defn map-layer-selector
   [cursor owner]

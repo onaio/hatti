@@ -588,29 +588,58 @@
     (.setLayoutProperty
      map "point-casting" "visibility" visibility)))
 
+(defn remove-layer
+  "Remove layer from map and it's source from map."
+  [map id & {:keys [keep-source?]}]
+  (when (.getLayer map id) (.removeLayer map id))
+  (when (and (.getSource map id) (not keep-source?)) (.removeSource map id)))
+
 (defn show-hexbins
   "Renders hexbin layer on map."
-  [owner map id_string geojson opts]
+  [owner map id_string geojson
+   {:keys [cell-color extrusion? hide-points?] :as opts}]
   (let [hexgrid (generate-hexgrid map id_string geojson opts)
         {:keys [min-count max-count]} (:properties hexgrid)
-        max-color (or (:cell-color opts) constants/max-count-color)
+        max-color (or cell-color  constants/max-count-color)
         min-color (if (= min-count max-count)
                     max-color
-                    constants/min-count-color)]
+                    constants/min-count-color)
+        property "point-count"
+        fill-color {:property
+                    "point-count"
+                    :stops [[0 "transparent"]
+                            [min-count min-color]
+                            [max-count max-color]]}
+        fill-opacity 0.6
+        paint (if extrusion?
+                {:fill-extrusion-color fill-color
+                 :fill-extrusion-opacity fill-opacity
+                 :fill-extrusion-height {:property property
+                                         :stops [[min-count 10]
+                                                 [max-count 25000]]
+                                         :base 1}}
+                {:fill-outline-color
+                 {:property property
+                  :stops [[0 "transparent"]
+                          [max-count "white"]]}
+                 :fill-color fill-color
+                 :fill-opacity fill-opacity})
+        layer-type (if extrusion? "fill-extrusion" "fill")
+        extrusion-layer-id (str hexgrid-id "-extrusion")]
     (when (and min-count max-count)
       (add-mapboxgl-source map hexgrid-id {:geojson hexgrid})
-      (add-mapboxgl-layer map hexgrid-id
-                          "fill"
-                          :paint {:fill-outline-color
-                                  {:property "point-count"
-                                   :stops [[0 "transparent"]
-                                           [max-count "white"]]}
-                                  :fill-color {:property "point-count"
-                                               :stops [[0 "transparent"]
-                                                       [min-count min-color]
-                                                       [max-count max-color]]}
-                                  :fill-opacity 0.6})
-      (show-hide-points map id_string (:hide-points? opts))
+      (add-mapboxgl-layer map hexgrid-id layer-type :paint paint)
+      ;; add extrusion layer if 3D toggled
+      (if extrusion?
+        (do
+          (add-mapboxgl-layer map hexgrid-id layer-type :paint paint
+                              :layer-id extrusion-layer-id)
+          (.setLayoutProperty map hexgrid-id "visibility" "none"))
+        (do
+          (.setLayoutProperty map hexgrid-id "visibility" "visible")
+          (remove-layer map extrusion-layer-id :keep-source? true)))
+      (.setPitch map (if extrusion? 50 0))
+      (show-hide-points map id_string hide-points?)
       (om/set-state! owner :show-hexbins? true))))
 
 (defn show-heatmap
@@ -651,12 +680,6 @@
                                            first)]])))
     (show-hide-points map id_string true)
     (om/set-state! owner :show-heatmap? true)))
-
-(defn remove-layer
-  "Remove layer from map and it's source from map."
-  [map id]
-  (when (.getLayer map id) (.removeLayer map id))
-  (when (.getSource map id) (.removeSource map id)))
 
 (defn map-on-load
   "Functions that are called after map is loaded in DOM."
