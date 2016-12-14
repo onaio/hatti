@@ -17,8 +17,10 @@
    :label "Submitted by" :type "text"})
 
 (def last_edited
-  {:name _last_edited :full-name _last_edited
-   :label "Last Edited" :type "date"})
+  {:name _last_edited
+   :full-name _last_edited
+   :label "Last Edited"
+   :type "date"})
 
 (def extra-submission-details [last_edited
                                submission-time-field

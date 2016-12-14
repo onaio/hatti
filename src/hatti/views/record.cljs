@@ -35,19 +35,22 @@
         event-key  (condp = view
                      :map :mapped-submission-to-rank
                      :table :submission-to-rank)]
-    [:a {:on-click (click-fn
-                    #(put! shared/event-chan {event-key new-rank}))
-         :class "pure-button btn-default" :href "#"} [:i {:class icon}]]))
+    [:a.pure-button.btn-default
+     {:on-click (click-fn
+                 #(put! shared/event-chan {event-key new-rank}))
+      :href "#"}
+     [:i {:class icon}]]))
 
 (defn submission-closer []
-  [:a {:on-click (click-fn
-                  #(put! shared/event-chan {:submission-unclicked true}))
-       :class "btn-close right" :href "#"} "×"])
+  [:a.btn-close.right
+   {:on-click (click-fn #(put! shared/event-chan {:submission-unclicked true}))
+    :href "#"}
+   "×"])
 
 (defmethod print-xls-report-btn :default
   [cursor owner]
   (om/component
-   (html [:div {:id "print-xls-report"}])))
+   (html [:div#print-xls-report])))
 
 ;; A single row of a question / answer pair
 (def qa-elements
