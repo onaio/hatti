@@ -213,7 +213,7 @@
   [data form current-language is-filtered-dataview? owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
   (let [columns (flat-form->sg-columns
-                 form true current-language
+                 form false current-language
                  :is-filtered-dataview? is-filtered-dataview?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
@@ -318,11 +318,11 @@
   [_ owner]
   (reify
     om/IInitState
-    (init-state [_] {:name-or-label :label})
+    (init-state [_] {:name-or-label :name})
     om/IRenderState
     (render-state [_ {:keys [name-or-label language]}]
-      (let [options {:label [:strong "Label"]
-                     :name [:strong "Name"]}
+      (let [options {:name [:strong "Name"]
+                     :label [:strong "Label"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
