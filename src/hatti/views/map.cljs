@@ -256,7 +256,7 @@
          (let [selected? (answer->selected? answer)
                col (answer->color answer)
                answer-count (or (answer->count answer) 0)
-               answer-string (format-answer field answer language)
+               answer-string (format-answer field answer :language language)
                title (str answer-string " - " answer-count)]
            [:li
             [:a (when answer {:href "#"

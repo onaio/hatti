@@ -66,7 +66,7 @@
   (let [fname (:full-name field)
         flabel (f/get-label field lang)
         answer (get data fname)
-        alabel (f/format-answer field answer lang)
+        alabel (f/format-answer field answer :language lang)
         {:keys [row-el question-el answer-el]} (qa-elements view)]
     (when (and alabel (not= alabel f/no-answer))
       (if (f/repeat? field)

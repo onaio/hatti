@@ -72,7 +72,8 @@
           query (aget args "query")
           fmt-subitem (fn [[fname answer]]
                         (format-answer (get indexed-form fname)
-                                       answer nil true))
+                                       answer
+                                       :compact? true))
           filtered (->> item
                         js->clj
                         (map fmt-subitem)
@@ -85,7 +86,9 @@
    Get one with (partial formatter field language)."
   [field language row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field clj-value language true)))
+    (forms/format-answer field clj-value
+                         :language language
+                         :compact? true)))
 
 (defmethod action-buttons :default
   [owner]
