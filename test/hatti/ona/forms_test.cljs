@@ -130,7 +130,7 @@
             two-options (take 2 (:children q-selm))
             two-answers (string/join #" " (map :name two-options))
             has-label? #(partial utils/substring? (:label %) %)]
-        (is (= (forms/format-answer q-selm "") "No Answer"))
+        (is (= (forms/format-answer q-selm "") forms/no-answer))
         (is (has-label? first-option
                         (forms/format-answer q-selm (:name first-option))))
         (is (has-label? (first two-options)
@@ -144,9 +144,9 @@
                     :small_download_url "THUMB.jpg"}
             image3 {:filename "foo/bar.jpg"
                     :download_url "IMAGE.jpg"}
-            txt-link (forms/format-answer q-img image2 nil true)]
-        (is (= (forms/format-answer q-img nil) nil))
-        (is (= (forms/format-answer q-img "") ""))
+            txt-link (forms/format-answer q-img image2 :compact? true)]
+        (is (= (forms/format-answer q-img nil) forms/no-answer))
+        (is (= (forms/format-answer q-img "") forms/no-answer))
         (is (= (forms/format-answer q-img image1) "bar.jpg"))
         (is (= (forms/format-answer q-img image2)
                [:a {:href "IMAGE.jpg" :target "_blank"}
@@ -159,6 +159,6 @@
                "bar.jpg </a>"))))
     (testing "repeat answers returns nil if no element, a list starting with
               :span otherwise"
-      (is (= (forms/format-answer q-repeat []) ""))
+      (is (= (forms/format-answer q-repeat []) forms/no-answer))
       (is (= (forms/format-answer q-repeat [{"foo" "bar"}])
              "Repeated data with 1 answers.")))))

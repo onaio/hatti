@@ -50,11 +50,12 @@
 (defn get-ona-style
   "Appropriate style given style-type (:normal, :clicked, :hover), and
    either a leaflet marker or clojurescript keyword (one of :point or :shape)."
-  [marker_or_keyword style-type]
+  [marker_or_keyword style-type
+   & {:keys [custom-styles] :or {custom-styles ona-styles}}]
   (let [kw (if (keyword? marker_or_keyword)
              marker_or_keyword
              (marker->geotype marker_or_keyword))]
-    (-> ona-styles kw style-type)))
+    (-> custom-styles kw style-type)))
 
 (defn equivalent-style [s t]
   "Checks that for all common properties, s and t are equivalent styles."

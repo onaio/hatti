@@ -10,15 +10,18 @@
             [hatti.shared :as shared]
             [hatti.views :refer [tabbed-dataview
                                  dataview-infobar dataview-actions
-                                 map-page table-page chart-page settings-page
-                                 photos-page overview-page saved-charts-page]]
+                                 map-page report-view-page table-page chart-page
+                                 settings-page photos-page overview-page
+                                 saved-charts-page user-guide-page]]
             [hatti.views.photos]
             [hatti.views.map]
+            [hatti.views.report-view]
             [hatti.views.table]
             [hatti.views.chart]
             [hatti.views.settings]
             [hatti.views.overview]
             [hatti.views.saved-charts]
+            [hatti.views.user-guide]
             [hatti.utils :refer [click-fn pluralize-number]]))
 
 (def dataview-map
@@ -37,12 +40,25 @@
    :chart {:view :chart
            :label "Charts"
            :component chart-page}
+   :report-view {:view :report-view
+                 :label "Reports"
+                 :component report-view-page}
    :saved-charts {:view :saved-charts
                   :label "Dashboard"
                   :component saved-charts-page}
    :settings {:view :settings
               :label "Settings"
-              :component settings-page}})
+              :component settings-page}
+   :user-guide {:view :user-guide
+                :label "User Guide"
+                :component user-guide-page}})
+
+(defn default-dataviews
+  "Initial Dataview State"
+  []
+  (atom dataview-map))
+
+(def view-state (default-dataviews))
 
 (defn- view->inactive-tab
   "Build and set the tooltips for inactive views based on why they are
@@ -153,7 +169,7 @@
             view->display #(if (= selected %) "block" "none")
             view->cls #(when (= selected %) "clicked")
             dataviews (->> app-state :views :all
-                           (map dataview-map) (remove nil?))
+                           (map @view-state) (remove nil?))
             dv->link (fn [{:keys [view label]}]
                        (let [active? (some #(= view %) active)]
                          (if active?

@@ -1,5 +1,6 @@
 (ns hatti.views.map
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [chimera.async :refer [go-inf]])
   (:require [cljs.core.async :refer [<! chan put! timeout]]
             [clojure.string :as string]
             [chimera.js-interop :refer [json->cljs]]
@@ -160,6 +161,14 @@
             (put! shared/event-chan
                   {:view-by (get-in @app-state [:map-page :view-by])})))))))
 
+(defn handle-re-render
+  "Handles the re-render event"
+  [app-state {:keys [re-render!]}]
+  (let [event-chan (shared/event-tap)]
+    (go-inf
+     (let [{:keys [re-render] :as e} (<! event-chan)]
+       (when (= re-render :map) (go (<! (timeout 16)) (re-render!)))))))
+
 (defn handle-map-events
   "Creates multiple channels and delegates events to them."
   [app-state opts]
@@ -247,7 +256,7 @@
          (let [selected? (answer->selected? answer)
                col (answer->color answer)
                answer-count (or (answer->count answer) 0)
-               answer-string (format-answer field answer language)
+               answer-string (format-answer field answer :language language)
                title (str answer-string " - " answer-count)]
            [:li
             [:a (when answer {:href "#"

@@ -29,11 +29,12 @@
 (defn get-extra-fields
   "Extra fields that will be displayed on the table."
   [is-filtered-dataview?]
-  (let [extra-field  [{:full-name _id :label "ID" :name _id :type
-                       "integer"}]]
-    (if is-filtered-dataview?
-      extra-field
-      (conj extra-field forms/submission-time-field))))
+  (let [id-field  [{:full-name _id
+                    :label "ID"
+                    :name _id
+                    :type "integer"}]]
+    (cond-> id-field
+      (not is-filtered-dataview?) (conj forms/submission-time-field))))
 
 (defn all-fields
   "Given a (flat-)form, returns fields for table display.
@@ -71,7 +72,8 @@
           query (aget args "query")
           fmt-subitem (fn [[fname answer]]
                         (format-answer (get indexed-form fname)
-                                       answer nil true))
+                                       answer
+                                       :compact? true))
           filtered (->> item
                         js->clj
                         (map fmt-subitem)
@@ -84,7 +86,9 @@
    Get one with (partial formatter field language)."
   [field language row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field clj-value language true)))
+    (forms/format-answer field clj-value
+                         :language language
+                         :compact? true)))
 
 (defmethod action-buttons :default
   [owner]
@@ -97,12 +101,12 @@
       (generate-html
        (when value
          [:ul
-          [:li.tooltip
-           [:span.tip-info.right "View"]
+          [:li.tooltip.middle-right
+           [:span.tip-info "View"]
            [:a.view-record
             [:i.fa.fa-clone {:data-id value}]]]
           [:li.tooltip
-           [:span.tip-info.right "Edit"]
+           [:span.tip-info "Edit"]
            [:a.edit-record {:data-id value :target "_blank"
                             :href edit-link}
             [:i.fa.fa-pencil-square-o]]]])))))
@@ -130,36 +134,42 @@
 
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
-  ([form] (flat-form->sg-columns form true))
-  ([form get-label?] (flat-form->sg-columns form get-label? nil))
-  ([form get-label? language & {:keys [is-filtered-dataview? owner]}]
-   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-         columns (for [field (all-fields form :is-filtered-dataview?
-                                         is-filtered-dataview?)]
-                   (let [{:keys [name type full-name]
-                          {:keys [hxl]} :instance} field
-                         label (if get-label? (get-label field language) name)
-                         column-class (get-column-class field)]
-                     {:id name
-                      :field full-name
-                      :type type
-                      :name (column-name-html-string column-class label hxl)
-                      :toolTip label
-                      :sortable true
-                      :formatter (partial formatter field language)
-                      :headerCssClass (when has-hxl? "hxl-min-height")
-                      :cssClass column-class
-                      :minWidth 50
-                      :hxl hxl}))]
-     (clj->js (conj columns (actions-column owner has-hxl?))))))
+  [form & {:keys [hide-actions-column?
+                  is-filtered-dataview?
+                  get-label?
+                  language
+                  owner]
+           :or {get-label? true}}]
+  (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
+        columns (for [field (all-fields form
+                                        :is-filtered-dataview?
+                                        is-filtered-dataview?)]
+                  (let [{:keys [name type full-name]
+                         {:keys [hxl]} :instance} field
+                        label (if get-label? (get-label field language) name)
+                        column-class (get-column-class field)]
+                    {:id name
+                     :field full-name
+                     :type type
+                     :name (column-name-html-string column-class label hxl)
+                     :toolTip label
+                     :sortable true
+                     :formatter (partial formatter field language)
+                     :headerCssClass (when has-hxl? "hxl-min-height")
+                     :cssClass column-class
+                     :minWidth 50
+                     :hxl hxl}))]
+    (clj->js (cond-> columns
+               (not hide-actions-column?)
+               (conj (actions-column owner has-hxl?))))))
 
-(defn- init-sg-pager [grid dataview]
+(defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
     (Pager. dataview
             grid
             (js/jQuery (str "#" pager-id)))))
 
-(defn- resizeColumns [grid]
+(defn resizeColumns [grid]
   (.registerPlugin grid (.AutoColumnSize js/Slick)))
 
 (def sg-options
@@ -169,26 +179,6 @@
        :enableTextSelectionOnCells true
        :rowHeight 40
        :syncColumnCellResize false})
-
-(defn freeze-action-column!
-  "Fixes the first column on slick table on horizontal scroll"
-  []
-  (let [actions (.getElementsByClassName js/document "record-actions")
-        sg-viewport (first (.getElementsByClassName js/document
-                                                    "slick-viewport"))]
-    (doseq [action actions]
-      (let [leftOffset (js/parseInt (.-offsetLeft action))]
-        (.addEventListener sg-viewport "scroll"
-                           (fn []
-                             (let [sl (.-scrollLeft  sg-viewport)
-                                   set-border! #(set!
-                                                 (.-borderRight
-                                                  (.-style action)) %)]
-                               (if (zero? sl)
-                                 (set-border! "1px dotted #ededed")
-                                 (set-border! "1px solid silver"))
-                               (set! (.-left (.-style action))
-                                     (str (+ sl leftOffset) "px")))))))))
 
 (defn bind-external-sg-grid-event-handlers
   [grid event-handlers]
@@ -212,16 +202,19 @@
    Returns [grid dataview]."
   [data form current-language is-filtered-dataview? owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
-  (let [columns (flat-form->sg-columns
-                 form true current-language
+  (let [{{{:keys [num-displayed-records
+                  total-page-count]} :paging
+          :keys [hide-actions-column?]} :table-page} @shared/app-state
+        columns (flat-form->sg-columns
+                 form
+                 :language current-language
+                 :hide-actions-column? hide-actions-column?
                  :is-filtered-dataview? is-filtered-dataview?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
         dataview (DataView.)
-        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)
-        {{{:keys [num-displayed-records total-page-count]} :paging} :table-page}
-        @shared/app-state]
+        grid (SlickGrid. (str "#" table-id) dataview columns sg-options)]
     ;; dataview / grid hookup
     (bind-external-sg-grid-event-handlers grid grid-event-handlers)
     (bind-external-sg-grid-dataview-handlers dataview dataview-event-handlers)
@@ -252,7 +245,6 @@
                     (when (= id data-id)
                       (put! shared/event-chan
                             {:submission-to-rank rank})))))
-
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
@@ -272,9 +264,12 @@
   (let [event-chan (shared/event-tap)]
     (go
       (while true
-        (let [e (<! event-chan)
-              {:keys [submission-to-rank submission-clicked submission-unclicked
-                      filter-by new-columns re-render]} e
+        (let [{:keys [submission-to-rank
+                      submission-clicked
+                      submission-unclicked
+                      filter-by
+                      new-columns
+                      re-render]} (<! event-chan)
               update-data! (partial om/update! app-state
                                     [:table-page :submission-clicked :data])
               get-submission-data (fn [field value]
@@ -315,7 +310,7 @@
 
 ;; OM COMPONENTS
 (defmethod label-changer :default
-  [_ owner]
+  [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
   (reify
     om/IInitState
     (init-state [_] {:name-or-label :label})
@@ -327,9 +322,11 @@
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
                            {:new-columns
-                            (flat-form->sg-columns flat-form
-                                                   (= :label %)
-                                                   new-language)})]
+                            (flat-form->sg-columns
+                             flat-form
+                             :get-label? (= :label %)
+                             :hide-actions-column? hide-actions-column?
+                             :language new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! name-or-label))
@@ -364,18 +361,18 @@
               :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
 (defmethod table-header :default
-  [app-state owner]
+  [cursor owner]
   (om/component
    (html
     [:div.topbar
      [:div {:id pager-id}]
-     (om/build label-changer nil)
-     (om/build table-search app-state)
+     (om/build label-changer cursor)
+     (om/build table-search cursor)
      [:div {:style {:clear "both"}}]])))
 
 (defn- init-grid!
-  [data owner slick-grid-event-handlers]
   "Initializes grid + dataview, and stores them in owner's state."
+  [data owner slick-grid-event-handlers]
   (when (seq data)
     (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
           current-language (:current
@@ -390,8 +387,29 @@
       (om/set-state! owner :dataview dataview)
       [grid dataview])))
 
+(defn get-table-view-height
+  []
+  (- (-> "body"
+         js/document.querySelector
+         .-clientHeight)
+     (-> ".tab-page"
+         js/document.querySelector
+         .getBoundingClientRect
+         .-top)))
+
+(defn set-window-resize-handler
+  [owner]
+  (let [resize-handler (fn [event]
+                         (om/set-state! owner
+                                        :table-view-height
+                                        (get-table-view-height)))]
+    (.addEventListener js/window
+                       "resize"
+                       resize-handler)
+    (om/set-state! owner :resize-handler resize-handler)))
+
 (defmethod table-page :default
-  [{{:keys [active]} :views :as app-state}
+  [{{:keys [active]} :views :as cursor}
    owner
    {:keys [slick-grid-event-handlers] :as opts}]
   "Om component for the table grid.
@@ -421,22 +439,29 @@
    https://github.com/mleibman/SlickGrid/wiki/Getting-Started"
   (let [active? (in? active :table)]
     (reify
-      om/IRender
-      (render [_]
-        (let [no-data? (empty? (get-in app-state [:data]))
-              {:keys [num_of_submissions] :as dataset-info}
-              (:dataset-info app-state)
-              with-info #(merge % {:dataset-info dataset-info})]
+      om/IRenderState
+      (render-state [_ {:keys [table-view-height]}]
+        (let [{:keys [data dataset-info]
+               {:keys [prevent-scrolling-in-table-view? submission-clicked]}
+               :table-page}
+              cursor
+              {:keys [num_of_submissions]} dataset-info
+              no-data? (empty? data)
+              with-info #(merge cursor %)]
           (when active?
             (html
              [:div.table-view
-              (om/build submission-view
-                        (with-info (get-in app-state
-                                           [:table-page :submission-clicked]))
-                        {:opts (merge (select-keys opts
-                                                   #{:delete-record! :role})
-                                      {:view :table})})
-              (om/build table-header app-state)
+              {:style (when prevent-scrolling-in-table-view?
+                        {:height (or table-view-height
+                                     (get-table-view-height))
+                         :overflow "hidden"})}
+              (when (:data submission-clicked)
+                (om/build submission-view
+                          (with-info submission-clicked)
+                          {:opts (merge
+                                  (select-keys opts #{:delete-record! :role})
+                                  {:view :table})}))
+              (om/build table-header cursor)
               [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
                  [:p.alert.alert-warning "No data"]
@@ -445,10 +470,16 @@
       om/IDidMount
       (did-mount [_]
         (when active?
-          (let [data (get-in app-state [:data])]
+          (set-window-resize-handler owner)
+          (let [data (get-in cursor [:data])]
             (when-let [[grid dataview]
                        (init-grid! data owner slick-grid-event-handlers)]
-              (handle-table-events app-state grid dataview)))))
+              (handle-table-events cursor grid dataview)))))
+      om/IWillUnmount
+      (will-unmount [_]
+        (.removeEventListener js/window
+                              "resize"
+                              (om/get-state owner :resize-handler)))
       om/IWillReceiveProps
       (will-receive-props [_ next-props]
         "Reset SlickGrid data if the table data has changed."
@@ -462,7 +493,7 @@
                            (init-grid! new-data
                                        owner
                                        slick-grid-event-handlers)]
-                  (handle-table-events app-state grid dataview))
+                  (handle-table-events cursor grid dataview))
                 (do ; data has changed
                   (.invalidateAllRows grid)
                   (.setItems dataview (clj->js new-data) _id)

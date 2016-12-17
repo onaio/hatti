@@ -37,18 +37,31 @@
   "An initial, empty, app-state, which can be modified to change dataviews."
   []
   (atom
-   {:views {:all [:overview :map :table :photos :chart :saved-charts :settings]
+   {:views {:all [:chart
+                  :dashboard
+                  :map
+                  :overview
+                  :photos
+                  :report-view
+                  :saved-charts
+                  :settings
+                  :table
+                  :user-guide]
             :selected :overview
-            :settings {:all [:form-info :settings :basemaps
-                             :integrated-apps :media-files
-                             :xls-reports
-                             :service-configuration]
+            :settings {:all [:basemaps
+                             :form-info
+                             :integrated-apps
+                             :media-files
+                             :service-configuration
+                             :settings
+                             :xls-reports]
                        :active-tab :form-info
                        :integrated-apps {:active-section :apps-list
                                          :add? false}}}
     :map-page {:submission-clicked {:data nil}
                :geofield {}}
-    :table-page {:submission-clicked {:data nil}}
+    :table-page {:submission-clicked {:data nil}
+                 :hide-actions-column? false}
     :chart-page {:visible-charts default-fields
                  :chart-data {}}
     :dataset-info {}

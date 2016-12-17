@@ -1,10 +1,15 @@
 (ns hatti.ona.forms
   (:require [chimera.js-interop :refer [format]]
             [chimera.urls :refer [last-url-param]]
+            [cljs.pprint :refer [cl-format]]
             [clojure.string :as string]
-            [hatti.constants :refer [_submission_time _submitted_by]]))
+            [hatti.constants :refer [_submission_time
+                                     _submitted_by
+                                     _last_edited]]))
 
 ;; CONSTANTS
+(def currency-regex #"£|$")
+(def newline-regex #"[\n\r]")
 (def no-answer "No Answer")
 (def submission-time-field
   {:name _submission_time :full-name _submission_time
@@ -14,13 +19,34 @@
   {:name _submitted_by :full-name _submitted_by
    :label "Submitted by" :type "text"})
 
-(def extra-submission-details [submission-time-field submitted-by-field])
+(def last_edited
+  {:name _last_edited
+   :full-name _last_edited
+   :label "Last Edited"
+   :type "date"})
+
+(def extra-submission-details [last_edited
+                               submission-time-field
+                               submitted-by-field])
+
+;; Formatting helpers
+(defn- format-multiline-answer
+  "Format multiline answer by introducing html line breaks"
+  [answer]
+  (if (and (string? answer) (re-find newline-regex answer))
+    (map #(vector :p %) (string/split answer newline-regex))
+    answer))
 
 ;; Functions on the FIELD object
 (defn field-type-in-set?
   "Helper function: is the :type of a field among a set of types"
   [types field]
   (contains? types (:type field)))
+
+(defn field-name-in-set?
+  "Helper function: is the :name of a field among a set of names"
+  [names field]
+  (contains? names (:name field)))
 
 (defn group?
   "Checks whether a field in a form (ie, a field) is a group field"
@@ -69,8 +95,18 @@
 
 (defn meta?
   [field]
-  (field-type-in-set? #{"start" "end" "today" "deviceid" "imei" "subscriberid"
-                        "uuid" "instanceID" "simserial" "phonenumber"} field))
+  (or (field-name-in-set? #{"meta" "instanceID"} field)
+      (field-type-in-set? #{"deviceid"
+                            "end"
+                            "imei"
+                            "instanceID"
+                            "phonenumber"
+                            "simserial"
+                            "start"
+                            "subscriberid"
+                            "today"
+                            "uuid"}
+                          field)))
 
 (defn geofield?
   [field]
@@ -118,8 +154,9 @@
   (not (or (note? field) (group? field))))
 
 ;; Formatting helpers
-(defn get-icon [field]
+(defn get-icon
   "Get the icon relevant to the given field (depending on its type)."
+  [field]
   [:i {:class
        (cond
          (text? field)        "fa fa-font"
@@ -158,61 +195,60 @@
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
    Optional: compact? should be true if a short string needs to be returned."
-  ([field answer] (format-answer field answer nil))
-  ([field answer language] (format-answer field answer language false))
-  ([field answer language compact?]
-   (cond
-     (select-one? field) (if-not answer
-                           no-answer
-                           (let [option (->> (:children field)
-                                             (filter #(= answer (:name %)))
-                                             first)
-                                 formatted (get-label option language)]
-                             (or formatted answer)))
-     (select-all? field) (if (string/blank? answer)
-                           no-answer
-                           (let [names (set (string/split answer #" "))]
-                             (->> (:children field)
-                                  (filter #(contains? names (:name %)))
-                                  (map #(str "☑ " (get-label % language) " "))
-                                  string/join)))
-
-     (or (image? field)
-         (video? field)) (let [image (:download_url answer)
-                               thumb (or (:small_download_url answer) image)
-                               fname (last-url-param (:filename answer))]
-                           (cond
-                             (or (nil? answer) (string? answer)) answer
-                             compact? (format "<a href='%s' target='_blank'>
+  [field answer & {:keys [compact? label language]}]
+  (cond
+    (string/blank? answer) no-answer
+    (select-one? field) (let [option (->> (:children field)
+                                          (filter #(= answer (:name %)))
+                                          first)
+                              formatted (get-label option language)]
+                          (or formatted answer))
+    (select-all? field) (let [names (set (string/split answer #" "))]
+                          (->> (:children field)
+                               (filter #(contains? names (:name %)))
+                               (map #(str "☑ " (get-label % language) " "))
+                               string/join))
+    (time-based? field) (-> answer js/moment (.format "ll"))
+    (or (image? field)
+        (video? field)) (let [image (:download_url answer)
+                              thumb (or (:small_download_url answer) image)
+                              fname (last-url-param (:filename answer))]
+                          (cond
+                            (string? answer) answer
+                            compact? (format "<a href='%s' target='_blank'>
                                       <i class='fa fa-external-link'></i>
                                      %s </a>" image fname)
-                             (nil? thumb) answer
-                             :else [:a {:href image :target "_blank"}
-                                    (if (image? field)
-                                      [:img {:width "80px" :src thumb}]
-                                      [:span
-                                       [:i.fa.fa-file-video-o]
-                                       " " fname])]))
-     (osm? field) (when answer
-                    (let [kw->name name ; aliasing before overriding name
-                          {:keys [name type osm-id]} answer
-                          type-cap (when type (string/capitalize type))
-                          title (str "OSM " type-cap ": " name " (" osm-id ")")]
-                      (if compact?
-                        title
-                        [:table.osm-data
-                         [:thead [:th {:col-span 2} title]]
-                         [:tbody
-                          (map (fn [[tk tv]]
-                                 (when-not (string/blank? tv)
-                                   [:tr
-                                    [:td.question (kw->name tk)]
-                                    [:td.answer tv]]))
-                               (:tags answer))]])))
-     (repeat? field) (if (empty? answer)
-                       ""
-                       (str "Repeated data with " (count answer) " answers."))
-     :else answer)))
+                            (nil? thumb) answer
+                            :else [:a {:href image :target "_blank"}
+                                   (if (image? field)
+                                     [:img {:width "80px" :src thumb}]
+                                     [:span
+                                      [:i.fa.fa-file-video-o]
+                                      " " fname])]))
+    (osm? field) (let [kw->name name ; aliasing before overriding name
+                       {:keys [name type osm-id]} answer
+                       type-cap (when type (string/capitalize type))
+                       title (str "OSM " type-cap ": " name " (" osm-id ")")]
+                   (if compact?
+                     title
+                     [:table.osm-data
+                      [:thead [:th {:col-span 2} title]]
+                      [:tbody
+                       (map (fn [[tk tv]]
+                              (when-not (string/blank? tv)
+                                [:tr
+                                 [:td.question (kw->name tk)]
+                                 [:td.answer tv]]))
+                            (:tags answer))]]))
+    (repeat? field) (if (empty? answer)
+                      no-answer
+                      (str "Repeated data with " (count answer) " answers."))
+    ;; Otherwise it is text of some kind
+    :else (if (numeric? field)
+            (if-let [currency (some->> label (re-find currency-regex))]
+              (str currency (cl-format nil "~:d" answer))
+              answer)
+            (format-multiline-answer answer))))
 
 (defn relabel-meta-field
   "Try and produce a label for meta field if non-existent."
@@ -284,13 +320,15 @@
   [flat-form]
   (remove meta? flat-form))
 
-(defn geofields [flat-form]
+(defn geofields
   "Get just the geofields from the form."
+  [flat-form]
   (filter geofield? flat-form))
 
-(defn default-geofield [flat-form]
+(defn default-geofield
   "From a list of geofields, get the default one to map.
    Implementation: pick first geoshape if any, else pick first geofield."
+  [flat-form]
   (let [repeats (->> flat-form
                      (filter repeat?)
                      flatten)
@@ -305,15 +343,18 @@
 ;; UTILITY: languages
 (defn english? [language] (re-find #"(?i)english" (str language)))
 
-(defn get-languages [form]
+(defn get-languages
   "Get the languages for a given form."
+  [form]
   (:languages (meta form)))
 
-(defn multilingual? [form]
+(defn multilingual?
   "Does this form contain labels in multiple languages?"
+  [form]
   (seq (get-languages form)))
 
-(defn default-lang [languages]
+(defn default-lang
   "Get default language (English or alphabetical first) from within a list."
+  [languages]
   (if-let [eng (first (filter english? languages))]
     eng (first (sort languages))))
