@@ -240,7 +240,9 @@
                                  [:td.question (kw->name tk)]
                                  [:td.answer tv]]))
                             (:tags answer))]]))
-    (repeat? field) (str "Repeated data with " (count answer) " answers.")
+    (repeat? field) (if (empty? answer)
+                      no-answer
+                      (str "Repeated data with " (count answer) " answers."))
     ;; Otherwise it is text of some kind
     :else (if (numeric? field)
             (if-let [currency (some->> label (re-find currency-regex))]
