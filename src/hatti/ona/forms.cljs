@@ -11,13 +11,18 @@
 (def currency-regex #"£|$")
 (def newline-regex #"[\n\r]")
 (def no-answer "No Answer")
+
 (def submission-time-field
-  {:name _submission_time :full-name _submission_time
-   :label "Submission Time" :type "dateTime"})
+  {:name _submission_time
+   :full-name _submission_time
+   :label "Submission Time"
+   :type "dateTime"})
 
 (def submitted-by-field
-  {:name _submitted_by :full-name _submitted_by
-   :label "Submitted by" :type "text"})
+  {:name _submitted_by
+   :full-name _submitted_by
+   :label "Submitted by"
+   :type "text"})
 
 (def last_edited
   {:name _last_edited
@@ -252,8 +257,8 @@
 
 (defn relabel-meta-field
   "Try and produce a label for meta field if non-existent."
-  [field]
-  (let [label (if-let [type (:type field)]
+  [{:keys [label name type] :as field}]
+  (let [label (if type
                 (case type
                   "start"         "Start time"
                   "end"           "End time"
@@ -265,12 +270,12 @@
                   "uuid"          "UUID"
                   "instanceID"    "Instance ID"
                   "phonenumber"   "Phone number"
-                  (:name field))
-                (case (:name field)
+                  name)
+                (case name
                   _submission_time "Submission time"
-                  _submitted_by "Submitted by"
+                  _submitted_by    "Submitted by"
                   ""))]
-    (if (:label field) field (assoc field :label label))))
+    (cond-> field (not label) (assoc :label label))))
 
 ;; UTILITY: Form Flattening
 (defn flatten-form
