@@ -1,6 +1,7 @@
 (ns hatti.views.dataview
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [chimera.js-interop :refer [format]]
+            [chimera.metrics :refer [send-event]]
             [chimera.om.state :refer [transact! merge-into-app-state!]]
             [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
@@ -186,9 +187,11 @@
            (om/build dataview-infobar
                      {:dataset-info (-> app-state :dataset-info)
                       :status (-> app-state :status)})]
-          (for [{:keys [component view]} dataviews]
-            [:div {:class (str "tab-page " (name view) "-page")
+          (for [{:keys [component view]} dataviews
+                :let [view-name (name view)]]
+            [:div {:class (str "tab-page " view-name "-page")
                    :style {:display (view->display view)}}
              (when (= selected view)
-               [:div.tab-content {:id (str "tab-content" (name view))}
+               (send-event :Dataview (str view-name "-page-load"))
+               [:div.tab-content {:id (str "tab-content" view-name)}
                 (om/build component app-state {:opts opts})])])])))))
