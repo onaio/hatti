@@ -86,11 +86,11 @@
    Get one with (partial formatter field language)."
   [field language field-key row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field
-                         clj-value
-                         :language language
-                         :compact? true
-                         :field-key field-key)))
+    (format-answer field
+                   clj-value
+                   :language language
+                   :compact? true
+                   :field-key field-key)))
 
 (defmethod action-buttons :default
   [owner]
@@ -326,8 +326,8 @@
             colset! #(put! shared/event-chan
                            {:new-columns
                             (flat-form->sg-columns flat-form
-                                                   (= :label %)
-                                                   new-language)})]
+                                                   :get-label? (= :label %)
+                                                   :language   new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! field-key))
