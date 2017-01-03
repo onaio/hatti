@@ -350,63 +350,63 @@
         (when (= query (.-value input))
           (put! shared/event-chan {query-event-key query})))))
 
-    (defmethod table-search :default
-      [_ owner]
-      (om/component
-       (html
-        [:div.table-search
-         [:i.fa.fa-search]
-         [:input {:type "text"
-                  :placeholder "Search"
-                  :on-change #(delayed-search (.-target %) :filter-by)}]])))
+(defmethod table-search :default
+  [_ owner]
+  (om/component
+   (html
+    [:div.table-search
+     [:i.fa.fa-search]
+     [:input {:type "text"
+              :placeholder "Search"
+              :on-change #(delayed-search (.-target %) :filter-by)}]])))
 
-    (defmethod table-header :default
-      [cursor owner]
-      (om/component
-       (html
-        [:div.topbar
-         [:div {:id pager-id}]
-         (om/build label-changer cursor)
-         (om/build table-search cursor)
-         [:div {:style {:clear "both"}}]])))
+(defmethod table-header :default
+  [cursor owner]
+  (om/component
+   (html
+    [:div.topbar
+     [:div {:id pager-id}]
+     (om/build label-changer cursor)
+     (om/build table-search cursor)
+     [:div {:style {:clear "both"}}]])))
 
-    (defn- init-grid!
-      "Initializes grid + dataview, and stores them in owner's state."
-      [data owner slick-grid-event-handlers]
-      (when (seq data)
-        (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
-              current-language (:current
-                                (om/observe owner (shared/language-cursor)))
-              [grid dataview] (sg-init data
-                                       flat-form
-                                       current-language
-                                       is-filtered-dataview?
-                                       owner
-                                       slick-grid-event-handlers)]
-          (om/set-state! owner :grid grid)
-          (om/set-state! owner :dataview dataview)
-          [grid dataview])))
+(defn- init-grid!
+  "Initializes grid + dataview, and stores them in owner's state."
+  [data owner slick-grid-event-handlers]
+  (when (seq data)
+    (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
+          current-language (:current
+                            (om/observe owner (shared/language-cursor)))
+          [grid dataview] (sg-init data
+                                   flat-form
+                                   current-language
+                                   is-filtered-dataview?
+                                   owner
+                                   slick-grid-event-handlers)]
+      (om/set-state! owner :grid grid)
+      (om/set-state! owner :dataview dataview)
+      [grid dataview])))
 
-    (defn get-table-view-height
-      []
-      (- (-> "body"
-             js/document.querySelector
-             .-clientHeight)
-         (-> ".tab-page"
-             js/document.querySelector
-             .getBoundingClientRect
-             .-top)))
+(defn get-table-view-height
+  []
+  (- (-> "body"
+         js/document.querySelector
+         .-clientHeight)
+     (-> ".tab-page"
+         js/document.querySelector
+         .getBoundingClientRect
+         .-top)))
 
-    (defn set-window-resize-handler
-      [owner]
-      (let [resize-handler (fn [event]
-                             (om/set-state! owner
-                                            :table-view-height
-                                            (get-table-view-height)))]
-        (.addEventListener js/window
-                           "resize"
-                           resize-handler)
-        (om/set-state! owner :resize-handler resize-handler)))
+(defn set-window-resize-handler
+  [owner]
+  (let [resize-handler (fn [event]
+                         (om/set-state! owner
+                                        :table-view-height
+                                        (get-table-view-height)))]
+    (.addEventListener js/window
+                       "resize"
+                       resize-handler)
+    (om/set-state! owner :resize-handler resize-handler)))
 
 (defmethod table-page :default
   [{{:keys [active]} :views :as cursor}

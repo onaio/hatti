@@ -223,7 +223,7 @@
                             (string? answer) answer
                             compact? (format "<a href='%s' target='_blank'>
                                       <i class='fa fa-external-link'></i>
-                                     %s </a>" image fname)
+                                      %s </a>" image fname)
                             (nil? thumb) answer
                             :else [:a {:href image :target "_blank"}
                                    (if (image? field)
