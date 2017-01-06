@@ -84,11 +84,13 @@
 (defn formatter
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
-  [field language row cell value columnDef dataContext]
+  [field language field-key row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
-    (forms/format-answer field clj-value
-                         :language language
-                         :compact? true)))
+    (format-answer field
+                   clj-value
+                   :language language
+                   :compact? true
+                   :field-key field-key)))
 
 (defmethod action-buttons :default
   [owner]
@@ -147,14 +149,15 @@
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
                         label (if get-label? (get-label field language) name)
-                        column-class (get-column-class field)]
+                        column-class (get-column-class field)
+                        field-key (if get-label? :name :label)]
                     {:id name
                      :field full-name
                      :type type
                      :name (column-name-html-string column-class label hxl)
                      :toolTip label
                      :sortable true
-                     :formatter (partial formatter field language)
+                     :formatter (partial formatter field language field-key)
                      :headerCssClass (when has-hxl? "hxl-min-height")
                      :cssClass column-class
                      :minWidth 50
@@ -256,7 +259,7 @@
     (resizeColumns grid)
     [grid dataview]))
 
-;; EVENT LOOPS
+    ;; EVENT LOOPS
 (defn handle-table-events
   "Event loop for the table view. Processes a tap of share/event-chan,
    and updates app-state/dataview/grid as needed."
@@ -303,40 +306,37 @@
 
 (defn- render-options
   [options owner colset!]
-  (let [choose-display-key (fn [k] (om/set-state! owner :name-or-label k)
+  (let [choose-display-key (fn [k] (om/set-state! owner :field-key k)
                              (colset! k))]
     (for [[k v] options]
       [:li [:a {:on-click (click-fn #(choose-display-key k)) :href "#"} v]])))
 
 ;; OM COMPONENTS
 (defmethod label-changer :default
-  [{{:keys [hide-actions-column?]} :table-page :as cursor} owner]
+  [_ owner]
   (reify
     om/IInitState
-    (init-state [_] {:name-or-label :label})
+    (init-state [_] {:field-key :label})
     om/IRenderState
-    (render-state [_ {:keys [name-or-label language]}]
+    (render-state [_ {:keys [field-key language]}]
       (let [options {:label [:strong "Label"]
-                     :name [:strong "Name"]}
+                     :name  [:strong "Name"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
             colset! #(put! shared/event-chan
                            {:new-columns
-                            (flat-form->sg-columns
-                             flat-form
-                             :get-label? (= :label %)
-                             :hide-actions-column? hide-actions-column?
-                             :language new-language)})]
+                            (flat-form->sg-columns flat-form
+                                                   :get-label? (= :label %)
+                                                   :language   new-language)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
-          (colset! name-or-label))
+          (colset! field-key))
         (html
          [:div.label-changer
           [:span.label-changer-label "Show:"]
-          [:div {:class "drop-hover" :id "header-display-dropdown"}
-           [:span (options name-or-label) [:i.fa.fa-angle-down]]
-           [:ul {:class "submenu no-dot"}
-            (render-options options owner colset!)]]])))))
+          [:div#header-display-dropdown.drop-hover
+           [:span (options field-key) [:i.fa.fa-angle-down]]
+           [:ul.submenu.no-dot (render-options options owner colset!)]]])))))
 
 (defn delayed-search
   "Delayed search fires a query-event on event-chan if the value of the input
@@ -465,8 +465,7 @@
               [:div.slickgrid {:id table-id}
                (if (and no-data? (zero? num_of_submissions))
                  [:p.alert.alert-warning "No data"]
-                 [:span
-                  [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
+                 [:span [:i.fa.fa-spinner.fa-pulse] "Loading..."])]]))))
       om/IDidMount
       (did-mount [_]
         (when active?
@@ -480,6 +479,7 @@
         (.removeEventListener js/window
                               "resize"
                               (om/get-state owner :resize-handler)))
+
       om/IWillReceiveProps
       (will-receive-props [_ next-props]
         "Reset SlickGrid data if the table data has changed."

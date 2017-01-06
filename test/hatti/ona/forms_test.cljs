@@ -112,19 +112,19 @@
   (let [form (forms/flatten-form single-language-form)
         q-sel1 (first (filter forms/select-one? form))
         q-selm (first (filter forms/select-all? form))
-        q-int (first (filter forms/numeric? form))
+        q-int  (first (filter forms/numeric? form))
         q-text (first (filter forms/text? form))
-        q-img (merge q-text {:type "image"})
+        q-img  (merge q-text {:type "image"})
         q-repeat (merge q-text {:type "repeat"})]
     (testing "select one answers are formatted properly"
       (let [rand-option (rand-nth (:children q-sel1))]
         (is (= (forms/format-answer q-sel1 (:name rand-option))
                (:label rand-option)))
-        (is (= (forms/format-answer q-sel1 nil) forms/no-answer))))
-    (testing "text and integer answers are left alone"
-      (is (= (forms/format-answer q-text "foo") "foo"))
-      (is (= (forms/format-answer q-text 1) 1))
-      (is (= (forms/format-answer q-text "1") "1")))
+        (is (= (forms/format-answer q-sel1 nil) forms/no-answer))
+        (is (= (forms/format-answer q-sel1
+                                    (:label rand-option)
+                                    :field-key :label)
+               (:label rand-option)))))
     (testing "select all answers are formatted properly"
       (let [first-option (first (:children q-selm))
             two-options (take 2 (:children q-selm))
@@ -133,10 +133,18 @@
         (is (= (forms/format-answer q-selm "") forms/no-answer))
         (is (has-label? first-option
                         (forms/format-answer q-selm (:name first-option))))
+        (is (has-label? first-option
+                        (forms/format-answer q-selm
+                                             (:label first-option)
+                                             :field-key :label)))
         (is (has-label? (first two-options)
                         (forms/format-answer q-selm two-answers)))
         (is (has-label? (second two-options)
                         (forms/format-answer q-selm two-answers)))))
+    (testing "text and integer answers are left alone"
+      (is (= (forms/format-answer q-text "foo") "foo"))
+      (is (= (forms/format-answer q-text 1) 1))
+      (is (= (forms/format-answer q-text "1") "1")))
     (testing "image answers are rendered as they should be"
       (let [image1 "bar.jpg"
             image2 {:filename "foo/bar.jpg"
