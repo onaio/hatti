@@ -100,7 +100,9 @@
 
 (defn meta?
   [field]
-  (or (field-name-in-set? #{"meta" "instanceID"} field)
+  (or (field-name-in-set? #{"meta"
+                            "instanceID"
+                            "__version__"} field)
       (field-type-in-set? #{"deviceid"
                             "end"
                             "imei"
