@@ -313,8 +313,9 @@
 (defn- load-mapboxgl-helper
   "Helper for map-and-markers component (see below);
    If map doesn't exists in local-state, creates it and puts it there."
-  [{:keys [dataset-info] {:keys [tiles-server]} :map-page :as app-state}
-   owner & {:keys [geojson geofield]}]
+  [{:keys [dataset-info]
+    {:keys [tiles-server] map-geojson :geojson} :map-page :as app-state}
+   owner & {:keys [geofield] updated-map-geojson :geojson}]
   (let [mapboxgl-map (or (om/get-state owner :mapboxgl-map)
                          (mu/create-mapboxgl-map (om/get-node owner)))
         {:keys [formid id_string query]} dataset-info
@@ -327,6 +328,8 @@
                                   tiles-server)
                          (mu/get-tiles-endpoint tiles-server
                                                 formid ["id"] flat-form query))
+        ;; generated geojson
+        geojson (or updated-map-geojson map-geojson)
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
@@ -360,11 +363,11 @@
           (load-layers))
         (do
           (.off mapboxgl-map "load")
-          (.on mapboxgl-map "load" load-layers)))
-      (om/set-state! owner :geojson geojson))
+          (.on mapboxgl-map "load" load-layers))))
     (om/set-state! owner :mapboxgl-map mapboxgl-map)
     (om/set-state! owner :layer-id id_string)
-    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)))
+    (om/update! app-state [:map-page :mapboxgl-map] mapboxgl-map)
+    (om/update! app-state [:map-page :geojson] geojson)))
 
 (defn mapboxgl-map
   "Map and markers. Initializes mapboxgl map + adds vector tile data to it.

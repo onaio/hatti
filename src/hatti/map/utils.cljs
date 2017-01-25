@@ -503,8 +503,10 @@
   "Fits map boundaries on rendered features."
   [map layer-id & [geojson]]
   (let [features (or (:features geojson)
-                     (.queryRenderedFeatures
-                      map (clj->js {:layers [layer-id]})))
+                     (when (.getLayer map layer-id)
+                       (.queryRenderedFeatures
+                        map (clj->js {:layers [layer-id]})))
+                     [])
         layer-data (or geojson
                        (clj->js
                         {:type "FeatureCollection" :features features}))
