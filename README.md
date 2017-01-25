@@ -8,6 +8,12 @@ A cljs dataview from [Ona](http://beta.ona.io).
 
 This library is a work-in-progress to package up much of the dataview used in Ona's new product. It provides a set of Om components that can be used to visualize a dataset that has a schema attached to it.
 
+## Installation
+
+Install via clojars with:
+
+[![Clojars Project](http://clojars.org/onaio/hatti/latest-version.svg)](http://clojars.org/onaio/hatti)
+
 ## Terminology used below:
 
  * `data` is a vector of `records`
