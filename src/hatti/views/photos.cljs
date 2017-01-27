@@ -48,9 +48,11 @@
 
 (defn full-url-from-active-image
   []
-  (.getAttribute
-   (.querySelector js/document "img.pswp__img.pswp__img--placeholder")
-   "src"))
+  (last
+   (re-find #"/(http.*)"
+            (.getAttribute
+             (.querySelector js/document "img.pswp__img.pswp__img--placeholder")
+             "src"))))
 
 ;;; We use strings instead of keywords below because keywords are forced to
 ;;; lower-case. We use js-obj to avoid additional conversion costs.
