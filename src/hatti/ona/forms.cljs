@@ -102,7 +102,10 @@
   [field]
   (or (field-name-in-set? #{"meta"
                             "instanceID"
-                            "__version__"} field)
+                            "__version__"
+                            "_duration"
+                            "_submitted_by"}
+                          field)
       (field-type-in-set? #{"deviceid"
                             "end"
                             "imei"
