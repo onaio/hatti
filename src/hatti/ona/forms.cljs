@@ -281,32 +281,41 @@
     (cond-> field (not label) (assoc :label label))))
 
 ;; UTILITY: Form Flattening
+(defn name-label-map
+  [{:keys [children name label] :as child} prefix acc flatten-repeats?]
+  (let [full-name         (if prefix (str prefix "/" name) name)
+        langs             (when (map? label) (keys label))
+        updated-child     (with-meta
+                            (assoc child :full-name full-name) {:langs langs})
+        childless-child   (dissoc updated-child :children)
+        make-new-children (map #(name-label-map % full-name [] flatten-repeats?)
+                               children)]
+    (cond
+      (or
+       (group? updated-child)
+       (and
+        flatten-repeats?
+        (repeat? updated-child))) (concat (conj acc childless-child)
+                                          make-new-children)
+      (repeat? updated-child)     (conj
+                                   acc
+                                   (assoc
+                                    updated-child
+                                    :children
+                                    (flatten (apply concat make-new-children))))
+      :else                       (conj acc updated-child))))
+
 (defn flatten-form
   "Input: map derived from form.json. Output: a flattened vector;
    each element is a field; a field is a {:name .. :label .. :type ..} map.
    By default, REPEAT BLOCKS ARE NOT FLATTENED, repeat blocks represent
    subforms, which need special handling in most cases.
    :flatten-repeats? overrides default behavior, also flattens repeats."
-  [form & {:keys [flatten-repeats?]}]
-  (letfn [(name-label-map [nd prefix acc]
-            (let [{:keys [:type :children :name :label]} nd
-                  full-name (if prefix (str prefix "/" name) name)
-                  langs (when (map? label) (keys label))
-                  nd (with-meta (assoc nd :full-name full-name) {:langs langs})
-                  mini-nd (dissoc nd :children)
-                  new-children (map #(name-label-map % full-name []) children)]
-              (cond
-                (group? nd) (concat (conj acc mini-nd) new-children)
-                (repeat? nd) (if flatten-repeats?
-                               (concat (conj acc mini-nd) new-children)
-                               (conj acc
-                                     (assoc nd :children
-                                            (flatten
-                                             (apply concat new-children)))))
-                :else (conj acc nd))))]
-    (let [nodes (flatten (map #(name-label-map % nil []) (:children form)))
-          langs (->> nodes (map #(:langs (meta %))) flatten distinct)]
-      (with-meta nodes {:languages (remove nil? langs)}))))
+  [{:keys [children] :as form} & {:keys [flatten-repeats?]}]
+  (let [nodes (flatten
+               (map #(name-label-map % nil [] flatten-repeats?) children))
+        langs (->> nodes (map #(:langs (meta %))) flatten distinct)]
+    (with-meta nodes {:languages (remove nil? langs)})))
 
 ;; FUNCTIONS on the flat-form
 (defn meta-fields
