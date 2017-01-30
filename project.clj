@@ -3,7 +3,7 @@
   [path]
   (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.18-add-submitted-by-duration-as-meta-field-SNAPSHOT"
+(defproject onaio/hatti "0.3.19-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
