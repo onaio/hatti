@@ -79,11 +79,17 @@
              (extract-images datum photos-column))))))
 
 (deftest full-url-from-active-image-gets-url
-  (let [img (.createElement js/document "img")
+  (let [img0 (.createElement js/document "img")
+        img1 (.createElement js/document "img")
+        img2 (.createElement js/document "img")
         container (new-container! "active-image")
         active-image-src "https://the-url"]
-    (.setAttribute img "class" "pswp__img pswp__img--placeholder")
-    (.setAttribute img "src" (resize-image active-image-src 100))
-    (dommy/append! (sel1 js/document "#active-image") img)
+    (.setAttribute img0 "class" "pswp__img pswp__img--placeholder")
+    (.setAttribute img1 "class" "pswp__img pswp__img--placeholder")
+    (.setAttribute img2 "class" "pswp__img pswp__img--placeholder")
+    (.setAttribute img1 "src" (resize-image active-image-src 100))
+    (dommy/append! (sel1 js/document "#active-image") img0)
+    (dommy/append! (sel1 js/document "#active-image") img1)
+    (dommy/append! (sel1 js/document "#active-image") img2)
     (testing "strips last url"
       (is (= (full-url-from-active-image) active-image-src)))))
