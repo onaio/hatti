@@ -105,10 +105,14 @@
 
 (deftest get-matching-name
   (testing "get-matching-name finds matching filename using attachement name
-  from list ofattachments"
+  from list of attachments"
     (is (= (post-process/get-matching-name
             "1478203839187.jpg"
             ["1474634658923_wiuyrXR.jpg"
              "1478203839187_wijUzUf.jpg"
              "1478404659734.jpg"])
-           "1478203839187_wijUzUf.jpg"))))
+           "1478203839187_wijUzUf.jpg"))
+    (is (= (post-process/get-matching-name
+            "السيره الذاتيه )  محمد خلف )-22_6_4.doc"
+            ["السيره_الذاتيه___محمد_خلف_-22_6_4.doc"])
+           "السيره الذاتيه )  محمد خلف )-22_6_4.doc"))))
