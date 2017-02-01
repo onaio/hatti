@@ -106,12 +106,15 @@
   it returns 1478203839187_wijUzUf.jpg."
   [fname fnames]
   (if (string? fname)
-    (or
-     (filter-first
-      #(re-find
-        (re-pattern (first (split fname (re-pattern "\\.")))) %)
-      fnames)
-     fname)
+    (try
+      (or
+       (filter-first
+        #(re-find
+          (re-pattern (first (split fname (re-pattern "\\.")))) %)
+        fnames)
+       fname)
+      (catch js/SyntaxError e
+        fname))
     fname))
 
 (defn get-attach-map
