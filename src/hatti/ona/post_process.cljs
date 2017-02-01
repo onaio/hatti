@@ -113,7 +113,7 @@
           (re-pattern (first (split fname (re-pattern "\\.")))) %)
         fnames)
        fname)
-      (catch js/Error e
+      (catch js/SyntaxError e
         fname))
     fname))
 
