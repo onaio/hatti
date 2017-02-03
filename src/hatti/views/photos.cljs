@@ -81,8 +81,6 @@
                             (js-obj "x" (.-left rect)
                                     "y" (+ (.-top rect) page-y-scroll)
                                     "w" (.-width rect))))
-                        "getImageURLForShare"
-                        (fn [share-button-data] (full-url-from-active-image))
                         "addCaptionHTMLFn"
                         (fn [item caption-el is-fake]
                           (set! (-> caption-el .-children first .-innerHTML)
@@ -91,6 +89,11 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
                                 options)]
+    (set! (.. gallery
+              -options
+              -getImageURLForShare)
+          (fn [share-button-data]
+            (or (aget gallery "currItem" "original-src") "")))
     (.init gallery)))
 
 (defn- on-thumbnail-click
