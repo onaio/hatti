@@ -46,17 +46,6 @@
     (format "%s <br/><small>Submitted at %s on %s</small>"
             (.-title item) time date)))
 
-(defn full-url-from-active-image
-  []
-  (last
-   (re-find
-    #"/(http.*)"
-    (.getAttribute
-     (.item
-      (.querySelectorAll js/document "img.pswp__img.pswp__img--placeholder")
-      1)
-     "src"))))
-
 ;;; We use strings instead of keywords below because keywords are forced to
 ;;; lower-case. We use js-obj to avoid additional conversion costs.
 
