@@ -9,8 +9,7 @@
             [hatti.test-utils :refer [new-container!]]
             [hatti.views :refer [photos-page]]
             [hatti.views.photos :refer [extract-images
-                                        resize-image
-                                        full-url-from-active-image]]
+                                        resize-image]]
             [hatti.shared-test :refer
              [fat-form no-data small-fat-data data-gen]]
             [om.core :as om :include-macros true]))
@@ -77,19 +76,3 @@
     (testing "prefer column URL to attachments"
       (is (= (assoc datum :attachments [:url1 :url2])
              (extract-images datum photos-column))))))
-
-(deftest full-url-from-active-image-gets-url
-  (let [img0 (.createElement js/document "img")
-        img1 (.createElement js/document "img")
-        img2 (.createElement js/document "img")
-        container (new-container! "active-image")
-        active-image-src "https://the-url"]
-    (.setAttribute img0 "class" "pswp__img pswp__img--placeholder")
-    (.setAttribute img1 "class" "pswp__img pswp__img--placeholder")
-    (.setAttribute img2 "class" "pswp__img pswp__img--placeholder")
-    (.setAttribute img1 "src" (resize-image active-image-src 100))
-    (dommy/append! (sel1 js/document "#active-image") img0)
-    (dommy/append! (sel1 js/document "#active-image") img1)
-    (dommy/append! (sel1 js/document "#active-image") img2)
-    (testing "strips last url"
-      (is (= (full-url-from-active-image) active-image-src)))))

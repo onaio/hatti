@@ -46,17 +46,6 @@
     (format "%s <br/><small>Submitted at %s on %s</small>"
             (.-title item) time date)))
 
-(defn full-url-from-active-image
-  []
-  (last
-   (re-find
-    #"/(http.*)"
-    (.getAttribute
-     (.item
-      (.querySelectorAll js/document "img.pswp__img.pswp__img--placeholder")
-      1)
-     "src"))))
-
 ;;; We use strings instead of keywords below because keywords are forced to
 ;;; lower-case. We use js-obj to avoid additional conversion costs.
 
@@ -81,8 +70,6 @@
                             (js-obj "x" (.-left rect)
                                     "y" (+ (.-top rect) page-y-scroll)
                                     "w" (.-width rect))))
-                        "getImageURLForShare"
-                        (fn [share-button-data] (full-url-from-active-image))
                         "addCaptionHTMLFn"
                         (fn [item caption-el is-fake]
                           (set! (-> caption-el .-children first .-innerHTML)
@@ -91,6 +78,11 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
                                 options)]
+    (set! (.. gallery
+              -options
+              -getImageURLForShare)
+          (fn [share-button-data]
+            (or (aget gallery "currItem" "original-src") "")))
     (.init gallery)))
 
 (defn- on-thumbnail-click
