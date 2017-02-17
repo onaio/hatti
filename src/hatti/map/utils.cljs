@@ -455,49 +455,50 @@
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
   [owner map event-chan id_string style]
-  (let [mousemove-fn
+  (let [layer-id id_string
+        mousemove-fn
         (fn [e]
-          (let [layer-id id_string
-                features
-                (.queryRenderedFeatures
-                 map (.-point e) (clj->js {:layers [layer-id]}))
-                no-of-features (.-length features)
-                view-by (om/get-props owner [:map-page :view-by])
-                selected-id (om/get-props
-                             owner [:map-page :submission-clicked :id])]
-            (set! (.-cursor (.-style (.getCanvas map)))
-                  (if (pos? (.-length features)) "pointer" ""))
-            (when-not view-by
-              (if (= no-of-features 1)
-                (set-mapboxgl-paint-property
-                 map layer-id
-                 (get-style-properties
-                  style :hover :selected-id (get-id-property features)))
-                (do
-                  (set-mapboxgl-paint-property
-                   map layer-id
-                   (get-style-properties style :normal))
-                  (when selected-id
-                    (set-mapboxgl-paint-property
-                     map layer-id
-                     (get-style-properties
-                      style :clicked :selected-id selected-id))))))))
-        click-fn
-        (fn [e]
-          (let [layer-id id_string
-                features
-                (.queryRenderedFeatures
-                 map (.-point e) (clj->js {:layers [layer-id]}))
-                no-of-features (.-length features)
-                view-by (om/get-props owner [:map-page :view-by])]
-            (when (pos? no-of-features)
-              (let [feature-id (get-id-property features)]
-                (put! event-chan {:mapped-submission-to-id feature-id})
-                (when-not view-by
+          (when (.getLayer map layer-id)
+            (let [features
+                  (.queryRenderedFeatures
+                   map (.-point e) (clj->js {:layers [layer-id]}))
+                  no-of-features (.-length features)
+                  view-by (om/get-props owner [:map-page :view-by])
+                  selected-id (om/get-props
+                               owner [:map-page :submission-clicked :id])]
+              (set! (.-cursor (.-style (.getCanvas map)))
+                    (if (pos? (.-length features)) "pointer" ""))
+              (when-not view-by
+                (if (= no-of-features 1)
                   (set-mapboxgl-paint-property
                    map layer-id
                    (get-style-properties
-                    style :clicked :selected-id feature-id)))))))]
+                    style :hover :selected-id (get-id-property features)))
+                  (do
+                    (set-mapboxgl-paint-property
+                     map layer-id
+                     (get-style-properties style :normal))
+                    (when selected-id
+                      (set-mapboxgl-paint-property
+                       map layer-id
+                       (get-style-properties
+                        style :clicked :selected-id selected-id)))))))))
+        click-fn
+        (fn [e]
+          (when (.getLayer map layer-id)
+            (let [features
+                  (.queryRenderedFeatures
+                   map (.-point e) (clj->js {:layers [layer-id]}))
+                  no-of-features (.-length features)
+                  view-by (om/get-props owner [:map-page :view-by])]
+              (when (pos? no-of-features)
+                (let [feature-id (get-id-property features)]
+                  (put! event-chan {:mapped-submission-to-id feature-id})
+                  (when-not view-by
+                    (set-mapboxgl-paint-property
+                     map layer-id
+                     (get-style-properties
+                      style :clicked :selected-id feature-id))))))))]
     ;; Remove existing event functions
     (.off map "mousemove" (om/get-state owner :mousemove-fn))
     (.off map "click" (om/get-state owner :click-fn))
