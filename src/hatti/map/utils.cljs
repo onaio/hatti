@@ -40,6 +40,8 @@
           :hover #js {:color "#631400"}
           :clicked #js {:color "#ad2300"}}})
 
+(def circle-border-id "point-casting")
+
 (defn marker->geotype
   "Returns geotype (:point :line or :shape) based on marker."
   [marker]
@@ -593,10 +595,10 @@
   "Show/or hide geopoints. Hide geopoints if hide-points is true."
   [map layer-id & [hide-points?]]
   (let [visibility (if hide-points? "none" "visible")]
-    (.setLayoutProperty
-     map layer-id "visibility" visibility)
-    (.setLayoutProperty
-     map "point-casting" "visibility" visibility)))
+    (when (.getLayer map layer-id)
+      (.setLayoutProperty map layer-id "visibility" visibility))
+    (when (.getLayer map circle-border-id)
+      (.setLayoutProperty map circle-border-id "visibility" visibility))))
 
 (defn remove-layer
   "Remove layer from map and it's source from map."
@@ -697,8 +699,7 @@
    {:keys [geofield owner tiles-url geojson] :as map-data}]
   (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
         {:keys [stops layer-opts show-hexbins? show-heatmap?]}
-        (om/get-state owner)
-        circle-border "point-casting"]
+        (om/get-state owner)]
     (when (or (-> geojson :features count pos?) tiles-url)
       (om/set-state! owner :loaded? false)
       (add-mapboxgl-source map id_string map-data)
@@ -712,10 +713,11 @@
       ;; otherwise remove the layer if it exists
       (if (= :point style)
         (add-mapboxgl-layer map id_string layer-type
-                            :layer-id circle-border
+                            :layer-id circle-border-id
                             :tiles-url tiles-url
                             :paint {:circle-color "#fff" :circle-radius 6})
-        (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+        (when (.getLayer map circle-border-id)
+          (.removeLayer map circle-border-id)))
       (when show-hexbins? (show-hexbins owner map id_string geojson
                                         layer-opts))
       (when show-heatmap? (show-heatmap owner map id_string geojson
