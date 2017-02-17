@@ -722,6 +722,7 @@
                                         layer-opts))
       (when show-heatmap? (show-heatmap owner map id_string geojson
                                         layer-opts))
+      (om/set-state! owner :geojson geojson)
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 
