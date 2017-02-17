@@ -330,6 +330,7 @@
                                                 formid ["id"] flat-form query))
         ;; generated geojson
         geojson (or updated-map-geojson map-geojson)
+        ;; function that renders layer with features
         load-layers (fn []
                       (mu/map-on-load
                        mapboxgl-map shared/event-chan id_string
@@ -338,12 +339,15 @@
                        :geofield geofield
                        :owner owner)
                       (om/set-state! owner :zoomed? false))
+        ;; function that fits bounds on features
         fitBounds (fn [geojson]
                     (when (and (.loaded mapboxgl-map)
                                (not (om/get-state owner :zoomed?)))
                       (if (and (om/get-state owner :zoom)
                                (om/get-state owner :loaded?))
+                        ;; fit bounds on current zoom zevel
                         (.on mapboxgl-map "zoom" #(mu/set-zoom-level owner))
+                        ;; fit bounds on features if not loaded
                         (mu/fitMapBounds
                          mapboxgl-map (:id_string dataset-info) geojson))
                       (om/set-state! owner :zoomed? true)))]
