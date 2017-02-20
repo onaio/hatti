@@ -40,6 +40,8 @@
           :hover #js {:color "#631400"}
           :clicked #js {:color "#ad2300"}}})
 
+(def circle-border-id "point-casting")
+
 (defn marker->geotype
   "Returns geotype (:point :line or :shape) based on marker."
   [marker]
@@ -453,51 +455,59 @@
 (defn register-mapboxgl-mouse-events
   "Register map mouse events."
   [owner map event-chan id_string style]
-  (.off map "mousemove")
-  (.off map "click")
-  (.on map "mousemove"
-       (fn [e]
-         (let [layer-id id_string
-               features
-               (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers [layer-id]}))
-               no-of-features (.-length features)
-               view-by (om/get-props owner [:map-page :view-by])
-               selected-id (om/get-props
-                            owner [:map-page :submission-clicked :id])]
-           (set! (.-cursor (.-style (.getCanvas map)))
-                 (if (pos? (.-length features)) "pointer" ""))
-           (when-not view-by
-             (if (= no-of-features 1)
-               (set-mapboxgl-paint-property
-                map layer-id
-                (get-style-properties
-                 style :hover :selected-id (get-id-property features)))
-               (do
-                 (set-mapboxgl-paint-property
-                  map layer-id
-                  (get-style-properties style :normal))
-                 (when selected-id
-                   (set-mapboxgl-paint-property
-                    map layer-id
-                    (get-style-properties
-                     style :clicked :selected-id selected-id)))))))))
-  (.on map "click"
-       (fn [e]
-         (let [layer-id id_string
-               features
-               (.queryRenderedFeatures
-                map (.-point e) (clj->js {:layers [layer-id]}))
-               no-of-features (.-length features)
-               view-by (om/get-props owner [:map-page :view-by])]
-           (when (pos? no-of-features)
-             (let [feature-id (get-id-property features)]
-               (put! event-chan {:mapped-submission-to-id feature-id})
-               (when-not view-by
-                 (set-mapboxgl-paint-property
-                  map layer-id
-                  (get-style-properties
-                   style :clicked :selected-id feature-id)))))))))
+  (let [layer-id id_string
+        mousemove-fn
+        (fn [e]
+          (when (.getLayer map layer-id)
+            (let [features
+                  (.queryRenderedFeatures
+                   map (.-point e) (clj->js {:layers [layer-id]}))
+                  no-of-features (.-length features)
+                  view-by (om/get-props owner [:map-page :view-by])
+                  selected-id (om/get-props
+                               owner [:map-page :submission-clicked :id])]
+              (set! (.-cursor (.-style (.getCanvas map)))
+                    (if (pos? (.-length features)) "pointer" ""))
+              (when-not view-by
+                (if (= no-of-features 1)
+                  (set-mapboxgl-paint-property
+                   map layer-id
+                   (get-style-properties
+                    style :hover :selected-id (get-id-property features)))
+                  (do
+                    (set-mapboxgl-paint-property
+                     map layer-id
+                     (get-style-properties style :normal))
+                    (when selected-id
+                      (set-mapboxgl-paint-property
+                       map layer-id
+                       (get-style-properties
+                        style :clicked :selected-id selected-id)))))))))
+        click-fn
+        (fn [e]
+          (when (.getLayer map layer-id)
+            (let [features
+                  (.queryRenderedFeatures
+                   map (.-point e) (clj->js {:layers [layer-id]}))
+                  no-of-features (.-length features)
+                  view-by (om/get-props owner [:map-page :view-by])]
+              (when (pos? no-of-features)
+                (let [feature-id (get-id-property features)]
+                  (put! event-chan {:mapped-submission-to-id feature-id})
+                  (when-not view-by
+                    (set-mapboxgl-paint-property
+                     map layer-id
+                     (get-style-properties
+                      style :clicked :selected-id feature-id))))))))]
+    ;; Remove existing event functions
+    (.off map "mousemove" (om/get-state owner :mousemove-fn))
+    (.off map "click" (om/get-state owner :click-fn))
+    ;; Set new event functions
+    (.on map "mousemove" mousemove-fn)
+    (.on map "click" click-fn)
+    ;; Update map component state with new event functions
+    (om/set-state! owner :mousemove-fn mousemove-fn)
+    (om/set-state! owner :click-fn click-fn)))
 
 (defn fitMapBounds
   "Fits map boundaries on rendered features."
@@ -520,7 +530,9 @@
   (cond
     (f/geoshape? field) {:layer-type "fill" :style :fill}
     (f/osm? field) {:layer-type "fill" :style :fill}
-    (f/geotrace? field) {:layer-type "line" :style :line
+    (or
+     (f/geotrace? field)
+     (f/repeat? field)) {:layer-type "line" :style :line
                          :layout {:line-join "round"
                                   :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
@@ -586,10 +598,10 @@
   "Show/or hide geopoints. Hide geopoints if hide-points is true."
   [map layer-id & [hide-points?]]
   (let [visibility (if hide-points? "none" "visible")]
-    (.setLayoutProperty
-     map layer-id "visibility" visibility)
-    (.setLayoutProperty
-     map "point-casting" "visibility" visibility)))
+    (when (.getLayer map layer-id)
+      (.setLayoutProperty map layer-id "visibility" visibility))
+    (when (.getLayer map circle-border-id)
+      (.setLayoutProperty map circle-border-id "visibility" visibility))))
 
 (defn remove-layer
   "Remove layer from map and it's source from map."
@@ -690,8 +702,7 @@
    {:keys [geofield owner tiles-url geojson] :as map-data}]
   (let [{:keys [layer-type layout style]} (geotype->marker-style geofield)
         {:keys [stops layer-opts show-hexbins? show-heatmap?]}
-        (om/get-state owner)
-        circle-border "point-casting"]
+        (om/get-state owner)]
     (when (or (-> geojson :features count pos?) tiles-url)
       (om/set-state! owner :loaded? false)
       (add-mapboxgl-source map id_string map-data)
@@ -705,14 +716,16 @@
       ;; otherwise remove the layer if it exists
       (if (= :point style)
         (add-mapboxgl-layer map id_string layer-type
-                            :layer-id circle-border
+                            :layer-id circle-border-id
                             :tiles-url tiles-url
                             :paint {:circle-color "#fff" :circle-radius 6})
-        (when (.getLayer map circle-border) (.removeLayer map circle-border)))
+        (when (.getLayer map circle-border-id)
+          (.removeLayer map circle-border-id)))
       (when show-hexbins? (show-hexbins owner map id_string geojson
                                         layer-opts))
       (when show-heatmap? (show-heatmap owner map id_string geojson
                                         layer-opts))
+      (om/set-state! owner :geojson geojson)
       (om/set-state! owner :style style)
       (om/set-state! owner :loaded? true))))
 
