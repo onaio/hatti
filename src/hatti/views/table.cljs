@@ -3,6 +3,8 @@
   (:require [chimera.js-interop :refer [safe-regex]]
             [chimera.urls :refer [last-url-param url]]
             [chimera.seq :refer [in?]]
+            [chimera.string :refer [escape-for-type]]
+            [clojure.string :refer [escape]]
             [cljs.core.async :refer [<! chan put! timeout]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -87,7 +89,7 @@
   [field language field-key row cell value columnDef dataContext]
   (let [clj-value (js->clj value :keywordize-keys true)]
     (format-answer field
-                   clj-value
+                   (escape-for-type clj-value)
                    :language language
                    :compact? true
                    :field-key field-key)))
