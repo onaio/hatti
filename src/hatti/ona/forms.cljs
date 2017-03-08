@@ -200,7 +200,7 @@
     (if (contains? (-> label keys set) language)
       (label language)
       (label (-> label keys sort first)))))
-
+(enable-console-print!)
 (defn format-answer
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
@@ -219,7 +219,10 @@
                                (filter #(contains? names (field-key %)))
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
-    (time-based? field) (-> answer js/moment (.format "ll"))
+    (time-based? field) (let [formatted-date (-> answer js/moment (.format "ll"))]
+                          (if (= formatted-date "Invalid date")
+                            answer
+                            formatted-date))
     (or (image? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)

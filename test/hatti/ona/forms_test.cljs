@@ -169,4 +169,9 @@
               :span otherwise"
       (is (= (forms/format-answer q-repeat []) forms/no-answer))
       (is (= (forms/format-answer q-repeat [{"foo" "bar"}])
-             "Repeated data with 1 answers.")))))
+             "Repeated data with 1 answers.")))
+    (testing "Returns the input if js/Date finds the date to be invalid"
+      (is (= (forms/format-answer {:type "date"} "") "No Answer"))
+      (is (= (forms/format-answer {:type "date"} "2014 04 25") "2014 04 25"))
+      (is (= (forms/format-answer {:type "date"} "2014 04 25 to 2014 06 13") "2014 04 25 to 2014 06 13"))
+      (is (= (forms/format-answer {:type "date"} "2014-04-25T01:32:21.196Z") "Apr 25, 2014")))))
