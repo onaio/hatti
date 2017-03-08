@@ -219,8 +219,8 @@
                                (filter #(contains? names (field-key %)))
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
-    (time-based? field) (if (or  (js/isNaN (new js/Date answer))
-                                 (= (.toString (new js/Date answer)) "Invalid Date"))
+    (time-based? field) (if (or (js/isNaN (new js/Date answer))
+                                (= (new js/Date answer) "Invalid Date"))
                           answer
                           (-> answer js/moment (.format "ll")))
     (or (image? field)

@@ -173,5 +173,7 @@
     (testing "Returns the input if js/Date finds the date to be invalid"
       (is (= (forms/format-answer {:type "date"} "") "No Answer"))
       (is (= (forms/format-answer {:type "date"} "2014 04 25") "2014 04 25"))
-      (is (= (forms/format-answer {:type "date"} "2014 04 25 to 2014 06 13") "2014 04 25 to 2014 06 13"))
-      (is (= (forms/format-answer {:type "date"} "2014-04-25T01:32:21.196Z") "Apr 25, 2014")))))
+      (is (= (forms/format-answer {:type "date"} "2014 04 25 to 2014 06 13")
+             "2014 04 25 to 2014 06 13"))
+      (is (= (forms/format-answer {:type "date"} "2014-04-25T01:32:21.196Z")
+             "Apr 25, 2014")))))
