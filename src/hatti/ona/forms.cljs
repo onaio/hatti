@@ -219,10 +219,10 @@
                                (filter #(contains? names (field-key %)))
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
-    (time-based? field) (let [formatted-date (-> answer js/moment (.format "ll"))]
-                          (if (= formatted-date "Invalid date")
-                            answer
-                            formatted-date))
+    (time-based? field) (if (or  (js/isNaN (new js/Date answer))
+                                 (= (.toString (new js/Date answer)) "Invalid Date"))
+                          answer
+                          (-> answer js/moment (.format "ll")))
     (or (image? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
