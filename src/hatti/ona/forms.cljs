@@ -1,6 +1,7 @@
 (ns hatti.ona.forms
   (:require [chimera.js-interop :refer [format]]
             [chimera.urls :refer [last-url-param]]
+            [chimera.date :as chimera-date]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :as string]
             [hatti.constants :refer [_submission_time
@@ -200,7 +201,7 @@
     (if (contains? (-> label keys set) language)
       (label language)
       (label (-> label keys sort first)))))
-(enable-console-print!)
+
 (defn format-answer
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
@@ -219,10 +220,7 @@
                                (filter #(contains? names (field-key %)))
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
-    (time-based? field) (if (or (js/isNaN (new js/Date answer))
-                                (= (new js/Date answer) "Invalid Date"))
-                          answer
-                          (-> answer js/moment (.format "ll")))
+    (time-based? field) (chimera-date/format-date answer)
     (or (image? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
