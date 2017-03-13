@@ -65,8 +65,8 @@
    eg. (evenly-spaced-bins [1 2 10] 5 'int') => ['1 to 2' '1 to 2' '9 to 10']
    metadata of this above value would be:
    {:bins ['1 to 2', '3 to 4', '5 to 6', '7 to 8', '9 to 10']}"
-  [answers bins type]
-  (let [numbers (map (str->int type) answers)
+  [answers bins type*]
+  (let [numbers (map (str->int type*) answers)
         mx (reduce max (remove nil? numbers))
         mn (reduce min (remove nil? numbers))
         s  (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
@@ -77,8 +77,8 @@
                                (dec %)
                                %)
                             (drop 1 lbounds)) mx)
-        fmt (int->str type :digits 0)
-        strings (mapv #(range->str [%1 %2] type) lbounds ubounds)
+        fmt (int->str type* :digits 0)
+        strings (mapv #(range->str [%1 %2] type*) lbounds ubounds)
         results (map (fn [i] (when i (get strings (int i)))) is)
         strings (-> strings distinct vec)] ; remove repeats before output
     (with-meta results

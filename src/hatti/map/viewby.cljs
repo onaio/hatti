@@ -34,12 +34,12 @@
   [field raw-answers]
   (cond
     (form-utils/select-one? field) raw-answers
-    (form-utils/text? field) raw-answers
-    (form-utils/calculate? field) raw-answers
-    (form-utils/numeric? field) (evenly-spaced-bins raw-answers 5 "int")
-    (form-utils/time-based? field) (if (re-find #"^..:..$" (first raw-answers))
-                                     (evenly-spaced-bins raw-answers 5 "time")
-                                     (evenly-spaced-bins raw-answers 5 "date"))
+    (form-utils/text? field)       raw-answers
+    (form-utils/calculate? field)  raw-answers
+    (form-utils/numeric? field)    (evenly-spaced-bins raw-answers 5 "int")
+    (form-utils/time-based? field)
+    (evenly-spaced-bins
+     raw-answers 5 (if (re-find #"^..:..$" (first raw-answers)) "time" "date"))
     (form-utils/select-all? field) (map #(when % (split % #" "))  raw-answers)))
 
 (defn has-geolocation?
