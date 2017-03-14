@@ -25,7 +25,8 @@
                         (/ millis-in-day)
                         floor)))
 (defn parse-time
-  "Remove the colon in a time string"
+  "Remove the colon in a time string
+  String -> String"
   [time-string]
   (when time-string
     (parse-int (replace time-string #":" ""))))
@@ -38,6 +39,10 @@
     "date" parse-date
     "time" parse-time))
 
+(defn time->string
+  [time]
+  (replace (str time) #"..$"  #(str ":" %1)))
+
 (defn int->str
   "Converts integers to strings, for type (int|date).
    Optional digits parameter = number of digits after decimal, default is 1."
@@ -48,7 +53,7 @@
     (case typ
       "int"  #(format int-fmt-s (float %))
       "date" #(date->str (d->millis %))
-      "time" (fn [x] (replace (str x) #"..$"  #(str ":" %1))))))
+      "time" time->string)))
 
 (defn range->str
   "Converts a range of typ (int|date) to a string."

@@ -1,6 +1,7 @@
 (ns hatti.charting-test
   (:require-macros [cljs.test :refer [is deftest testing]])
-  (:require [hatti.charting :refer [str->int parse-date parse-time evenly-spaced-bins]]
+  (:require [hatti.charting
+             :refer [str->int parse-date parse-time evenly-spaced-bins]]
             [cljs-time.format :as tf]))
 
 (deftest str->int-test
