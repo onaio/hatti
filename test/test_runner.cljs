@@ -9,6 +9,7 @@
    [hatti.ona.post-process-test]
    [hatti.utils-test]
    [hatti.views.chart-test]
+   [hatti.charting-test]
    [hatti.views.dataview-test]
    [hatti.views.map-test]
    [hatti.views.photos-test]
@@ -36,6 +37,7 @@
         'hatti.ona.post-process-test
         'hatti.utils-test
         'hatti.views.chart-test
+        'hatti.charting-test
         'hatti.views.dataview-test
         'hatti.views.map-test
         'hatti.views.photos-test

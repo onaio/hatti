@@ -6,27 +6,42 @@
             [cljs-time.coerce :as tc]
             [hatti.maths :refer [gcd lcm floor ceil abs]]
             [chimera.js-interop :refer [format]]
+            [chimera.date :as chimera-date]
             [hatti.ona.forms :as f]
-            [clojure.string :refer [join blank?]]))
+            [clojure.string :refer [join replace blank?]]))
 
 (def millis-in-day 86400000)
 
 (defn parse-int
   "Parse an integer from a string."
   [st]
-  (let [ans (js/parseInt st)] (when-not (js/isNaN ans) ans)))
+  (let [ans (js/parseInt st)]
+    (when-not (js/isNaN ans) ans)))
+
+(defn parse-date
+  [date-string]
+  (when date-string (-> (new js/Date date-string)
+                        tc/to-long
+                        (/ millis-in-day)
+                        floor)))
+(defn parse-time
+  "Remove the colon in a time string
+  String -> String"
+  [time-string]
+  (when time-string
+    (parse-int (replace time-string #":" ""))))
 
 (defn str->int
   "Converts string to integer, for typ (int|date)."
   [typ]
   (case typ
-    "int" parse-int
-    "date" (fn [date-string]
-             (when date-string
-               (-> (new js/Date date-string)
-                   tc/to-long
-                   (/ millis-in-day)
-                   floor)))))
+    "int"  parse-int
+    "date" parse-date
+    "time" parse-time))
+
+(defn time->string
+  [time]
+  (replace (str time) #"..$"  #(str ":" %1)))
 
 (defn int->str
   "Converts integers to strings, for type (int|date).
@@ -34,18 +49,20 @@
   [typ & {:keys [digits] :or {digits 1}}]
   (let [int-fmt-s (str "%." digits "f")
         d->millis #(* millis-in-day %)
-        date->str #(when % (.format (js/moment %) "ll"))]
+        date->str #(when % (chimera-date/format-date %))]
     (case typ
       "int"  #(format int-fmt-s (float %))
-      "date" #(date->str (d->millis %)))))
+      "date" #(date->str (d->millis %))
+      "time" time->string)))
 
 (defn range->str
   "Converts a range of typ (int|date) to a string."
-  [[mn mx] typ]
-  (let [[mn mx] [(ceil mn) (floor mx)]
+  [[minimum maximum] typ]
+  (let [[minimum maximum] [(ceil minimum) (floor maximum)]
         fmt (int->str typ :digits 0)]
-    (if (<= mx mn) (fmt mn)
-        (join " to " [(fmt mn) (fmt mx)]))))
+    (if (<= maximum minimum)
+      (fmt minimum)
+      (join " to " [(fmt minimum) (fmt maximum)]))))
 
 (defn evenly-spaced-bins
   "Given a list of answers, returns each one as a bin, in string form.
@@ -53,18 +70,20 @@
    eg. (evenly-spaced-bins [1 2 10] 5 'int') => ['1 to 2' '1 to 2' '9 to 10']
    metadata of this above value would be:
    {:bins ['1 to 2', '3 to 4', '5 to 6', '7 to 8', '9 to 10']}"
-  [answers bins typ]
-  (let [numbers (map (str->int typ) answers)
+  [answers bins type*]
+  (let [numbers (map (str->int type*) answers)
         mx (reduce max (remove nil? numbers))
         mn (reduce min (remove nil? numbers))
-        s (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
+        s  (scale/linear :domain [mn mx] :range [0 (- bins (/ 1 10000))])
         is (map floor (map #(when % (s %)) numbers))
-        t (scale/linear :domain [0 bins] :range [mn mx])
+        t  (scale/linear :domain [0 bins] :range [mn mx])
         lbounds (->> (range bins) (map t) (map float) distinct)
         ubounds (conj (mapv #(if (= % (floor %))
-                               (dec %) %) (drop 1 lbounds)) mx)
-        fmt (int->str typ :digits 0)
-        strings (mapv #(range->str [%1 %2] typ) lbounds ubounds)
+                               (dec %)
+                               %)
+                            (drop 1 lbounds)) mx)
+        fmt (int->str type* :digits 0)
+        strings (mapv #(range->str [%1 %2] type*) lbounds ubounds)
         results (map (fn [i] (when i (get strings (int i)))) is)
         strings (-> strings distinct vec)] ; remove repeats before output
     (with-meta results
