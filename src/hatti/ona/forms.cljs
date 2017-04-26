@@ -6,8 +6,7 @@
             [clojure.string :as string]
             [hatti.constants :refer [_submission_time
                                      _submitted_by
-                                     _last_edited]]
-            [hatti.utils.helpers :refer [uses-search-expression?]]))
+                                     _last_edited]]))
 
 ;; CONSTANTS
 (def currency-regex #"£|$")
@@ -202,6 +201,12 @@
     (if (contains? (-> label keys set) language)
       (label language)
       (label (-> label keys sort first)))))
+
+(defn uses-search-expression?
+    "Checks if the appearance-value has the search expression"
+    [appearance-value]
+    (and (string? appearance-value)
+         (re-matches #"^search\(.*\)$" appearance-value)))
 
 (defn format-answer
   "String representation for a particular field datapoint (answer).
