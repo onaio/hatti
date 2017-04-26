@@ -215,9 +215,20 @@
                                           first)
                               formatted (get-label option language)]
                           (or formatted answer))
-    (select-all? field) (let [names (set (string/split answer #" "))]
-                          (->> (:children field)
-                               (filter #(contains? names (field-key %)))
+    (select-all? field) (let [names (set (string/split answer #" "))
+                              appearance-value (-> field :control :appearance)
+                              uses-search-expression?
+                              (and (string? appearance-value)
+                                   (re-matches
+                                    #"^search\(.*\)$"
+                                    appearance-value))
+                              multiple-select-values
+                              (if uses-search-expression?
+                                (map #(identity {:name %}) names)
+                                (->> (:children field)
+                                     (filter
+                                      #(contains? names (field-key %)))))]
+                          (->> multiple-select-values
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
     (time-based? field) (chimera-date/format-date answer)
