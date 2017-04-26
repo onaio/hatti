@@ -1,0 +1,32 @@
+{
+    "children": [{
+        "children": [
+            {"label": "fruit_label", "name": "fruit_name"}
+        ],
+        "control": {
+            "appearance": "search('fruit_choices')"
+        },
+        "label": "Which fruits do you like?",
+        "name": "fruit",
+        "type": "select all that apply"
+    }, {
+        "children": [{
+            "bind": {
+                "calculate": "concat('uuid:', uuid())",
+                "readonly": "true()"
+            },
+            "name": "instanceID",
+            "type": "calculate"
+        }],
+        "control": {"bodyless": true},
+        "name": "meta",
+        "type": "group"
+    }],
+    "default_language": "default",
+    "id_string": "favorite_fruits",
+    "name": "favorite_fruits",
+    "sms_keyword": "favorite_fruits",
+    "title": "Favorite Fruits",
+    "type": "survey",
+    "version": "201704241204"
+}

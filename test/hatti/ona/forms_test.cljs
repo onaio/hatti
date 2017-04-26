@@ -17,7 +17,9 @@
           :geopoint (read-file "test/fixtures/geopoint-form.json")
           :geotrace (read-file "test/fixtures/geotrace-form.json")
           :groups-in-repeats
-          (read-file "test/fixtures/groups-in-repeats-form.json"))]
+          (read-file "test/fixtures/groups-in-repeats-form.json")
+          :search-expression
+          (read-file "test/fixtures/search-expression-form.json"))]
     (json->js->cljs file)))
 
 (defn get-data [which]
@@ -33,6 +35,7 @@
 (def geoshape-form (get-form :geoshape))
 (def geopoint-form (get-form :geopoint))
 (def geotrace-form (get-form :geotrace))
+(def search-expression-form (get-form :search-expression))
 
 (deftest flatten-form-generates-full-names-correctly
   (let [flat-form (forms/flatten-form single-language-form)
@@ -110,8 +113,10 @@
 
 (deftest format-answer-formats-answers-according-to-the-field
   (let [form (forms/flatten-form single-language-form)
+        form-2 (forms/flatten-form search-expression-form)
         q-sel1 (first (filter forms/select-one? form))
         q-selm (first (filter forms/select-all? form))
+        q-selm-2 (first (filter forms/select-all? form-2))
         q-int  (first (filter forms/numeric? form))
         q-text (first (filter forms/text? form))
         q-img  (merge q-text {:type "image"})
@@ -127,9 +132,13 @@
                (:label rand-option)))))
     (testing "select all answers are formatted properly"
       (let [first-option (first (:children q-selm))
+            first-option-2 (first (:children q-selm-2))
             two-options (take 2 (:children q-selm))
-            two-answers (string/join #" " (map :name two-options))
-            has-label? #(partial utils/substring? (:label %) %)]
+            after-map (map #(str (:name  %)) two-options)
+            two-answers (string/replace
+                         (string/join #" " (map :name two-options))
+                         #"/" "")
+            has-label? #(utils/substring? (:label %1) %2)]
         (is (= (forms/format-answer q-selm "") forms/no-answer))
         (is (has-label? first-option
                         (forms/format-answer q-selm (:name first-option))))
@@ -137,6 +146,8 @@
                         (forms/format-answer q-selm
                                              (:label first-option)
                                              :field-key :label)))
+        (is (= "☑ apple ☑ mango "
+               (forms/format-answer q-selm-2 "apple mango")))
         (is (has-label? (first two-options)
                         (forms/format-answer q-selm two-answers)))
         (is (has-label? (second two-options)
