@@ -203,10 +203,10 @@
       (label (-> label keys sort first)))))
 
 (defn uses-search-expression?
-    "Checks if the appearance-value has the search expression"
-    [appearance-value]
-    (and (string? appearance-value)
-         (re-matches #"^search\(.*\)$" appearance-value)))
+  "Checks if the appearance-value has the search expression"
+  [appearance-value]
+  (and (string? appearance-value)
+       (re-matches #"^search\(.*\)$" appearance-value)))
 
 (defn format-answer
   "String representation for a particular field datapoint (answer).
@@ -224,7 +224,7 @@
     (select-all? field) (let [names (set (string/split answer #" "))
                               appearance-value (-> field :control :appearance)
                               has-search-expression? (uses-search-expression?
-                                                       appearance-value)
+                                                      appearance-value)
                               multiple-select-values
                               (if has-search-expression?
                                 (map #(identity {:name %}) names)
