@@ -228,9 +228,9 @@
                               multiple-select-values
                               (if has-search-expression?
                                 (map #(identity {:name %}) names)
-                                (->> (:children field)
-                                     (filter
-                                      #(contains? names (field-key %)))))]
+                                (filter
+                                 #(contains?
+                                   names (field-key %)) (:children field)))]
                           (->> multiple-select-values
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
