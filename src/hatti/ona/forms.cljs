@@ -6,7 +6,8 @@
             [clojure.string :as string]
             [hatti.constants :refer [_submission_time
                                      _submitted_by
-                                     _last_edited]]))
+                                     _last_edited]]
+            [hatti.utils.helpers :refer [uses-search-expression?]]))
 
 ;; CONSTANTS
 (def currency-regex #"£|$")
@@ -217,13 +218,10 @@
                           (or formatted answer))
     (select-all? field) (let [names (set (string/split answer #" "))
                               appearance-value (-> field :control :appearance)
-                              uses-search-expression?
-                              (and (string? appearance-value)
-                                   (re-matches
-                                    #"^search\(.*\)$"
-                                    appearance-value))
+                              has-search-expression? (uses-search-expression?
+                                                       appearance-value)
                               multiple-select-values
-                              (if uses-search-expression?
+                              (if has-search-expression?
                                 (map #(identity {:name %}) names)
                                 (->> (:children field)
                                      (filter
