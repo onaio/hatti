@@ -223,10 +223,8 @@
                           (or formatted answer))
     (select-all? field) (let [names (set (string/split answer #" "))
                               appearance-value (-> field :control :appearance)
-                              has-search-expression? (uses-search-expression?
-                                                      appearance-value)
                               multiple-select-values
-                              (if has-search-expression?
+                              (if (uses-search-expression? appearance-value)
                                 (map #(identity {:name %}) names)
                                 (filter
                                  #(contains?
