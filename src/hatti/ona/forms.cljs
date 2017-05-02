@@ -202,6 +202,12 @@
       (label language)
       (label (-> label keys sort first)))))
 
+(defn uses-search-expression?
+  "Checks if the appearance-value has the search expression"
+  [appearance-value]
+  (and (string? appearance-value)
+       (re-matches #"^search\(.*\)$" appearance-value)))
+
 (defn format-answer
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
@@ -215,9 +221,15 @@
                                           first)
                               formatted (get-label option language)]
                           (or formatted answer))
-    (select-all? field) (let [names (set (string/split answer #" "))]
-                          (->> (:children field)
-                               (filter #(contains? names (field-key %)))
+    (select-all? field) (let [names (set (string/split answer #" "))
+                              appearance-value (-> field :control :appearance)
+                              multiple-select-values
+                              (if (uses-search-expression? appearance-value)
+                                (map #(identity {:name %}) names)
+                                (filter
+                                 #(contains?
+                                   names (field-key %)) (:children field)))]
+                          (->> multiple-select-values
                                (map #(str "☑ " (get-label % language) " "))
                                string/join))
     (time-based? field) (chimera-date/format-date answer)
