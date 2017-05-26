@@ -526,15 +526,17 @@
 
 (defn geotype->marker-style
   "Get marker style for field type."
-  [field]
+  [{:keys [children] :as field}]
   (cond
     (f/geoshape? field) {:layer-type "fill" :style :fill}
     (f/osm? field) {:layer-type "fill" :style :fill}
     (or
      (f/geotrace? field)
-     (f/repeat? field)) {:layer-type "line" :style :line
-                         :layout {:line-join "round"
-                                  :line-cap "round"}}
+     (and (f/repeat? field)
+          (f/geotrace? (first children))))
+    {:layer-type "line" :style :line
+     :layout {:line-join "round"
+              :line-cap "round"}}
     :else {:layer-type "circle" :style :point}))
 
 (defn filter-selected-features
