@@ -54,7 +54,8 @@
             :style :line
             :layout {:line-join "round"
                      :line-cap  "round"}}))
-    (is (= (mu/geotype->marker-style {:type "repeat" :children '({:type "geotrace"})})
+    (is (= (mu/geotype->marker-style {:type "repeat"
+                                      :children '({:type "geotrace"})})
            {:layer-type "line"
             :style :line
             :layout {:line-join "round"
