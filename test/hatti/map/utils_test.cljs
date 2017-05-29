@@ -43,6 +43,26 @@
     (is (not= nil (sel1 map-id :.leaflet-control-zoom)))
     (is (not= nil (sel1 map-id :.leaflet-control-layers)))))
 
+(deftest test-geotype->marker-style
+  (testing "Returns the exptected marker style for a given goetype"
+    (is (= (mu/geotype->marker-style {:type "geoshape"})
+           {:layer-type "fill" :style :fill}))
+    (is (= (mu/geotype->marker-style {:type "osm"})
+           {:layer-type "fill" :style :fill}))
+    (is (= (mu/geotype->marker-style {:type "geotrace"})
+           {:layer-type "line"
+            :style :line
+            :layout {:line-join "round"
+                     :line-cap  "round"}}))
+    (is (= (mu/geotype->marker-style {:type "repeat"
+                                      :children '({:type "geotrace"})})
+           {:layer-type "line"
+            :style :line
+            :layout {:line-join "round"
+                     :line-cap  "round"}}))
+    (is (= (mu/geotype->marker-style {:type "anything else"})
+           {:layer-type "circle" :style :point}))))
+
 (deftest loading-and-marker-actions
   (let [chan (chan)
         N 10
