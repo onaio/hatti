@@ -6,7 +6,8 @@
             [clojure.string :as string]
             [hatti.constants :refer [_submission_time
                                      _submitted_by
-                                     _last_edited]]))
+                                     _last_edited
+                                     _id]]))
 
 ;; CONSTANTS
 (def currency-regex #"£|$")
@@ -18,6 +19,11 @@
    :full-name _submission_time
    :label "Submission Time"
    :type "dateTime"})
+
+(def id-field {:full-name _id
+               :label "ID"
+               :name _id
+               :type "integer"})
 
 (def submitted-by-field
   {:name _submitted_by
