@@ -35,8 +35,7 @@
                     :label "ID"
                     :name _id
                     :type "integer"}]]
-    (cond-> id-field
-      (not is-filtered-dataview?) (conj forms/submission-time-field))))
+    (conj id-field forms/submission-time-field)))
 
 (defn all-fields
   "Given a (flat-)form, returns fields for table display.
@@ -45,8 +44,7 @@
   [form & {:keys [is-filtered-dataview?]}]
   (->> (concat (get-extra-fields is-filtered-dataview?)
                (forms/non-meta-fields form)
-               (forms/meta-fields
-                form :with-submission-details? (not is-filtered-dataview?)))
+               (forms/meta-fields form :with-submission-details? true))
        (filter forms/has-data?)
        (distinct)))
 
