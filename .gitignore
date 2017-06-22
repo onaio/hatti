@@ -9,6 +9,7 @@ pom.xml
 .lein-repl-history
 .lein-plugins/
 *-init.clj
+.nrepl-port
 
 # master
 examples/*/main.js*
