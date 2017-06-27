@@ -28,25 +28,14 @@
 (def pager-id "pager")
 
 ;; FIELDS
-(defn get-extra-fields
-  "Extra fields that will be displayed on the table."
-  [is-filtered-dataview?]
-  (let [id-field  [{:full-name _id
-                    :label "ID"
-                    :name _id
-                    :type "integer"}]]
-    (cond-> id-field
-      (not is-filtered-dataview?) (conj forms/submission-time-field))))
-
 (defn all-fields
   "Given a (flat-)form, returns fields for table display.
    Puts extra fields in the beginning, metadata at the end of the table,
    and drops fields that have no data (eg. group/note)."
-  [form & {:keys [is-filtered-dataview?]}]
-  (->> (concat (get-extra-fields is-filtered-dataview?)
+  [form]
+  (->> (concat (vector forms/id-field forms/submission-time-field)
                (forms/non-meta-fields form)
-               (forms/meta-fields
-                form :with-submission-details? (not is-filtered-dataview?)))
+               (forms/meta-fields form :with-submission-details? true))
        (filter forms/has-data?)
        (distinct)))
 
@@ -139,15 +128,12 @@
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
   [form & {:keys [hide-actions-column?
-                  is-filtered-dataview?
                   get-label?
                   language
                   owner]
            :or {get-label? true}}]
   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-        columns (for [field (all-fields form
-                                        :is-filtered-dataview?
-                                        is-filtered-dataview?)]
+        columns (for [field (all-fields form)]
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
                         label (if get-label? (get-label field language) name)
@@ -205,7 +191,7 @@
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
-  [data form current-language is-filtered-dataview? owner
+  [data form current-language owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
   (let [{{{:keys [num-displayed-records
                   total-page-count]} :paging
@@ -214,7 +200,6 @@
                  form
                  :language current-language
                  :hide-actions-column? hide-actions-column?
-                 :is-filtered-dataview? is-filtered-dataview?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
@@ -376,13 +361,12 @@
   "Initializes grid + dataview, and stores them in owner's state."
   [data owner slick-grid-event-handlers]
   (when (seq data)
-    (let [{:keys [flat-form is-filtered-dataview?]} (om/get-shared owner)
+    (let [{:keys [flat-form]} (om/get-shared owner)
           current-language (:current
                             (om/observe owner (shared/language-cursor)))
           [grid dataview] (sg-init data
                                    flat-form
                                    current-language
-                                   is-filtered-dataview?
                                    owner
                                    slick-grid-event-handlers)]
       (om/set-state! owner :grid grid)
