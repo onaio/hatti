@@ -174,7 +174,6 @@
                            (map @view-state) (remove nil?))
             dv->link (fn [{:keys [view label]}]
                        (if (and (some #(= view %) active)
-                                (not (and (= view :map) no-geodata?))
                                 (not (in? disabled view)))
                          [:a {:class (view->cls view)
                               :href (str "#/" (name view))} label]

@@ -1,8 +1,10 @@
 (ns hatti.views.dataview-test
   (:require-macros [cljs.test :refer (is deftest testing)])
   (:require [chimera.seq :refer [in?]]
+
             [cljs.test :as t]
-            [dommy.core :as dommy :refer-macros [sel1]]
+            [clojure.string :refer [lower-case trim]]
+            [dommy.core :as dommy :refer-macros [sel sel1]]
             [hatti.shared :as shared]
 
             [hatti.utils.om.state :as state]
@@ -32,8 +34,7 @@
         (is (= (sort test-dates) (conj (take 2 test-dates) (last test-dates))))
         (is (= s100 (sort s100)))))))
 
-
-;;TABBED DATAVIEW TESTS
+;; TABBED DATAVIEW TESTS
 (defn- tabbed-dataview-container
   [app-state]
   (let [c (new-container!)
@@ -48,20 +49,23 @@
                     :target c})]
     c))
 
-(deftest tabbed-dataview-tests
-  (let [tabbed-view (tabbed-dataview-container shared/app-state)]
-    (testing "Map tab is not rendered when there is no geodata"
-      (is (= "map"
-             (-> tabbed-view (sel1 :div.tab-bar) (sel1 :.inactive) (dommy/html)))))))
-
 (deftest disabled-tabbed-tests
   (testing "Map, Chart and Table tabs are disabled"
-    (let [disabled-views [:map :table :chart]
-          data-atom (shared/empty-app-state)
-          _ (state/transact-app-state! data-atom
-                                       [:views :disabled]
-                                       #(identity disabled-views))
-          tabbed-view (tabbed-dataview-container data-atom)]
-      (doseq [tab (-> tabbed-view (sel1 :div.tab-bar) (sel :.inactive))]
+    (let [disabled-views [:map :table :chart :charts]
+          ;; add "charts" because the text is "charts" but the view is :chart
+          data-atom (shared/empty-app-state)]
+      (state/update-app-state! data-atom
+                               [:views :disabled]
+                               disabled-views)
+      (state/update-app-state! data-atom
+                               [:views :active]
+                               (-> @data-atom :views :all))
+      (doseq [tab (-> (tabbed-dataview-container data-atom)
+                      (sel1 :div.tab-bar)
+                      (sel :.inactive))]
         (is (in? disabled-views
-                 (keyword (dommy/html tab))))))))
+                 (keyword (-> tab
+                              (sel1 :span)
+                              dommy/html
+                              trim
+                              lower-case))))))))
