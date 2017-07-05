@@ -1,10 +1,10 @@
 (ns hatti.views.dataview-test
-  (:require-macros [cljs.test :refer (is deftest testing)]
-                   [dommy.macros :refer [sel sel1]])
-  (:require [cljs.test :as t]
-            [dommy.core :as dommy]
+  (:require-macros [cljs.test :refer (is deftest testing)])
+  (:require [chimera.seq :refer [in?]]
+            [cljs.test :as t]
+            [dommy.core :as dommy :refer-macros [sel1]]
             [hatti.shared :as shared]
-            [hatti.utils :refer [in?]]
+
             [hatti.utils.om.state :as state]
             [hatti.views :refer [tabbed-dataview]]
             [hatti.test-utils :refer [big-thin-data
@@ -59,8 +59,8 @@
     (let [disabled-views [:map :table :chart]
           data-atom (shared/empty-app-state)
           _ (state/transact-app-state! data-atom
-                                        [:views :disabled]
-                                        #(identity disabled-views))
+                                       [:views :disabled]
+                                       #(identity disabled-views))
           tabbed-view (tabbed-dataview-container data-atom)]
       (doseq [tab (-> tabbed-view (sel1 :div.tab-bar) (sel :.inactive))]
         (is (in? disabled-views
