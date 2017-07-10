@@ -13,8 +13,11 @@
             [hatti.views.table :as tv]
             [hatti.test-utils :refer [new-container! texts owner readonly]]
             [om.core :as om :include-macros true]
-            [hatti.shared-test :refer [thin-form small-thin-data no-data
-                                       fat-form small-fat-data]]))
+            [hatti.test-utils :refer [thin-form
+                                      small-thin-data
+                                      no-data
+                                      fat-form
+                                      small-fat-data]]))
 
 ;; SLICKGRID HELPER TESTS
 

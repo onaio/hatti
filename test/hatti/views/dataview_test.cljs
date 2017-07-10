@@ -1,18 +1,20 @@
 (ns hatti.views.dataview-test
   (:require-macros [cljs.test :refer (is deftest testing)])
-  (:require [cljs.test :as t]
+  (:require [chimera.seq :refer [in?]]
+
+            [cljs.test :as t]
+            [clojure.string :refer [lower-case trim]]
+            [dommy.core :as dommy :refer-macros [sel sel1]]
             [hatti.shared :as shared]
-            [hatti.test-utils :refer [format]]))
 
-(defn data-gen [ncol nrow]
-  (let [rf (fn [max] (format "%02d" (inc (rand-int max))))]
-    (for [i (range nrow)]
-      (apply merge {"_id" i
-                    "_rank" (inc i)
-                    "_submission_time" (str "2012-" (rf 12) "-" (rf 28))}
-             (for [j (range ncol)] {(str "hello" j) (str "goodbye" j)})))))
-
-(def big-thin-data (data-gen 1 100))
+            [hatti.utils.om.state :as state]
+            [hatti.views :refer [tabbed-dataview]]
+            [hatti.test-utils :refer [big-thin-data
+                                      data-gen
+                                      format
+                                      new-container!
+                                      thin-form]]
+            [om.core :as om :include-macros true]))
 
 ;; INITIAL STATE TESTS
 (deftest initial-state
@@ -31,3 +33,39 @@
                       (dget "_submission_time" data-100))]
         (is (= (sort test-dates) (conj (take 2 test-dates) (last test-dates))))
         (is (= s100 (sort s100)))))))
+
+;; TABBED DATAVIEW TESTS
+(defn- tabbed-dataview-container
+  [app-state]
+  (let [c (new-container!)
+        _ (om/root tabbed-dataview
+                   app-state
+                   {:shared {:flat-form thin-form
+                             :project-id "1"
+                             :project-name "Project"
+                             :dataset-id "2"
+                             :username "user"
+                             :view-type :default}
+                    :target c})]
+    c))
+
+(deftest disabled-tabbed-tests
+  (testing "Map, Chart and Table tabs are disabled"
+    (let [disabled-views [:map :table :chart :charts]
+          ;; add "charts" because the text is "charts" but the view is :chart
+          data-atom (shared/empty-app-state)]
+      (state/update-app-state! data-atom
+                               [:views :disabled]
+                               disabled-views)
+      (state/update-app-state! data-atom
+                               [:views :active]
+                               (-> @data-atom :views :all))
+      (doseq [tab (-> (tabbed-dataview-container data-atom)
+                      (sel1 :div.tab-bar)
+                      (sel :.inactive))]
+        (is (in? disabled-views
+                 (keyword (-> tab
+                              (sel1 :span)
+                              dommy/html
+                              trim
+                              lower-case))))))))

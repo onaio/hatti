@@ -37,12 +37,11 @@
         'hatti.ona.post-process-test
         'hatti.utils-test
         'hatti.views.chart-test
-        'hatti.charting-test
+        'hatti.views.table-test
         'hatti.views.dataview-test
         'hatti.views.map-test
         'hatti.views.photos-test
         'hatti.views.record-test
-        'hatti.views.table-test
         'hatti.shared-test))
     0
     1))

@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [chimera.js-interop :refer [format]]
             [chimera.metrics :refer [send-event]]
+            [chimera.seq :refer [in?]]
             [chimera.om.state :refer [transact! merge-into-app-state!]]
             [cljs.core.async :refer [put!]]
             [om.core :as om :include-macros true]
@@ -166,20 +167,20 @@
     om/IRender
     (render [_]
       (let [{:keys [is-encrypted? is-within-pricing-limits?]
-             {:keys [active selected]} :views} app-state
+             {:keys [active disabled selected]} :views} app-state
             view->display #(if (= selected %) "block" "none")
             view->cls #(when (= selected %) "clicked")
             dataviews (->> app-state :views :all
                            (map @view-state) (remove nil?))
             dv->link (fn [{:keys [view label]}]
-                       (let [active? (some #(= view %) active)]
-                         (if active?
-                           [:a {:class (view->cls view)
-                                :href (str "#/" (name view))} label]
-                           (view->inactive-tab view
-                                               label
-                                               is-encrypted?
-                                               is-within-pricing-limits?))))]
+                       (if (and (some #(= view %) active)
+                                (not (in? disabled view)))
+                         [:a {:class (view->cls view)
+                              :href (str "#/" (name view))} label]
+                         (view->inactive-tab view
+                                             label
+                                             is-encrypted?
+                                             is-within-pricing-limits?)))]
         (html
          [:div.tab-container.dataset-tabs
           [:div.tab-bar
