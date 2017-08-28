@@ -102,8 +102,7 @@
     om/IRender
     (render [_]
       (let [form (om/get-shared owner :flat-form)
-            {:keys [dataset-id]} (om/get-shared owner)
-            {:keys [num_of_submissions]} dataset-info
+            {:keys [num_of_submissions formid]} dataset-info
             {:keys [loading? total-records]} status]
         (html
          [:div.right.rec-summary.rec-margin
@@ -115,7 +114,7 @@
             (when loading? [:i.fa.fa-spinner.fa-pulse])
             (pluralize-number num_of_submissions " Record")]]
           [:div.divider]
-          (om/build dataview-actions dataset-id)])))))
+          (om/build dataview-actions formid)])))))
 
 (defn activate-view!
   "Strip off ampersand suffixes then switch to view if result is a valid view"
