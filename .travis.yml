@@ -1,15 +1,11 @@
-before_script:
-    - "export JAVA_OPTS=-Xmx512m"
-
-lein: lein2
 language: clojure
 script:
-    - lein2 bikeshed
-    - lein2 cljfmt check
-    - lein2 kibit
-    - lein2 cljsbuild once dev
-    - lein2 cljsbuild once prod
-    - lein2 cljsbuild test
+    - lein bikeshed
+    - lein cljfmt check
+    - lein kibit
+    - lein cljsbuild once dev
+    - lein cljsbuild once prod
+    - lein cljsbuild test
 notifications:
   email:
     - tech+travis@ona.io
