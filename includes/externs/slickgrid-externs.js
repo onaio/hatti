@@ -1567,3 +1567,13 @@ Slick.Controls = {};
  * @constructor
  */
 Slick.Controls.Pager = function(dataview, grid, jqueryElement) {};
+
+/**
+ * @constructor
+ */
+Slick.AutoColumnSize = function () {};
+
+/**
+ * @constructor
+ */
+Slick.CheckboxSelectColumn = function () {};
