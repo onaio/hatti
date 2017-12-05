@@ -342,15 +342,36 @@
     (.subscribe (.-onClick grid)
                 (fn [e args]
                   (let [elem (.-target e)
+                        class-name (.-className elem)
+                        checked? (.-checked elem)
                         row (.getItem dataview (aget args "row"))
                         elem-data-id (.getAttribute elem "data-id")
                         data-id (when elem-data-id
                                   (js/parseInt (.getAttribute elem "data-id")))
                         id  (aget row _id)
-                        rank (aget row _rank)]
-                    (when (= id data-id)
-                      (put! shared/event-chan
-                            {:submission-to-rank rank})))))
+                        rank (aget row _rank)
+                        select-unselect-all-records-chkbox
+                        (.getElementById js/document
+                                         select-unselect-all-records-id)
+                        {:keys [selected-table-rows]} @shared/app-state]
+                    (if (= class-name delete-record-class)
+                      (let [fn (if checked? add-element remove-element)
+                            row (js/parseInt (.. grid
+                                                 (getCellFromEvent e)
+                                                 -row))]
+                        (update-data-to-be-deleted-vector checked? data-id)
+                        (set! (.-checked select-unselect-all-records-chkbox)
+                              (check-select-unselect-all-records-element?))
+                        (transact! shared/app-state
+                                   [:selected-table-rows]
+                                   #(fn selected-table-rows row))
+                        (.setSelectedRows
+                         grid
+                         (clj->js (:selected-table-rows @shared/app-state))))
+
+                      (when (= id data-id)
+                        (put! shared/event-chan
+                              {:submission-to-rank rank}))))))
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
@@ -391,9 +412,12 @@
           (when submission-unclicked
             (update-data! nil))
           (when new-columns
-            (.setColumns grid new-columns)
-            (resizeColumns grid)
-            (.render grid))
+            (go (<! (timeout 20))
+                (.setColumns grid new-columns)
+                (resizeColumns grid)
+                (.render grid)
+                (select-rows-marked-to-be-deleted)
+                (higlight-rows-marked-to-be-deleted grid)))
           (when filter-by
             (.setFilterArgs dataview (clj->js {:query filter-by}))
             (.refresh dataview))
