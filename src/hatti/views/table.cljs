@@ -198,6 +198,72 @@
                event (aget dataview handler-name)]]
      (.subscribe event handler-function))))
 
+(defn add-element
+  [vector value]
+  (-> vector
+      (conj (int value))
+      set
+      vec))
+
+(defn remove-element
+  [vector value]
+  (vec (remove (fn [id] (= id value))
+               vector)))
+
+(defn update-data-to-be-deleted-vector
+  [checked? data-id]
+  (let [{:keys [data-to-be-deleted]} @shared/app-state
+        fn (if checked? add-element remove-element)]
+    (transact! shared/app-state
+               [:data-to-be-deleted]
+               #(fn data-to-be-deleted data-id))))
+
+(defn get-elements-count-by-selector
+  [selector]
+  (.. js/document (querySelectorAll selector) -length))
+
+(defn check-select-unselect-all-records-element?
+  []
+  (let [delete-record-class-selector (str "." delete-record-class)
+        total-rows-count (get-elements-count-by-selector
+                          delete-record-class-selector)
+        ; TODO: test using (:data-to-be-deleted @shared/app-state)
+        selected-rows-count (get-elements-count-by-selector
+                             (str delete-record-class-selector ":checked"))]
+    (if (= selected-rows-count total-rows-count) true false)))
+
+(defn get-checkbox-selector
+  [data-id]
+  (str "." delete-record-class "[data-id=\"" data-id "\"]"))
+
+(defn get-delete-checkbox-by-data-id
+  [data-id]
+  (let [selector (get-checkbox-selector data-id)]
+    (.querySelector js/document selector)))
+
+(defn select-rows-marked-to-be-deleted
+  []
+  (doseq [data-id (:data-to-be-deleted @shared/app-state)]
+    (let
+     [element (get-delete-checkbox-by-data-id data-id)]
+      (set! (.-checked element) true))))
+
+(defn higlight-rows-marked-to-be-deleted
+  [grid]
+  (let [checkboxes (.getElementsByClassName js/document delete-record-class)
+        indexes (range (.-length checkboxes))
+        indexes-of-selected-checkboxes (->> (map-indexed
+                                             (fn [index checkbox]
+                                               (when (.-checked checkbox)
+                                                 index))
+                                             checkboxes)
+                                            (remove nil?)
+                                            vec)]
+    (transact! shared/app-state
+               [:selected-table-rows]
+               #(identity indexes-of-selected-checkboxes))
+    (.setSelectedRows grid (clj->js indexes-of-selected-checkboxes))))
+
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
