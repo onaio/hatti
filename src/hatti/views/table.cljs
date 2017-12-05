@@ -94,15 +94,18 @@
       (generate-html
        (when value
          [:ul
+          [:li [:input {:type "checkbox"
+                        :data-id value
+                        :class "delete-record"}]]
           [:li.tooltip.middle-right
            [:span.tip-info "View"]
            [:a.view-record
-            [:i.fa.fa-clone {:data-id value}]]]
+            [:i.fa.fa-eye {:data-id value}]]]
           [:li.tooltip
            [:span.tip-info "Edit"]
            [:a.edit-record {:data-id value :target "_blank"
                             :href edit-link}
-            [:i.fa.fa-pencil-square-o]]]])))))
+            [:i.fa.fa-pencil]]]])))))
 
 (defn column-name-html-string
   "The html needed for a column name as a string.
