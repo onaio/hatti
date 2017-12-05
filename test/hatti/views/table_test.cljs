@@ -46,7 +46,7 @@
                     :headerCssClass :maxWidth :cssClass}
                   (set (keys first-col)))
 
-          (is (= (:name first-col) (:toolTip first-col)))))
+          (is (= (:name first-col) tv/select-unselect-all-records-element))))
     (testing "compfn works on submission-time"
       (let [submission-col (->> slickgrid-cols
                                 (filter #(= (:id %) "_submission_time"))
