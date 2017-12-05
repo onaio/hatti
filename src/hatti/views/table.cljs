@@ -114,19 +114,27 @@
   (str "<div class=\"" column-class "\">" label "</div>"
        (when hxl (str "<div class=\"hxl-row\">" hxl "</div>"))))
 
+(def select-unselect-all-records-id "select-unselect-all-records")
+(def select-unselect-all-records-element
+  (str "<span class=\"tooltip middle-right\">
+            <span class=\"tip-info\">Select all on this page</span>
+            <input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">
+           </span>"))
+(def delete-record-class "delete-record")
+
 (defn actions-column
   [owner has-hxl?]
   {:id "actions"
    :field _id
    :type "text"
-   :name ""
+   :name select-unselect-all-records-element
    :toolTip ""
    :sortable false
    :formatter (action-buttons owner)
    :headerCssClass (str (when has-hxl? "hxl-min-height ")
                         "record-actions header")
    :cssClass "record-actions"
-   :maxWidth 70})
+   :maxWidth 100})
 
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
