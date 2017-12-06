@@ -2,7 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [chimera.js-interop :refer [safe-regex]]
             [chimera.urls :refer [last-url-param url]]
-            [chimera.seq :refer [in?]]
+            [chimera.seq :refer [in? add-element remove-element]]
             [chimera.om.state :refer [transact!]]
             [chimera.string :refer [escape-for-type]]
             [clojure.string :refer [escape]]
@@ -198,18 +198,6 @@
          :let [handler-name (hyphen->camel-case (name handler-key))
                event (aget dataview handler-name)]]
      (.subscribe event handler-function))))
-
-(defn add-element
-  [vector value]
-  (-> vector
-      (conj (int value))
-      set
-      vec))
-
-(defn remove-element
-  [vector value]
-  (vec (remove (fn [id] (= id value))
-               vector)))
 
 (defn update-data-to-be-deleted-vector
   [checked? data-id]
