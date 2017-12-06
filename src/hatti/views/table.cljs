@@ -95,16 +95,17 @@
       (generate-html
        (when value
          [:ul
-          [:li [:input {:type "checkbox"
-                        :data-id value
-                        :class "delete-record"}]]
+          [:li
+           [:input.delete-record {:type "checkbox"
+                                  :data-id value}]]
           [:li.tooltip.middle-right
            [:span.tip-info "View"]
            [:a.view-record
             [:i.fa.fa-eye {:data-id value}]]]
           [:li.tooltip
            [:span.tip-info "Edit"]
-           [:a.edit-record {:data-id value :target "_blank"
+           [:a.edit-record {:data-id value
+                            :target "_blank"
                             :href edit-link}
             [:i.fa.fa-pencil]]]])))))
 
@@ -219,7 +220,7 @@
         ; TODO: test using (:data-to-be-deleted @shared/app-state)
         selected-rows-count (get-elements-count-by-selector
                              (str delete-record-class-selector ":checked"))]
-    (if (= selected-rows-count total-rows-count) true false)))
+    (= selected-rows-count total-rows-count)))
 
 (defn get-checkbox-selector
   [data-id]
@@ -240,7 +241,6 @@
 (defn higlight-rows-marked-to-be-deleted
   [grid]
   (let [checkboxes (.getElementsByClassName js/document delete-record-class)
-        indexes (range (.-length checkboxes))
         indexes-of-selected-checkboxes (->> (map-indexed
                                              (fn [index checkbox]
                                                (when (.-checked checkbox)
