@@ -118,10 +118,7 @@
 
 (def select-unselect-all-records-id "select-unselect-all-records")
 (def select-unselect-all-records-element
-  (str "<span class=\"tooltip middle-right\">
-            <span class=\"tip-info\">Select all on this page</span>
-            <input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">
-           </span>"))
+  (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
 (def delete-record-class "delete-record")
 
 (defn actions-column
