@@ -2,7 +2,8 @@
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [chimera.js-interop :refer [safe-regex]]
             [chimera.urls :refer [last-url-param url]]
-            [chimera.seq :refer [in?]]
+            [chimera.seq :refer [in? add-element remove-element]]
+            [chimera.om.state :refer [transact!]]
             [chimera.string :refer [escape-for-type]]
             [clojure.string :refer [escape]]
             [cljs.core.async :refer [<! chan put! timeout]]
@@ -94,15 +95,19 @@
       (generate-html
        (when value
          [:ul
+          [:li
+           [:input.delete-record {:type "checkbox"
+                                  :data-id value}]]
           [:li.tooltip.middle-right
            [:span.tip-info "View"]
            [:a.view-record
-            [:i.fa.fa-clone {:data-id value}]]]
+            [:i.fa.fa-eye {:data-id value}]]]
           [:li.tooltip
            [:span.tip-info "Edit"]
-           [:a.edit-record {:data-id value :target "_blank"
+           [:a.edit-record {:data-id value
+                            :target "_blank"
                             :href edit-link}
-            [:i.fa.fa-pencil-square-o]]]])))))
+            [:i.fa.fa-pencil]]]])))))
 
 (defn column-name-html-string
   "The html needed for a column name as a string.
@@ -111,19 +116,24 @@
   (str "<div class=\"" column-class "\">" label "</div>"
        (when hxl (str "<div class=\"hxl-row\">" hxl "</div>"))))
 
+(def select-unselect-all-records-id "select-unselect-all-records")
+(def select-unselect-all-records-element
+  (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
+(def delete-record-class "delete-record")
+
 (defn actions-column
   [owner has-hxl?]
   {:id "actions"
    :field _id
    :type "text"
-   :name ""
+   :name select-unselect-all-records-element
    :toolTip ""
    :sortable false
    :formatter (action-buttons owner)
    :headerCssClass (str (when has-hxl? "hxl-min-height ")
                         "record-actions header")
    :cssClass "record-actions"
-   :maxWidth 70})
+   :maxWidth 100})
 
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
@@ -187,6 +197,59 @@
                event (aget dataview handler-name)]]
      (.subscribe event handler-function))))
 
+(defn update-data-to-be-deleted-vector
+  [checked? data-id]
+  (let [{:keys [data-to-be-deleted]} @shared/app-state
+        fn (if checked? add-element remove-element)]
+    (transact! shared/app-state
+               [:data-to-be-deleted]
+               #(fn data-to-be-deleted data-id))))
+
+(defn get-elements-count-by-selector
+  [selector]
+  (.. js/document (querySelectorAll selector) -length))
+
+(defn check-select-unselect-all-records-element?
+  []
+  (let [delete-record-class-selector (str "." delete-record-class)
+        total-rows-count (get-elements-count-by-selector
+                          delete-record-class-selector)
+        ; TODO: test using (:data-to-be-deleted @shared/app-state)
+        selected-rows-count (get-elements-count-by-selector
+                             (str delete-record-class-selector ":checked"))]
+    (= selected-rows-count total-rows-count)))
+
+(defn get-checkbox-selector
+  [data-id]
+  (str "." delete-record-class "[data-id=\"" data-id "\"]"))
+
+(defn get-delete-checkbox-by-data-id
+  [data-id]
+  (let [selector (get-checkbox-selector data-id)]
+    (.querySelector js/document selector)))
+
+(defn select-rows-marked-to-be-deleted
+  []
+  (doseq [data-id (:data-to-be-deleted @shared/app-state)]
+    (let
+     [element (get-delete-checkbox-by-data-id data-id)]
+      (set! (.-checked element) true))))
+
+(defn higlight-rows-marked-to-be-deleted
+  [grid]
+  (let [checkboxes (.getElementsByClassName js/document delete-record-class)
+        indexes-of-selected-checkboxes (->> (map-indexed
+                                             (fn [index checkbox]
+                                               (when (.-checked checkbox)
+                                                 index))
+                                             checkboxes)
+                                            (remove nil?)
+                                            vec)]
+    (transact! shared/app-state
+               [:selected-table-rows]
+               #(identity indexes-of-selected-checkboxes))
+    (.setSelectedRows grid (clj->js indexes-of-selected-checkboxes))))
+
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
@@ -208,6 +271,9 @@
     ;; dataview / grid hookup
     (bind-external-sg-grid-event-handlers grid grid-event-handlers)
     (bind-external-sg-grid-dataview-handlers dataview dataview-event-handlers)
+    (.setSelectionModel grid
+                        (js/Slick.RowSelectionModel.
+                         (clj->js {:selectActiveRow false})))
 
     (.subscribe (.-onRowCountChanged dataview)
                 (fn [e args]
@@ -216,7 +282,42 @@
     (.subscribe (.-onRowsChanged dataview)
                 (fn [e args]
                   (.invalidateRows grid (aget args "rows"))
-                  (.render grid)))
+                  (.render grid)
+                  (select-rows-marked-to-be-deleted)
+                  (higlight-rows-marked-to-be-deleted grid)))
+    (.subscribe (.-onHeaderClick grid)
+                (fn [e args]
+                  (when (and (= (.. args -column -id) "actions")
+                             (= (.. e -target -type) "checkbox"))
+                    (let [target (.-target e)
+                          id (.-id target)
+                          checked? (.-checked target)
+                          delete-record-class-selector (str
+                                                        "."
+                                                        delete-record-class)
+                          total-rows-count (get-elements-count-by-selector
+                                            delete-record-class-selector)]
+                      (when (= select-unselect-all-records-id id)
+                        (let [records-to-be-deleted (.getElementsByClassName
+                                                     js/document
+                                                     delete-record-class)]
+
+                          (doseq [record records-to-be-deleted]
+                            (set! (.-checked record) checked?)
+                            (update-data-to-be-deleted-vector
+                             checked?
+                             (js/parseInt
+                              (.getAttribute record "data-id"))))
+
+                          (transact! shared/app-state
+                                     [:selected-table-rows]
+                                     #(if checked?
+                                        (range total-rows-count)
+                                        []))
+                          (.setSelectedRows
+                           grid
+                           (clj->js
+                            (:selected-table-rows @shared/app-state)))))))))
     ;; Double-click handlers
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
@@ -226,15 +327,36 @@
     (.subscribe (.-onClick grid)
                 (fn [e args]
                   (let [elem (.-target e)
+                        class-name (.-className elem)
+                        checked? (.-checked elem)
                         row (.getItem dataview (aget args "row"))
                         elem-data-id (.getAttribute elem "data-id")
                         data-id (when elem-data-id
                                   (js/parseInt (.getAttribute elem "data-id")))
                         id  (aget row _id)
-                        rank (aget row _rank)]
-                    (when (= id data-id)
-                      (put! shared/event-chan
-                            {:submission-to-rank rank})))))
+                        rank (aget row _rank)
+                        select-unselect-all-records-chkbox
+                        (.getElementById js/document
+                                         select-unselect-all-records-id)
+                        {:keys [selected-table-rows]} @shared/app-state]
+                    (if (= class-name delete-record-class)
+                      (let [fn (if checked? add-element remove-element)
+                            row (js/parseInt (.. grid
+                                                 (getCellFromEvent e)
+                                                 -row))]
+                        (update-data-to-be-deleted-vector checked? data-id)
+                        (set! (.-checked select-unselect-all-records-chkbox)
+                              (check-select-unselect-all-records-element?))
+                        (transact! shared/app-state
+                                   [:selected-table-rows]
+                                   #(fn selected-table-rows row))
+                        (.setSelectedRows
+                         grid
+                         (clj->js (:selected-table-rows @shared/app-state))))
+
+                      (when (= id data-id)
+                        (put! shared/event-chan
+                              {:submission-to-rank rank}))))))
     ;; page, filter, and data set-up on the dataview
     (init-sg-pager grid dataview)
     (.setPagingOptions dataview
@@ -275,9 +397,12 @@
           (when submission-unclicked
             (update-data! nil))
           (when new-columns
-            (.setColumns grid new-columns)
-            (resizeColumns grid)
-            (.render grid))
+            (go (<! (timeout 20))
+                (.setColumns grid new-columns)
+                (resizeColumns grid)
+                (.render grid)
+                (select-rows-marked-to-be-deleted)
+                (higlight-rows-marked-to-be-deleted grid)))
           (when filter-by
             (.setFilterArgs dataview (clj->js {:query filter-by}))
             (.refresh dataview))

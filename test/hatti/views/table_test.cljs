@@ -46,7 +46,7 @@
                     :headerCssClass :maxWidth :cssClass}
                   (set (keys first-col)))
 
-          (is (= (:name first-col) (:toolTip first-col)))))
+          (is (= (:name first-col) tv/select-unselect-all-records-element))))
     (testing "compfn works on submission-time"
       (let [submission-col (->> slickgrid-cols
                                 (filter #(= (:id %) "_submission_time"))
@@ -143,9 +143,17 @@
       (not-nil? (re-matches (re-pattern  (string/join (htitles table)))
                             (string/join (htexts table)))))
 
+    (testing "delete checkbox selector is valid"
+      (is (= (tv/get-checkbox-selector 1)
+             ".delete-record[data-id=\"1\"]")))
+
     (testing "actions column is rendered"
       (is (= (-> (sel table :.record-actions) count dec)
              (count small-thin-data)))
+      ;; delete checkboxes is rendered correctly with valid ids
+      (is (every? (set (map #(get % "_id") small-thin-data))
+                  (map #(int (dommy/attr % :data-id))
+                       (sel table [:.record-actions :.delete-record]))))
       ;; view submission icons are rendered with correct data-id
       (is (every? (set (map #(get % "_id") small-thin-data))
                   (map #(int (dommy/attr % :data-id))

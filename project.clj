@@ -3,7 +3,7 @@
   [path]
   (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.3.28"
+(defproject onaio/hatti "0.4.0"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
@@ -16,7 +16,7 @@
                  [org.omcljs/om "0.9.0"]
                  [inflections "0.12.2"]
                  [secretary "1.2.3"]
-                 [onaio/chimera "0.0.6-format-date-SNAPSHOT"]
+                 [onaio/chimera "0.0.7-SNAPSHOT"]
                  ;; For charts
                  [com.keminglabs/c2 "0.2.4-SNAPSHOT"]
                  [org.clojure/math.numeric-tower "0.0.4"]
@@ -29,7 +29,7 @@
                  [cljsjs/jquery "2.2.4-0"]
                  [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/photoswipe "4.1.1-0"]
-                 [onaio/slickgrid-cljs "0.0.3"]
+                 [onaio/slickgrid-cljs "0.0.4-SNAPSHOT"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
                  ;; For client
