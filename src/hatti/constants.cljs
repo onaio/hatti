@@ -7,6 +7,7 @@
 (def _notes "_notes")
 (def _rank "_rank")
 (def _submission_time "_submission_time")
+(def _media_all_received "_media_all_received")
 (def _submitted_by "_submitted_by")
 (def photo "Photo")
 
