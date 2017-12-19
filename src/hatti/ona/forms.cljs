@@ -1,13 +1,16 @@
 (ns hatti.ona.forms
   (:require [chimera.js-interop :refer [format]]
             [chimera.urls :refer [last-url-param]]
+            [ona.utils.urls :as urls]
+            [ona.utils.i18n :refer [translate]]
             [chimera.date :as chimera-date]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :as string]
             [hatti.constants :refer [_submission_time
                                      _submitted_by
                                      _last_edited
-                                     _id]]))
+                                     _id
+                                     _media_all_received]]))
 
 ;; CONSTANTS
 (def currency-regex #"£|$")
@@ -34,9 +37,15 @@
                   :label     "Last Edited"
                   :type      "date"})
 
+(def media_received_field {:name      _media_all_received
+                           :full-name _media_all_received
+                           :label     "All media received?"
+                           :type      "boolean"})
+
 (def extra-submission-details [last_edited
                                submission-time-field
-                               submitted-by-field])
+                               submitted-by-field
+                               media_received_field])
 
 ;; Formatting helpers
 (defn- format-multiline-answer
@@ -108,7 +117,8 @@
                             "instanceID"
                             "__version__"
                             "_duration"
-                            "_submitted_by"}
+                            "_submitted_by"
+                            "_media_all_received"}
                           field)
       (field-type-in-set? #{"deviceid"
                             "end"
@@ -119,7 +129,8 @@
                             "start"
                             "subscriberid"
                             "today"
-                            "uuid"}
+                            "uuid"
+                            "_media_all_received"}
                           field)))
 
 (defn geofield?
@@ -211,12 +222,26 @@
   (and (string? appearance-value)
        (re-matches #"^search\(.*\)$" appearance-value)))
 
+(defn media-files-upload-error-component
+  "Displays tip question and tooltip msg for failed media files uploads"
+  [answer & {:keys [hlp-url translation-txt record-modal?]}]
+  (if record-modal?
+    [:span.image-name answer
+     [:a.tooltip {:href hlp-url :target "_blank"}
+      [:span.tip-info translation-txt]
+      [:span.tip-question "?"]]]
+    (format "<span class='image-name'> %s </span>
+          <a class='tooltip' href=%s target='_blank'>
+          <span class='tip-info'>%s</span>
+          <span class='tip-question'>?</span></a>"
+            answer hlp-url translation-txt)))
+
 (defn format-answer
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
    Optional: compact? should be true if a short string needs to be returned."
-  [field answer & {:keys [language compact? label field-key]
-                   :or {field-key :name}}]
+  [field answer & {:keys [language compact? label field-key media record-modal?]
+                   :or {field-key :name record-modal? false}}]
   (cond
     (string/blank? answer) no-answer
     (select-one? field) (let [option (->> (:children field)
@@ -239,13 +264,27 @@
     (or (image? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
+                              media-upload-fail-hlp-url
+                              urls/media-upload-fail-during-submission-help
+                              media-upload-fail-translation-txt
+                              (translate
+                               :table-data-view-page/media-upload-fail-err-msg)
                               fname (last-url-param (:filename answer))]
                           (cond
-                            (string? answer) answer
+                            (and (string? answer)
+                                 (not= answer "null") (nil? thumb))
+                            (media-files-upload-error-component
+                             answer
+                             :hlp-url
+                             media-upload-fail-hlp-url
+                             :translation-txt
+                             media-upload-fail-translation-txt
+                             :record-modal?
+                             record-modal?)
+                            (= answer "null") answer
                             compact? (format "<a href='%s' target='_blank'>
                                       <i class='fa fa-external-link'></i>
                                       %s </a>" image fname)
-                            (nil? thumb) answer
                             :else [:a {:href image :target "_blank"}
                                    (if (image? field)
                                      [:img {:width "80px" :src thumb}]
@@ -292,10 +331,11 @@
                   "uuid"          "UUID"
                   "instanceID"    "Instance ID"
                   "phonenumber"   "Phone number"
+                  "_media_all_received"    "All media received?"
                   name)
                 (case name
-                  _submission_time "Submission time"
-                  _submitted_by    "Submitted by"
+                  _submission_time       "Submission time"
+                  _submitted_by          "Submitted by"
                   ""))]
     (cond-> field (not label) (assoc :label label))))
 
