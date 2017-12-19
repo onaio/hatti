@@ -287,37 +287,35 @@
                   (higlight-rows-marked-to-be-deleted grid)))
     (.subscribe (.-onHeaderClick grid)
                 (fn [e args]
-                  (when (and (= (.. args -column -id) "actions")
-                             (= (.. e -target -type) "checkbox"))
-                    (let [target (.-target e)
-                          id (.-id target)
-                          checked? (.-checked target)
-                          delete-record-class-selector (str
-                                                        "."
-                                                        delete-record-class)
-                          total-rows-count (get-elements-count-by-selector
-                                            delete-record-class-selector)]
-                      (when (= select-unselect-all-records-id id)
-                        (let [records-to-be-deleted (.getElementsByClassName
-                                                     js/document
-                                                     delete-record-class)]
+                  (let [target (.-target e)
+                        id (.-id target)
+                        checked? (.-checked target)
+                        delete-record-class-selector (str
+                                                      "."
+                                                      delete-record-class)
+                        total-rows-count (get-elements-count-by-selector
+                                          delete-record-class-selector)]
+                    (when (= select-unselect-all-records-id id)
+                      (let [records-to-be-deleted (.getElementsByClassName
+                                                   js/document
+                                                   delete-record-class)]
 
-                          (doseq [record records-to-be-deleted]
-                            (set! (.-checked record) checked?)
-                            (update-data-to-be-deleted-vector
-                             checked?
-                             (js/parseInt
-                              (.getAttribute record "data-id"))))
+                        (doseq [record records-to-be-deleted]
+                          (set! (.-checked record) checked?)
+                          (update-data-to-be-deleted-vector
+                           checked?
+                           (js/parseInt
+                            (.getAttribute record "data-id"))))
 
-                          (transact! shared/app-state
-                                     [:selected-table-rows]
-                                     #(if checked?
-                                        (range total-rows-count)
-                                        []))
-                          (.setSelectedRows
-                           grid
-                           (clj->js
-                            (:selected-table-rows @shared/app-state)))))))))
+                        (transact! shared/app-state
+                                   [:selected-table-rows]
+                                   #(if checked?
+                                      (range total-rows-count)
+                                      []))
+                        (.setSelectedRows
+                         grid
+                         (clj->js
+                          (:selected-table-rows @shared/app-state))))))))
     ;; Double-click handlers
     (.subscribe (.-onDblClick grid)
                 (fn [e args]
