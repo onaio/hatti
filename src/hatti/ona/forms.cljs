@@ -1,8 +1,6 @@
 (ns hatti.ona.forms
   (:require [chimera.js-interop :refer [format]]
             [chimera.urls :refer [last-url-param]]
-            [ona.utils.urls :as urls]
-            [ona.utils.i18n :refer [translate]]
             [chimera.date :as chimera-date]
             [cljs.pprint :refer [cl-format]]
             [clojure.string :as string]
@@ -10,7 +8,10 @@
                                      _submitted_by
                                      _last_edited
                                      _id
-                                     _media_all_received]]))
+                                     _media_all_received
+                                     help-base-url
+                                     failed-media-upload-help-url
+                                     failed-media-upload-error-message]]))
 
 ;; CONSTANTS
 (def currency-regex #"£|$")
@@ -40,7 +41,7 @@
 (def media_received_field {:name      _media_all_received
                            :full-name _media_all_received
                            :label     "All media received?"
-                           :type      "boolean"})
+                           :type      "text"})
 
 (def extra-submission-details [last_edited
                                submission-time-field
@@ -224,17 +225,17 @@
 
 (defn media-files-upload-error-component
   "Displays tip question and tooltip msg for failed media files uploads"
-  [answer & {:keys [hlp-url translation-txt record-modal?]}]
+  [answer & {:keys [help-url error-message record-modal?]}]
   (if record-modal?
     [:span.image-name answer
-     [:a.tooltip {:href hlp-url :target "_blank"}
-      [:span.tip-info translation-txt]
+     [:a.tooltip {:href help-url :target "_blank"}
+      [:span.tip-info error-message]
       [:span.tip-question "?"]]]
     (format "<span class='image-name'> %s </span>
           <a class='tooltip' href=%s target='_blank'>
           <span class='tip-info'>%s</span>
           <span class='tip-question'>?</span></a>"
-            answer hlp-url translation-txt)))
+            answer help-url error-message)))
 
 (defn format-answer
   "String representation for a particular field datapoint (answer).
@@ -264,21 +265,16 @@
     (or (image? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
-                              media-upload-fail-hlp-url
-                              urls/media-upload-fail-during-submission-help
-                              media-upload-fail-translation-txt
-                              (translate
-                               :table-data-view-page/media-upload-fail-err-msg)
                               fname (last-url-param (:filename answer))]
                           (cond
                             (and (string? answer)
                                  (not= answer "null") (nil? thumb))
                             (media-files-upload-error-component
                              answer
-                             :hlp-url
-                             media-upload-fail-hlp-url
-                             :translation-txt
-                             media-upload-fail-translation-txt
+                             :help-url
+                             (help-base-url failed-media-upload-help-url)
+                             :error-message
+                             failed-media-upload-error-message
                              :record-modal?
                              record-modal?)
                             (= answer "null") answer
