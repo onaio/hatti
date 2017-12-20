@@ -163,10 +163,12 @@
                     :small_download_url "THUMB.jpg"}
             image3 {:filename "foo/bar.jpg"
                     :download_url "IMAGE.jpg"}
-            txt-link (forms/format-answer q-img image2 :compact? true)]
+            txt-link (forms/format-answer q-img image2 :compact? true)
+            tooltip-error-msg (forms/format-answer q-img image1)]
         (is (= (forms/format-answer q-img nil) forms/no-answer))
         (is (= (forms/format-answer q-img "") forms/no-answer))
-        (is (= (forms/format-answer q-img image1) "bar.jpg"))
+        (is (re-find #"This media file was not uploaded successfully."
+                     tooltip-error-msg))
         (is (= (forms/format-answer q-img image2)
                [:a {:href "IMAGE.jpg" :target "_blank"}
                 [:img {:width "80px" :src "THUMB.jpg"}]]))

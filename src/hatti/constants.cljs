@@ -7,6 +7,7 @@
 (def _notes "_notes")
 (def _rank "_rank")
 (def _submission_time "_submission_time")
+(def _media_all_received "_media_all_received")
 (def _submitted_by "_submitted_by")
 (def photo "Photo")
 
@@ -40,3 +41,14 @@
 (def hexbin-cell-width 60)
 (def min-count-color "#f2f5fc")
 (def max-count-color "#08519c")
+
+(def failed-media-upload-error-message
+  "This media file was not uploaded successfully.")
+
+(def failed-media-upload-help-url
+  "knowledge-base/#")
+
+(defn help-base-url
+  "Define a help URL"
+  [suffix]
+  (str "http://help.ona.io/" suffix))
