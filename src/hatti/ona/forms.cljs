@@ -40,7 +40,7 @@
 
 (def media_received_field {:name      _media_all_received
                            :full-name _media_all_received
-                           :label     "All media received?"
+                           :label     "Media attachments received"
                            :type      "text"})
 
 (def extra-submission-details [last_edited
@@ -327,7 +327,7 @@
                   "uuid"          "UUID"
                   "instanceID"    "Instance ID"
                   "phonenumber"   "Phone number"
-                  "_media_all_received"    "All media received?"
+                  "_media_all_received"    "Media attachments received"
                   name)
                 (case name
                   _submission_time       "Submission time"
