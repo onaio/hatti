@@ -77,12 +77,15 @@
   "Formatter for slickgrid columns takes row,cell,value,columnDef,dataContext.
    Get one with (partial formatter field language)."
   [field language field-key row cell value columnDef dataContext]
-  (let [clj-value (js->clj value :keywordize-keys true)]
+  (let [clj-value (js->clj value :keywordize-keys true)
+        media-count (aget dataContext "_media_count")
+        total-media (aget dataContext "_total_media")]
     (format-answer field
                    (escape-for-type clj-value)
                    :language language
                    :compact? true
-                   :field-key field-key)))
+                   :field-key field-key
+                   :media-count media-count :total-media total-media)))
 
 (defmethod action-buttons :default
   [owner]

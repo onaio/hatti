@@ -40,7 +40,7 @@
 
 (def media_received_field {:name      _media_all_received
                            :full-name _media_all_received
-                           :label     "All media received?"
+                           :label     "Media attachments received"
                            :type      "text"})
 
 (def extra-submission-details [last_edited
@@ -237,11 +237,29 @@
           <span class='tip-question'>?</span></a>"
             answer help-url error-message)))
 
+(defn infor-icon-component
+  "Returns an infor icon with a tooltip message"
+  [answer & {:keys [media-count total-media]}]
+  (format "<span>%s<a class='tooltip top-right' href='#' target='_blank'>
+           <span class='media-status tip-info'>
+           <p><b>Total media files expected</b><span> : </span><span> %s </span>
+           </p>
+           <p><b>Total media files received</b><span> : </span><span> %s </span>
+           </p></span><i class='fa fa-info-circle'></i></a></span>"
+          answer total-media media-count))
+
 (defn format-answer
   "String representation for a particular field datapoint (answer).
    re-formatting depends on field type, eg. name->label substitution.
    Optional: compact? should be true if a short string needs to be returned."
-  [field answer & {:keys [language compact? label field-key media record-modal?]
+  [field answer & {:keys [language
+                          compact?
+                          label
+                          field-key
+                          media
+                          record-modal?
+                          media-count
+                          total-media]
                    :or {field-key :name record-modal? false}}]
   (cond
     (string/blank? answer) no-answer
@@ -310,7 +328,10 @@
             (if-let [currency (some->> label (re-find currency-regex))]
               (str currency (cl-format nil "~:d" answer))
               answer)
-            (format-multiline-answer answer))))
+            (if (= (str answer) "false")
+              (infor-icon-component answer :media-count media-count
+                                    :total-media total-media)
+              (format-multiline-answer answer)))))
 
 (defn relabel-meta-field
   "Try and produce a label for meta field if non-existent."
@@ -327,7 +348,7 @@
                   "uuid"          "UUID"
                   "instanceID"    "Instance ID"
                   "phonenumber"   "Phone number"
-                  "_media_all_received"    "All media received?"
+                  "_media_all_received"    "Media attachments received"
                   name)
                 (case name
                   _submission_time       "Submission time"
