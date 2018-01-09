@@ -197,7 +197,9 @@
    both in the numeric category"
   [field]
   (cond
-    (text? field)        "column-string"
+    (text? field)        (if (= (get field :full-name) "_media_all_received")
+                           "column-string media-attachment"
+                           "column-string")
     (numeric? field)     "column-numeric"
     (time-based? field)  "column-datetime"
     (categorical? field) "column-categorical"
@@ -240,13 +242,13 @@
 (defn infor-icon-component
   "Returns an infor icon with a tooltip message"
   [answer & {:keys [media-count total-media]}]
-  (format "<span>%s<a class='tooltip top-right' href='#' target='_blank'>
-           <span class='media-status tip-info'>
-           <p><b>Total media files expected</b><span> : </span><span> %s </span>
-           </p>
-           <p><b>Total media files received</b><span> : </span><span> %s </span>
-           </p></span><i class='fa fa-info-circle'></i></a></span>"
-          answer total-media media-count))
+  (str "<span>" answer
+       "<a class=\"tooltip top-right\" href=\"#\" target=\"_blank\">
+       <span class=\"media-status tip-info\">
+       <p><b>Total media files expected</b><span> : </span><span>"
+       total-media "</span></p>
+       <p><b>Total media files received</b><span> : </span><span>" media-count
+       "</span></p></span><i class='fa fa-info-circle'></i></a></span>"))
 
 (defn format-answer
   "String representation for a particular field datapoint (answer).
