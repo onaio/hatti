@@ -33,6 +33,7 @@
 (defmulti table-search view-type-dispatcher)
 (defmulti label-changer view-type-dispatcher)
 (defmulti action-buttons view-type-fn-dispatcher)
+(defmulti actions-column view-type-fn-dispatcher)
 
 ;; MAP TABLE
 (defmulti report-view-page view-type-dispatcher)
