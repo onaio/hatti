@@ -14,6 +14,7 @@
             [hatti.ona.forms :as forms
              :refer [get-label format-answer get-column-class]]
             [hatti.views :refer [action-buttons
+                                 actions-column
                                  table-page table-header table-search
                                  label-changer submission-view]]
             [hatti.views.record]
@@ -124,7 +125,7 @@
   (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
 (def delete-record-class "delete-record")
 
-(defn actions-column
+(defmethod actions-column :default
   [owner has-hxl?]
   {:id "actions"
    :field _id
@@ -440,7 +441,8 @@
                            {:new-columns
                             (flat-form->sg-columns flat-form
                                                    :get-label? (= :label %)
-                                                   :language   new-language)})]
+                                                   :language   new-language
+                                                   :owner owner)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! field-key))
