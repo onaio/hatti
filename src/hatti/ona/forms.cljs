@@ -161,6 +161,10 @@
   [field]
   (field-type-in-set? #{"image" "photo"} field))
 
+(defn audio?
+  [field]
+  (field-type-in-set? #{"audio"} field))
+
 (defn video?
   [field]
   (field-type-in-set? #{"video"} field))
@@ -205,6 +209,7 @@
     (categorical? field) "column-categorical"
     (geofield? field)    "column-geofield"
     (image? field)       "column-image"
+    (audio? field)       "column-audio"
     (video? field)       "column-video"
     (meta? field)        "column-metadata"
     :else                ""))
@@ -283,6 +288,7 @@
                                string/join))
     (time-based? field) (chimera-date/format-date answer)
     (or (image? field)
+        (audio? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
                               fname (last-url-param (:filename answer))]
