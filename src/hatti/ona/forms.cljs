@@ -161,6 +161,10 @@
   [field]
   (field-type-in-set? #{"image" "photo"} field))
 
+(defn audio?
+  [field]
+  (field-type-in-set? #{"audio"} field))
+
 (defn video?
   [field]
   (field-type-in-set? #{"video"} field))
@@ -205,6 +209,7 @@
     (categorical? field) "column-categorical"
     (geofield? field)    "column-geofield"
     (image? field)       "column-image"
+    (audio? field)       "column-audio"
     (video? field)       "column-video"
     (meta? field)        "column-metadata"
     :else                ""))
@@ -241,9 +246,9 @@
 
 (defn infor-icon-component
   "Returns an infor icon with a tooltip message"
-  [answer & {:keys [media-count total-media]}]
+  [answer & {:keys [media-count total-media help-url]}]
   (str "<span>" answer
-       "<a class=\"tooltip top-right\" href=\"#\" target=\"_blank\">
+       "<a class=\"tooltip top-right\" href=" help-url " target=\"_blank\">
        <span class=\"media-status tip-info\">
        <p><b>Total media files expected</b><span> : </span><span>"
        total-media "</span></p>
@@ -283,6 +288,7 @@
                                string/join))
     (time-based? field) (chimera-date/format-date answer)
     (or (image? field)
+        (audio? field)
         (video? field)) (let [image (:download_url answer)
                               thumb (or (:small_download_url answer) image)
                               fname (last-url-param (:filename answer))]
@@ -332,7 +338,10 @@
               answer)
             (if (= (str answer) "false")
               (infor-icon-component answer :media-count media-count
-                                    :total-media total-media)
+                                    :total-media total-media
+                                    :help-url
+                                    (help-base-url
+                                     failed-media-upload-help-url))
               (format-multiline-answer answer)))))
 
 (defn relabel-meta-field

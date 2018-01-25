@@ -46,9 +46,9 @@
   "This media file was not uploaded successfully.")
 
 (def failed-media-upload-help-url
-  "knowledge-base/#")
+  "knowledge-base/media-files-metadata-field/")
 
 (defn help-base-url
   "Define a help URL"
   [suffix]
-  (str "http://help.ona.io/" suffix))
+  (str "https://help.ona.io/" suffix))

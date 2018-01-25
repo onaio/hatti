@@ -130,7 +130,7 @@
 (defn filter-media
   "Coll -> Coll"
   [flat-form]
-  (filter #(or (forms/video? %) (forms/image? %)) flat-form))
+  (filter #(or (forms/video? %) (forms/audio? %) (forms/image? %)) flat-form))
 
 (defn integrate-attachments
   "Inlines media data from within _attachments into each record.
