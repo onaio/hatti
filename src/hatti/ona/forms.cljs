@@ -246,9 +246,9 @@
 
 (defn infor-icon-component
   "Returns an infor icon with a tooltip message"
-  [answer & {:keys [media-count total-media]}]
+  [answer & {:keys [media-count total-media help-url]}]
   (str "<span>" answer
-       "<a class=\"tooltip top-right\" href=\"#\" target=\"_blank\">
+       "<a class=\"tooltip top-right\" href=" help-url " target=\"_blank\">
        <span class=\"media-status tip-info\">
        <p><b>Total media files expected</b><span> : </span><span>"
        total-media "</span></p>
@@ -338,7 +338,10 @@
               answer)
             (if (= (str answer) "false")
               (infor-icon-component answer :media-count media-count
-                                    :total-media total-media)
+                                    :total-media total-media
+                                    :help-url
+                                    (help-base-url
+                                     failed-media-upload-help-url))
               (format-multiline-answer answer)))))
 
 (defn relabel-meta-field
