@@ -125,6 +125,20 @@
   (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
 (def delete-record-class "delete-record")
 
+(defn mock-onadata-tasking-fields
+  [cols] (let [review-status {:id "_review_status"
+                              :name "Review status"
+                              :sortable true
+                              :field "_review_status"
+                              :type "text"}
+               comment {:id "_review_comment"
+                        :name "Review comment"
+                        :sortable true
+                        :field "_review_comment"
+                        :type "text"}
+               [actions data] (split-at 1 cols)]
+            (vec (flatten (conj data comment review-status actions)))))
+
 (defmethod actions-column :default
   [owner has-hxl?]
   {:id "actions"
@@ -166,7 +180,8 @@
                      :hxl hxl}))]
     (clj->js (cond-> columns
                (not hide-actions-column?)
-               (conj (actions-column owner has-hxl?))))))
+               (conj (actions-column owner has-hxl?))
+               true  mock-onadata-tasking-fields))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -366,7 +381,7 @@
                                           default-num-displayed-records)
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
-    (.setItems dataview (clj->js data) _id)
+    (.setItems dataview (clj->js (map #(assoc % :_review_status "Pending" :_review_comment "A comment!") data)) _id)
     (resizeColumns grid)
     [grid dataview]))
 
