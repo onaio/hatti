@@ -126,18 +126,8 @@
 (def delete-record-class "delete-record")
 
 (defn mock-onadata-tasking-fields
-  [cols] (let [review-status {:id "_review_status"
-                              :name "Review status"
-                              :sortable true
-                              :field "_review_status"
-                              :type "text"}
-               comment {:id "_review_comment"
-                        :name "Review comment"
-                        :sortable true
-                        :field "_review_comment"
-                        :type "text"}
-               [actions data] (split-at 1 cols)]
-            (vec (flatten (conj data comment review-status actions)))))
+  [cols] (let [[actions data] (split-at 1 cols)]
+            (vec (flatten (conj data forms/comment-field forms/review-status-field actions)))))
 
 (defmethod actions-column :default
   [owner has-hxl?]

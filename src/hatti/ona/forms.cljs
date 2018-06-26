@@ -43,6 +43,18 @@
                            :label     "Media attachments received"
                            :type      "text"})
 
+(def comment-field {:id "_review_comment"
+                    :name "Review comment"
+                    :sortable true
+                    :field "_review_comment"
+                    :type "text"})
+
+(def review-status-field {:id "_review_status"
+                          :name "Review status"
+                          :sortable true
+                          :field "_review_status"
+                          :type "text"})
+
 (def extra-submission-details [last_edited
                                submission-time-field
                                submitted-by-field
@@ -418,6 +430,10 @@
     (->> meta-fields
          (map relabel)
          include-extra-sub-details)))
+
+(defn tasking-fields
+  []
+  (throw (Exception. "TODO: tasking fields not yet implemented")))
 
 (defn non-meta-fields
   "Get just the fields in this form that are not meta fields."

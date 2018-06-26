@@ -59,7 +59,11 @@
          :answer-el :span.answer}
    :table {:row-el :tr.question-answer
            :question-el :td.question
-           :answer-el :td.answer}})
+           :answer-el :td.answer}
+   :comment {:row-el :tr.question-answer
+             :question-el :td.question
+             :answer-el :td.answer
+             :comment-el :td}})
 
 (defn format-as-question-answer
   [view field data lang]
