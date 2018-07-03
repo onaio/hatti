@@ -565,7 +565,9 @@
           (when active?
             (html
              [:div.table-view
-              {:style (when prevent-scrolling-in-table-view?
+             ;; Check if prevent-scrolling-in-table-view? value is equal to true
+             ;; since it can also be null
+              {:style (when (= true prevent-scrolling-in-table-view?)
                         {:height (or table-view-height
                                      (get-table-view-height))
                          :overflow "hidden"})}
