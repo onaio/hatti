@@ -185,12 +185,21 @@
           [:div.tab-bar
            (map dv->link dataviews)
            (om/build dataview-infobar
-                     {:dataset-info (-> app-state :dataset-info)
-                      :status (-> app-state :status)})]
+                     {:dataset-info (:dataset-info app-state)
+                      :status (:status app-state)})]
           (for [{:keys [component view]} dataviews
                 :let [view-name (name view)]]
             [:div {:class (str "tab-page " view-name "-page")
-                   :style {:display (view->display view)}}
+                   :style {:height
+                           (-> app-state :table-page :table-view-height)
+                           :display
+                           (view->display view)
+                           :overflow-x
+                           (if (-> app-state
+                                   :table-page
+                                   :prevent-scrolling-in-table-view?)
+                             "hidden"
+                             "scroll")}}
              (when (= selected view)
                (send-event :Dataview (str view-name "-page-load"))
                [:div.tab-content {:id (str "tab-content" view-name)}

@@ -506,7 +506,7 @@
   (- (-> "body"
          js/document.querySelector
          .-clientHeight)
-     (-> ".tab-page"
+     (-> ".table-page"
          js/document.querySelector
          .getBoundingClientRect
          .-top)))
@@ -556,19 +556,21 @@
       om/IRenderState
       (render-state [_ {:keys [table-view-height]}]
         (let [{:keys [data dataset-info]
-               {:keys [prevent-scrolling-in-table-view? submission-clicked]}
+               {:keys [submission-clicked]}
                :table-page}
               cursor
               {:keys [num_of_submissions]} dataset-info
               no-data? (empty? data)
               with-info #(merge cursor %)]
+          (swap! shared/app-state
+                 assoc-in
+                 [:table-page :table-view-height]
+                 (when-not (nil? (js/document.querySelector ".table-page"))
+                   (get-table-view-height)))
           (when active?
             (html
              [:div.table-view
-              {:style (when prevent-scrolling-in-table-view?
-                        {:height (or table-view-height
-                                     (get-table-view-height))
-                         :overflow "hidden"})}
+              {:style {:overflow "initial"}}
               (when (:data submission-clicked)
                 (om/build submission-view
                           (with-info submission-clicked)
