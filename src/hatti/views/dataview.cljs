@@ -190,7 +190,15 @@
           (for [{:keys [component view]} dataviews
                 :let [view-name (name view)]]
             [:div {:class (str "tab-page " view-name "-page")
-                   :style {:display (view->display view)}}
+                   :style {:height
+                           (:table-view-height (-> app-state :table-page))
+                           :display
+                           (view->display view)
+                           :overflow-x
+                           (if (:prevent-scrolling-in-table-view?
+                                (-> app-state :table-page))
+                             "hidden"
+                             "scroll")}}
              (when (= selected view)
                (send-event :Dataview (str view-name "-page-load"))
                [:div.tab-content {:id (str "tab-content" view-name)}
