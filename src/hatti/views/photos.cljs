@@ -34,6 +34,7 @@
   "If not a fully qualified URL, remove the API namespace prefix from a URI
    string and convert to a fully qualified URL."
   [s]
+  (js/console.log ">>>sub s:" (clj->js (subs s 0 4)))
   (if (= (subs s 0 4) "http")
     s
     (remote/make-url (replace s #"/api/v1" ""))))
@@ -77,7 +78,8 @@
         gallery (js/PhotoSwipe. pswp-element
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
-                                options)]
+                                options)
+        _ (js/console.log ">>>gallery:" (clj->js gallery))]
     (set! (.. gallery
               -options
               -getImageURLForShare)
@@ -144,7 +146,8 @@
         (fn [j attachment]
           (let [download-url (make-url attachment)
                 thumbnail (resize-image download-url
-                                        thumb-width-px)]
+                                        thumb-width-px)
+                _ (js/console.log ">>>download-url:" (clj->js download-url))]
             {:src (resize-image (make-url download-url) width-px)
              :original-src download-url
              :msrc thumbnail
@@ -165,6 +168,7 @@
 (defn- build-photo-gallery
   "Build markup with actions for a photo gallery."
   [photos owner]
+  (js/console.log ">>>photos:" (clj->js photos))
   (for [i (-> photos count range)
         :let [{:keys [title] :as photo} (nth photos i)]]
     [:figure {"itemProp" "associatedMedia"
