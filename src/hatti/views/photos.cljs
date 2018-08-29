@@ -79,13 +79,16 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
                                 options)
-        _ (js/console.log ">>>gallery:" (clj->js gallery))]
+        _ (js/console.log ">>>old-gallery:" (clj->js gallery))]
     (set! (.. gallery
               -options
               -getImageURLForShare)
           (fn [share-button-data]
-            (or (aget gallery "currItem" "msrc") "")))
-    (.init gallery)))
+            (or (aget gallery "currItem" "original-src") "")))
+    (js/console.log ">>>new-gallery:" (clj->js gallery))
+    (.init gallery)
+    (js/console.log ">>>gallery-original-src:" (clj->js (aget gallery "currItem" "original-src")))
+    (js/console.log ">>>gallery-src:" (clj->js (aget gallery "currItem" "src")))))
 
 (defn- on-thumbnail-click
   "Actions to perform on thumbnail click."
