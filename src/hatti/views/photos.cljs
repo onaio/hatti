@@ -84,7 +84,7 @@
               -options
               -getImageURLForShare)
           (fn [share-button-data]
-            (or (aget gallery "currItem" "original-src") "")))
+            (or (aget gallery "currItem" "msrc") "")))
     (.init gallery)))
 
 (defn- on-thumbnail-click
