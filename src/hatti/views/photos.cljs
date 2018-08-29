@@ -84,7 +84,7 @@
               -options
               -getImageURLForShare)
           (fn [share-button-data]
-            (or (aget gallery "currItem" "original-src") "")))
+            (or (aget gallery "currItem" "src") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (.init gallery)
     (js/console.log ">>>gallery-original-src:" (clj->js (aget gallery "currItem" "original-src")))
