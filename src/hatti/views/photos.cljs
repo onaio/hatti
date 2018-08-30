@@ -152,7 +152,7 @@
                 thumbnail (resize-image download-url
                                         thumb-width-px)
                 _ (js/console.log ">>>download-url:" (clj->js download-url))]
-            {:src (resize-image (make-url download-url) width-px)
+            {:src download-url
              :original-src download-url
              :msrc thumbnail
              :thumb thumbnail
