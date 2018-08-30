@@ -84,10 +84,11 @@
               -options
               -getImageURLForShare)
           (fn [share-button-data]
-            (or (aget gallery "currItem" "src") "")))
+            (or (aget gallery "currItem" "msrc") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (.init gallery)
     (js/console.log ">>>gallery-original-src:" (clj->js (aget gallery "currItem" "original-src")))
+    (js/console.log ">>>msrc:" (clj->js (aget gallery "currItem" "msrc")))
     (js/console.log ">>>gallery-src:" (clj->js (aget gallery "currItem" "src")))))
 
 (defn- on-thumbnail-click
