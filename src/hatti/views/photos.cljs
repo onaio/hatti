@@ -79,13 +79,20 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
                                 options)
-        _ (js/console.log ">>>old-gallery:" (clj->js gallery))]
+        _ (js/console.log ">>>old-gallery:" (clj->js gallery))
+        _ (js/console.log ">>>share-url:" (clj->js (.. gallery
+                                                         -options
+                                                         -getImageURLForShare)))]
     (set! (.. gallery
               -options
               -getImageURLForShare)
-          (fn [share-button-data]
-            (or (aget gallery "currItem" "msrc") "")))
+          (fn []
+            (js* "debugger;")
+            (or (aget gallery "currItem" "original-src") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
+    (js/console.log ">>>share-url:" (clj->js (.. gallery
+                                                 -options
+                                                 -getImageURLForShare)))
     (.init gallery)
     (js/console.log ">>>gallery-original-src:" (clj->js (aget gallery "currItem" "original-src")))
     (js/console.log ">>>msrc:" (clj->js (aget gallery "currItem" "msrc")))
@@ -152,7 +159,7 @@
                 thumbnail (resize-image download-url
                                         thumb-width-px)
                 _ (js/console.log ">>>download-url:" (clj->js download-url))]
-            {:src download-url
+            {:src (resize-image (make-url download-url) width-px)
              :original-src download-url
              :msrc thumbnail
              :thumb thumbnail
