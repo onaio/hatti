@@ -145,7 +145,7 @@
           (let [download-url (make-url attachment)
                 thumbnail (resize-image download-url
                                         thumb-width-px)]
-            {:src (resize-image (make-url download-url) width-px)
+            {:src (resize-image download-url width-px)
              :original-src download-url
              :msrc thumbnail
              :thumb thumbnail
