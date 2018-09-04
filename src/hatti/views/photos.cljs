@@ -34,9 +34,10 @@
   "If not a fully qualified URL, remove the API namespace prefix from a URI
    string and convert to a fully qualified URL."
   [s]
-  (if (= (subs s 0 4) "http")
-    (js/encodeURIComponent s)
-    (remote/make-url (replace s #"/api/v1" ""))))
+  (js/encodeURIComponent
+   (if (= (subs s 0 4) "http")
+     s
+     (remote/make-url (replace s #"/api/v1" "")))))
 
 (defn- build-caption
   [item]
