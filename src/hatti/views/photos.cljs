@@ -87,7 +87,7 @@
               -options
               -getImageURLForShare)
           (fn []
-            (js* "debugger;")
+            (js/console.log ">>Update Image url!!")
             (or (aget gallery "currItem" "original-src") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (js/console.log ">>>share-url:" (clj->js (.. gallery
@@ -100,8 +100,9 @@
 
 (defn- on-thumbnail-click
   "Actions to perform on thumbnail click."
-  [event photos]
+  [event photos owner]
   (.preventDefault event)
+  (om/set-state! owner :original-img-url? false)
   (open-photoswipe (.getAttribute (.-target event) data-pswp-id)
                    photos))
 
@@ -139,7 +140,9 @@
    do not have a photo attached. If the photo info is attached directly to the
    submission and not to the attachments list, use the information attached
    directly to the submission."
-  [data photo-columns]
+  [data photo-columns original-img-url?]
+  (js/console.log ">>>original-img-url?:" (clj->js original-img-url?))
+  (js/console.log ">>>I was built!!!")
   (let [data-with-attachments (keep #(extract-images % photo-columns) data)
         attachment-totals (reductions #(+ %1 (count (get %2 :attachments)))
                                       0 data-with-attachments)
@@ -158,8 +161,12 @@
           (let [download-url (make-url attachment)
                 thumbnail (resize-image download-url
                                         thumb-width-px)
+                _ (js/console.log ">>>id:" (clj->js id))
+                _ (js/console.log ">>>attachment:" (clj->js attachment))
                 _ (js/console.log ">>>download-url:" (clj->js download-url))]
-            {:src (resize-image (make-url download-url) width-px)
+            {:src (if original-img-url?
+                    download-url
+                    (resize-image (make-url download-url) width-px))
              :original-src download-url
              :msrc thumbnail
              :thumb thumbnail
@@ -181,14 +188,15 @@
   [photos owner]
   (js/console.log ">>>photos:" (clj->js photos))
   (for [i (-> photos count range)
-        :let [{:keys [title] :as photo} (nth photos i)]]
+        :let [{:keys [title] :as photo} (nth photos i)
+              _ (js/console.log ">>>photo:" (clj->js photo))]]
     [:figure {"itemProp" "associatedMedia"
               "itemScope" ""
               "itemType" "http://schema.org/ImageObject"}
      [:a {:href (:src photo)
           "itemProp" "contentUrl"
           :data-size (format "%sx%s" width-px width-px)
-          :on-click #(on-thumbnail-click % photos)}
+          :on-click #(on-thumbnail-click % photos owner)}
       [:img {:width thumb-width-px-str
              :height thumb-width-px-str
              :src (:thumb photo)
@@ -200,10 +208,12 @@
 (defmethod photos-page :default
   [{{:keys [num_of_submissions] :as dataset-info} :dataset-info} owner]
   "Om component for the photos page."
+  (js/console.log ">>>Photos-page-built!")
   (reify
     om/IInitState
     (init-state [_]
       ;; Use map-page data because it is not paged, like the table data
+      :original-img-url? false
       (assoc
        (select-keys @shared/app-state [:map-page :data])
        :photo-columns (get-photo-columns (om/get-shared owner [:flat-form]))))
@@ -211,9 +221,9 @@
     (will-receive-props [_ next-props]
       (om/set-state! owner :data (-> @shared/app-state :map-page :data)))
     om/IRenderState
-    (render-state [_ {:keys [data photo-columns]}]
+    (render-state [_ {:keys [data photo-columns original-img-url?]}]
       (let [form (om/get-shared owner [:flat-form])
-            photos (build-photos data photo-columns)]
+            photos (build-photos data photo-columns original-img-url?)]
         (html
          [:div.tab-content
           (cond
@@ -238,7 +248,11 @@
                 [:button.pswp__button.pswp__button--close
                  {:title "Close (Esc)"}]
                 [:button.pswp__button.pswp__button--share
-                 {:title "Share"}]
+                 {:title "Share"
+                  :on-click (fn[event]
+                              (om/set-state! owner :original-img-url? true)
+                              ; (js/console.log ">>>Photos:" (clj->js photos))
+                              (js/console.log ">>>I was clicked!!"))}]
                 [:button.pswp__button.pswp__button--fs
                  {:title "Toggle fullscreen"}]
                 [:button.pswp__button.pswp__button--zoom
