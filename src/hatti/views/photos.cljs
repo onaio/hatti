@@ -2,7 +2,7 @@
   (:require [chimera.js-interop :refer [format]]
             [cljsjs.photoswipe]
             [cljsjs.photoswipe-ui-default]
-            [clojure.string :refer [replace]]
+            [clojure.string :refer [replace split join]]
             [om.core :as om :include-macros true]
             [sablono.core :refer-macros [html]]
             [hatti.constants :as constants]
@@ -34,10 +34,17 @@
   "If not a fully qualified URL, remove the API namespace prefix from a URI
    string and convert to a fully qualified URL."
   [url]
-  (js/encodeURIComponent
-   (if (= (subs url 0 4) "http")
-     url
-     (remote/make-url (replace url #"/api/v1" "")))))
+  (let [string-vec (split url #"\?")
+        index 1
+        encoded-question-mark "%3F"
+        encoded-url
+        (join encoded-question-mark
+              (assoc string-vec
+                     index
+                     (js/encodeURIComponent (nth string-vec index))))]
+    (if (= (subs encoded-url 0 4) "http")
+      encoded-url
+      (remote/make-url (replace encoded-url #"/api/v1/" "")))))
 
 (defn- build-caption
   [item]
