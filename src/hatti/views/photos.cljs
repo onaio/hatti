@@ -86,9 +86,7 @@
     (set! (.. gallery
               -options
               -getImageURLForShare)
-          (fn []
-            (js/console.log ">>Update Image url!!")
-            (or (aget gallery "currItem" "original-src") "")))
+          #(or (aget gallery "currItem" "original-src") ""))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (js/console.log ">>>share-url:" (clj->js (.. gallery
                                                  -options
