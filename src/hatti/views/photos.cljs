@@ -80,17 +80,19 @@
                                 (clj->js photos)
                                 options)
         _ (js/console.log ">>>old-gallery:" (clj->js gallery))
-        _ (js/console.log ">>>share-url:" (clj->js (.. gallery
-                                                         -options
-                                                         -getImageURLForShare)))]
-    (set! (.. gallery
-              -options
-              -getImageURLForShare)
-          #(or (aget gallery "currItem" "original-src") ""))
+        _ (js/console.log ">>>share-url:" (clj->js (-> gallery
+                                                         .-options
+                                                       .-getImageURLForShare)))]
+    (set! (-> gallery
+              .-options
+              .-getImageURLForShare)
+          (fn []
+            (js/console.log ">>Update Image url!!")
+            (or (aget gallery "currItem" "original-src") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
-    (js/console.log ">>>share-url:" (clj->js (.. gallery
-                                                 -options
-                                                 -getImageURLForShare)))
+    (js/console.log ">>>share-url:" (clj->js (-> gallery
+                                                 .-options
+                                                 .-getImageURLForShare)))
     (.init gallery)
     (js/console.log ">>>gallery-original-src:" (clj->js (aget gallery "currItem" "original-src")))
     (js/console.log ">>>msrc:" (clj->js (aget gallery "currItem" "msrc")))
