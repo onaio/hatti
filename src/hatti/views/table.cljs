@@ -19,7 +19,12 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
+            [hatti.utils :refer [click-fn
+                                 generate-html
+                                 hyphen->camel-case
+                                 review-status-map
+                                 get-submission-review-text
+                                 pending-status]]
             [chimera.core :refer [any?]]
             [cljsjs.slickgrid-with-deps]))
 
@@ -125,9 +130,13 @@
   (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
 (def delete-record-class "delete-record")
 
-(defn mock-onadata-tasking-fields
-  [cols] (let [[actions data] (split-at 1 cols)]
-            (vec (flatten (conj data forms/comment-field forms/review-status-field actions)))))
+(defn submission-review-fields
+  [cols]
+  (let [[actions data] (split-at 1 cols)]
+    (vec
+     (flatten
+      (conj
+       data forms/comment-field forms/review-status-field actions)))))
 
 (defmethod actions-column :default
   [owner has-hxl?]
@@ -171,7 +180,7 @@
     (clj->js (cond-> columns
                (not hide-actions-column?)
                (conj (actions-column owner has-hxl?))
-               true  mock-onadata-tasking-fields))))
+               true  submission-review-fields))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -258,6 +267,14 @@
                [:selected-table-rows]
                #(identity indexes-of-selected-checkboxes))
     (.setSelectedRows grid (clj->js indexes-of-selected-checkboxes))))
+
+(defn replace-review-num-status-with-text-status
+  [data]
+  (map (fn [row-map]
+         (assoc row-map
+                "_review_status"
+                (get-submission-review-text row-map)))
+       data))
 
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
@@ -371,7 +388,9 @@
                                           default-num-displayed-records)
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
-    (.setItems dataview (clj->js (map #(assoc % :_review_status "Pending" :_review_comment "A comment!") data)) _id)
+    (.setItems dataview
+               (clj->js (replace-review-num-status-with-text-status data))
+               _id)
     (resizeColumns grid)
     [grid dataview]))
 
@@ -617,5 +636,9 @@
                   (handle-table-events cursor grid dataview))
                 (do ; data has changed
                   (.invalidateAllRows grid)
-                  (.setItems dataview (clj->js new-data) _id)
+                  (.setItems dataview
+                             (clj->js
+                              (replace-review-num-status-with-text-status
+                               new-data))
+                             _id)
                   (.render grid))))))))))
