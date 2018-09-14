@@ -431,10 +431,6 @@
          (map relabel)
          include-extra-sub-details)))
 
-(defn tasking-fields
-  []
-  (throw (Exception. "TODO: tasking fields not yet implemented")))
-
 (defn non-meta-fields
   "Get just the fields in this form that are not meta fields."
   [flat-form]
