@@ -136,7 +136,7 @@
     (vec
      (flatten
       (conj
-       data forms/comment-field forms/review-status-field actions)))))
+       data forms/review-comment-field forms/review-status-field actions)))))
 
 (defmethod actions-column :default
   [owner has-hxl?]
@@ -155,6 +155,7 @@
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
   [form & {:keys [hide-actions-column?
+                  submission-review?
                   get-label?
                   language
                   owner]
@@ -180,7 +181,7 @@
     (clj->js (cond-> columns
                (not hide-actions-column?)
                (conj (actions-column owner has-hxl?))
-               true  submission-review-fields))))
+               submission-review?  submission-review-fields))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -282,13 +283,15 @@
    Returns [grid dataview]."
   [data form current-language owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
-  (let [{{{:keys [num-displayed-records
+  (let [{:keys [submission-review?]
+         {{:keys [num-displayed-records
                   total-page-count]} :paging
           :keys [hide-actions-column?]} :table-page} @shared/app-state
         columns (flat-form->sg-columns
                  form
                  :language current-language
                  :hide-actions-column? hide-actions-column?
+                 :submission-review? submission-review?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
