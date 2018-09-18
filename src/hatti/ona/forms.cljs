@@ -43,11 +43,11 @@
                            :label     "Media attachments received"
                            :type      "text"})
 
-(def comment-field {:id "_review_comment"
-                    :name "Review comment"
-                    :sortable true
-                    :field "_review_comment"
-                    :type "text"})
+(def review-comment-field {:id "_review_comment"
+                           :name "Review comment"
+                           :sortable true
+                           :field "_review_comment"
+                           :type "text"})
 
 (def review-status-field {:id "_review_status"
                           :name "Review status"
