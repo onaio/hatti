@@ -392,7 +392,9 @@
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
     (.setItems dataview
-               (clj->js (replace-review-num-status-with-text-status data))
+               (clj->js
+                (cond-> data
+                  submission-review? replace-review-num-status-with-text-status))
                _id)
     (resizeColumns grid)
     [grid dataview]))
@@ -641,7 +643,8 @@
                   (.invalidateAllRows grid)
                   (.setItems dataview
                              (clj->js
-                              (replace-review-num-status-with-text-status
-                               new-data))
+                              (cond-> new-data
+                                (:submission-review?  @shared/app-state)
+                                replace-review-num-status-with-text-status))
                              _id)
                   (.render grid))))))))))
