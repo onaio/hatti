@@ -9,6 +9,8 @@
                                      _last_edited
                                      _id
                                      _media_all_received
+                                     _review_status
+                                     _review_comment
                                      help-base-url
                                      failed-media-upload-help-url
                                      failed-media-upload-error-message]]))
@@ -43,17 +45,15 @@
                            :label     "Media attachments received"
                            :type      "text"})
 
-(def review-comment-field {:id "_review_comment"
-                           :name "Review comment"
-                           :sortable true
-                           :field "_review_comment"
-                           :type "text"})
+(def review-comment-field {:name      _review_comment
+                           :full-name _review_comment
+                           :label     "Review comment"
+                           :type      "text"})
 
-(def review-status-field {:id "_review_status"
-                          :name "Review status"
-                          :sortable true
-                          :field "_review_status"
-                          :type "text"})
+(def review-status-field {:name      _review_status
+                          :full-name _review_status
+                          :label     "Review status"
+                          :type      "text"})
 
 (def extra-submission-details [last_edited
                                submission-time-field
