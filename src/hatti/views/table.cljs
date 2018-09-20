@@ -161,7 +161,8 @@
                   owner]
            :or {get-label? true}}]
   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-        columns (for [field (all-fields form)]
+        columns (for [field (cond-> (all-fields form)
+                              submission-review?  submission-review-fields)]
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
                         label (if get-label? (get-label field language) name)
@@ -180,8 +181,7 @@
                      :hxl hxl}))]
     (clj->js (cond-> columns
                (not hide-actions-column?)
-               (conj (actions-column owner has-hxl?))
-               submission-review?  submission-review-fields))))
+               (conj (actions-column owner has-hxl?))))))
 
 (defn init-sg-pager [grid dataview]
   (let [Pager (.. js/Slick -Controls -Pager)]
@@ -394,8 +394,7 @@
     (.setItems dataview
                (clj->js
                 (cond-> data
-                  submission-review?
-                  replace-review-num-status-with-text-status))
+                  submission-review? replace-review-num-status-with-text-status))
                _id)
     (resizeColumns grid)
     [grid dataview]))
@@ -467,12 +466,15 @@
                      :name  [:strong "Name"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
+            {:keys [submission-review?]} @shared/app-state
             colset! #(put! shared/event-chan
                            {:new-columns
-                            (flat-form->sg-columns flat-form
-                                                   :get-label? (= :label %)
-                                                   :language   new-language
-                                                   :owner owner)})]
+                            (flat-form->sg-columns
+                             flat-form
+                             :get-label? (= :label %)
+                             :language   new-language
+                             :submission-review? submission-review?
+                             :owner owner)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! field-key))
