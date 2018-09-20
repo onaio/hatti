@@ -4,10 +4,12 @@
   (:require [chimera.core :refer [not-nil?]]
             [chimera.om.state :refer [merge-into-app-state!]]
             [chimera.urls :refer [last-url-param url]]
+            [chimera.seq :refer [not-empty?]]
             [cljs.core.async :refer [<! chan sliding-buffer put! close!]]
             [cljs.test :as t]
             [dommy.core :as dommy]
             [clojure.string :as string]
+            [hatti.ona.forms :refer [review-comment-field review-status-field]]
             [hatti.shared :as shared]
             [hatti.views :refer [table-page]]
             [hatti.views.table :as tv]
@@ -25,6 +27,11 @@
   (let [flat-form (-> fat-form)
         slickgrid-cols (-> flat-form tv/all-fields tv/flat-form->sg-columns
                            (js->clj :keywordize-keys true))
+        slickgrid-cols-with-submission-review-enabled
+        (-> flat-form
+            tv/all-fields
+            (tv/flat-form->sg-columns :submission-review? true)
+            (js->clj :keywordize-keys true))
         first-col (first slickgrid-cols)]
 
     (testing "slickgrid columns have the right types"
@@ -40,6 +47,19 @@
                       :headerCssClass :minWidth :cssClass :hxl}
                     (set (keys col))))
         (not-nil? (re-matches (re-pattern (str (:hxl col))) (:name col)))))
+
+    (testing "Submission review status and comment columns visible if
+              submission review is enabled"
+      (is (not-empty?
+           (filterv
+            (fn [col]
+              (string/includes? (:name col) (:label review-comment-field)))
+            slickgrid-cols-with-submission-review-enabled)))
+      (is (not-empty?
+           (filterv
+            (fn [col]
+              (string/includes? (:name col) (:label review-status-field)))
+            slickgrid-cols-with-submission-review-enabled))))
 
     (testing "slickgrid action column has the right types"
       (is (every? #{:id :name :field :sortable :toolTip :type :formatter
