@@ -394,7 +394,8 @@
     (.setItems dataview
                (clj->js
                 (cond-> data
-                  submission-review? replace-review-num-status-with-text-status))
+                  submission-review?
+                  replace-review-num-status-with-text-status))
                _id)
     (resizeColumns grid)
     [grid dataview]))
