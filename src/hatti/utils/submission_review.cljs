@@ -1,5 +1,5 @@
 (ns hatti.utils.submission-review
-	(:require [hatti.constants :refer [_review_status]]))
+  (:require [hatti.constants :refer [_review_status]]))
 
 (def approved-text "Approved")
 (def approved-status "1")
