@@ -21,10 +21,10 @@
             [hatti.shared :as shared]
             [hatti.utils :refer [click-fn
                                  generate-html
-                                 hyphen->camel-case
-                                 review-status-map
-                                 get-submission-review-text
-                                 pending-status]]
+                                 hyphen->camel-case]]
+            [hatti.utils.submission-review :refer [review-status-map
+                                                   get-submission-review-text
+                                                   pending-status]]
             [chimera.core :refer [any?]]
             [cljsjs.slickgrid-with-deps]))
 
