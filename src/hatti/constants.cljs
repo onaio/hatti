@@ -9,6 +9,8 @@
 (def _submission_time "_submission_time")
 (def _media_all_received "_media_all_received")
 (def _submitted_by "_submitted_by")
+(def _review_status "_review_status")
+(def _review_comment "_review_comment")
 (def photo "Photo")
 
 ;; Attachments keys

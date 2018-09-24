@@ -19,7 +19,12 @@
                                  label-changer submission-view]]
             [hatti.views.record]
             [hatti.shared :as shared]
-            [hatti.utils :refer [click-fn generate-html hyphen->camel-case]]
+            [hatti.utils :refer [click-fn
+                                 generate-html
+                                 hyphen->camel-case]]
+            [hatti.utils.submission-review :refer [review-status-map
+                                                   get-submission-review-text
+                                                   pending-status]]
             [chimera.core :refer [any?]]
             [cljsjs.slickgrid-with-deps]))
 
@@ -125,6 +130,14 @@
   (str "<input type=\"checkbox\" id=\"" select-unselect-all-records-id "\">"))
 (def delete-record-class "delete-record")
 
+(defn submission-review-fields
+  [cols]
+  (let [[actions data] (split-at 1 cols)]
+    (vec
+     (flatten
+      (conj
+       data forms/review-comment-field forms/review-status-field actions)))))
+
 (defmethod actions-column :default
   [owner has-hxl?]
   {:id "actions"
@@ -142,12 +155,14 @@
 (defn- flat-form->sg-columns
   "Get a set of slick grid column objects when given a flat form."
   [form & {:keys [hide-actions-column?
+                  submission-review?
                   get-label?
                   language
                   owner]
            :or {get-label? true}}]
   (let [has-hxl? (any? false? (map #(nil? (-> % :instance :hxl)) form))
-        columns (for [field (all-fields form)]
+        columns (for [field (cond-> (all-fields form)
+                              submission-review?  submission-review-fields)]
                   (let [{:keys [name type full-name]
                          {:keys [hxl]} :instance} field
                         label (if get-label? (get-label field language) name)
@@ -254,19 +269,29 @@
                #(identity indexes-of-selected-checkboxes))
     (.setSelectedRows grid (clj->js indexes-of-selected-checkboxes))))
 
+(defn replace-review-num-status-with-text-status
+  [data]
+  (map (fn [row-map]
+         (assoc row-map
+                "_review_status"
+                (get-submission-review-text row-map)))
+       data))
+
 (defn sg-init
   "Creates a Slick.Grid backed by Slick.Data.DataView from data and fields.
    Most events are handled by slickgrid. On double-click, event is put on chan.
    Returns [grid dataview]."
   [data form current-language owner
    {:keys [grid-event-handlers dataview-event-handlers]}]
-  (let [{{{:keys [num-displayed-records
+  (let [{:keys [submission-review?]
+         {{:keys [num-displayed-records
                   total-page-count]} :paging
           :keys [hide-actions-column?]} :table-page} @shared/app-state
         columns (flat-form->sg-columns
                  form
                  :language current-language
                  :hide-actions-column? hide-actions-column?
+                 :submission-review? submission-review?
                  :owner owner)
         SlickGrid (.. js/Slick -Grid)
         DataView (.. js/Slick -Data -DataView)
@@ -366,7 +391,12 @@
                                           default-num-displayed-records)
                             :totalPages total-page-count})
     (.setFilter dataview (partial filterfn form))
-    (.setItems dataview (clj->js data) _id)
+    (.setItems dataview
+               (clj->js
+                (cond-> data
+                  submission-review?
+                  replace-review-num-status-with-text-status))
+               _id)
     (resizeColumns grid)
     [grid dataview]))
 
@@ -437,12 +467,15 @@
                      :name  [:strong "Name"]}
             {:keys [flat-form]} (om/get-shared owner)
             new-language (:current (om/observe owner (shared/language-cursor)))
+            {:keys [submission-review?]} @shared/app-state
             colset! #(put! shared/event-chan
                            {:new-columns
-                            (flat-form->sg-columns flat-form
-                                                   :get-label? (= :label %)
-                                                   :language   new-language
-                                                   :owner owner)})]
+                            (flat-form->sg-columns
+                             flat-form
+                             :get-label? (= :label %)
+                             :language   new-language
+                             :submission-review? submission-review?
+                             :owner owner)})]
         (when (not= new-language language)
           (om/set-state! owner :language new-language)
           (colset! field-key))
@@ -612,5 +645,10 @@
                   (handle-table-events cursor grid dataview))
                 (do ; data has changed
                   (.invalidateAllRows grid)
-                  (.setItems dataview (clj->js new-data) _id)
+                  (.setItems dataview
+                             (clj->js
+                              (cond-> new-data
+                                (:submission-review?  @shared/app-state)
+                                replace-review-num-status-with-text-status))
+                             _id)
                   (.render grid))))))))))
