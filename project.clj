@@ -29,7 +29,7 @@
                  [cljsjs/jquery "2.2.4-0"]
                  [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/photoswipe "4.1.1-0"]
-                 [onaio/slickgrid-cljs "0.0.5-SNAPSHOT"]
+                 [onaio/slickgrid-cljs "0.0.5"]
                  [prabhasp/osmtogeojson-cljs "2.2.5-1"]
                  [org.webjars/SlickGrid "2.1"]
                  ;; For client
