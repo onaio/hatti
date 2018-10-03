@@ -371,7 +371,8 @@
                             row (js/parseInt (.. grid
                                                  (getCellFromEvent e)
                                                  -row))]
-                        (update-instance-ids-of-selected-rows-vector checked? data-id)
+                        (update-instance-ids-of-selected-rows-vector
+                         checked? data-id)
                         (set! (.-checked select-unselect-all-records-chkbox)
                               (check-select-unselect-all-records-element?))
                         (transact! shared/app-state
