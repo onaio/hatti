@@ -216,13 +216,13 @@
                event (aget dataview handler-name)]]
      (.subscribe event handler-function))))
 
-(defn update-data-to-be-deleted-vector
+(defn update-instance-ids-of-selected-rows-vector
   [checked? data-id]
-  (let [{:keys [data-to-be-deleted]} @shared/app-state
+  (let [{:keys [instance-ids-of-selected-rows]} @shared/app-state
         fn (if checked? add-element remove-element)]
     (transact! shared/app-state
-               [:data-to-be-deleted]
-               #(fn data-to-be-deleted data-id))))
+               [:instance-ids-of-selected-rows]
+               #(fn instance-ids-of-selected-rows data-id))))
 
 (defn get-elements-count-by-selector
   [selector]
@@ -233,7 +233,7 @@
   (let [delete-record-class-selector (str "." delete-record-class)
         total-rows-count (get-elements-count-by-selector
                           delete-record-class-selector)
-        ; TODO: test using (:data-to-be-deleted @shared/app-state)
+        ; TODO: test using (:instance-ids-of-selected-rows @shared/app-state)
         selected-rows-count (get-elements-count-by-selector
                              (str delete-record-class-selector ":checked"))]
     (= selected-rows-count total-rows-count)))
@@ -249,7 +249,7 @@
 
 (defn select-rows-marked-to-be-deleted
   []
-  (doseq [data-id (:data-to-be-deleted @shared/app-state)]
+  (doseq [data-id (:instance-ids-of-selected-rows @shared/app-state)]
     (let
      [element (get-delete-checkbox-by-data-id data-id)]
       (set! (.-checked element) true))))
@@ -331,7 +331,7 @@
 
                         (doseq [record records-to-be-deleted]
                           (set! (.-checked record) checked?)
-                          (update-data-to-be-deleted-vector
+                          (update-instance-ids-of-selected-rows-vector
                            checked?
                            (js/parseInt
                             (.getAttribute record "data-id"))))
@@ -371,7 +371,7 @@
                             row (js/parseInt (.. grid
                                                  (getCellFromEvent e)
                                                  -row))]
-                        (update-data-to-be-deleted-vector checked? data-id)
+                        (update-instance-ids-of-selected-rows-vector checked? data-id)
                         (set! (.-checked select-unselect-all-records-chkbox)
                               (check-select-unselect-all-records-element?))
                         (transact! shared/app-state

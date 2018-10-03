@@ -67,7 +67,7 @@
                  :chart-data {}}
     :dataset-info {}
     :data []
-    :data-to-be-deleted []
+    :instance-ids-of-selected-rows []
     :selected-table-rows []
     :status {:total-records 0 :loading? true}
     :languages {:current nil :all []}
