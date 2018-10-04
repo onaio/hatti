@@ -47,6 +47,15 @@
     (format "%s <br/><small>Submitted at %s on %s</small>"
             (.-title item) time date)))
 
+(defn ^:export update-download-link-url
+  [gallery]
+  (set! (-> gallery
+            .-options
+            .-getImageURLForShare)
+        (fn []
+          (js/console.log ">>Update Image url!!")
+          (or (aget gallery "currItem" "original-src") ""))))
+
 ;;; We use strings instead of keywords below because keywords are forced to
 ;;; lower-case. We use js-obj to avoid additional conversion costs.
 
@@ -83,12 +92,7 @@
         _ (js/console.log ">>>share-url:" (clj->js (-> gallery
                                                          .-options
                                                        .-getImageURLForShare)))]
-    (set! (-> gallery
-              .-options
-              .-getImageURLForShare)
-          (fn []
-            (js/console.log ">>Update Image url!!")
-            (or (aget gallery "currItem" "original-src") "")))
+    (update-download-link-url gallery)
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (js/console.log ">>>share-url:" (clj->js (-> gallery
                                                  .-options
