@@ -164,9 +164,10 @@
                 _ (js/console.log ">>>id:" (clj->js id))
                 _ (js/console.log ">>>attachment:" (clj->js attachment))
                 _ (js/console.log ">>>download-url:" (clj->js download-url))]
-            {:src (if original-img-url?
-                    download-url
-                    (resize-image (make-url download-url) width-px))
+            {:src (resize-image (make-url download-url) width-px)
+            ;  :src (if original-img-url?
+            ;         download-url
+            ;         (resize-image (make-url download-url) width-px))
              :original-src download-url
              :msrc thumbnail
              :thumb thumbnail
