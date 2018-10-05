@@ -49,7 +49,7 @@
 
 (defn ^:export update-download-link-url
   [gallery]
-  (js/console.log ">>I was here!!!!!")
+  (js/console.log ">>I was here in update-download-link-url!!!!!")
   (js/console.log ">>gallery::" (clj->js gallery))
   (set! (.. gallery
             -options
