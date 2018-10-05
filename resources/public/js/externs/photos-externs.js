@@ -1,1 +1,4 @@
-PhotoSwipe.prototype.options.getImageURLForShare = function () { };
+// PhotoSwipe.prototype.options.getImageURLForShare = function () { };
+var PhotoSwipe = {
+    "options": { "getImageURLForShare": function () { } }
+};
