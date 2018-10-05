@@ -59,7 +59,10 @@
                       :compiler {:output-to ~(lib-dir "hatti.js")
                                  :output-dir ~(lib-dir "out-prod")
                                  :optimizations :advanced
-                                 :pretty-print false}
+                                 :pretty-print false
+                                 :externs ~(map
+                                            #(js-dir %)
+                                            ["externs/photos-externs.js"])}
                       :jar true}
                :test {:source-paths ["src" "test"]
                       :notify-command ["phantomjs"
@@ -69,10 +72,7 @@
                       :compiler {:optimizations :whitespace
                                  :output-to "target/main-test.js"
                                  :pretty-print true
-                                 :closure-output-charset "US-ASCII"
-                                 :externs ~(map
-                                            #(js-dir %)
-                                            ["externs/photos-externs.js"])}}}
+                                 :closure-output-charset "US-ASCII"}}}
               :test-commands {"unit-test"
                               ["phantomjs"
                                "phantom/unit-test.js"
