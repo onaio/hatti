@@ -49,6 +49,8 @@
 
 (defn ^:export update-download-link-url
   [gallery]
+  (js/console.log ">>I was here!!!!!")
+  (js/console.log ">>gallery::" (clj->js gallery))
   (set! (.. gallery
             -options
             -getImageURLForShare)
