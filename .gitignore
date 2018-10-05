@@ -2,7 +2,7 @@ pom.xml
 *jar
 /lib/
 /classes/
-/resources/
+resources/public/js/lib
 /target/
 .lein-deps-sum
 .lein-env

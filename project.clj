@@ -1,7 +1,12 @@
-(defn js-dir
+(defn lib-dir
   "Prefix with full JavaScript directory."
   [path]
   (str "resources/public/js/lib/" path))
+
+(defn js-dir
+  "Prefix with full JavaScript directory."
+  [path]
+  (str "resources/public/js" path))
 
 (defproject onaio/hatti "0.4.7-224-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
@@ -44,15 +49,15 @@
   :clean-targets ["out/hatti" "out/hatti.js"]
   :cljsbuild {:builds
               {:dev {:source-paths ["src"]
-                     :compiler {:output-to ~(js-dir "main.js")
-                                :output-dir ~(js-dir "out")
+                     :compiler {:output-to ~(lib-dir "main.js")
+                                :output-dir ~(lib-dir "out")
                                 :optimizations :whitespace
                                 :cache-analysis true
                                 :pretty-print true
-                                :source-map ~(js-dir "main.js.map")}}
+                                :source-map ~(lib-dir "main.js.map")}}
                :prod {:source-paths ["src"]
-                      :compiler {:output-to ~(js-dir "hatti.js")
-                                 :output-dir ~(js-dir "out-prod")
+                      :compiler {:output-to ~(lib-dir "hatti.js")
+                                 :output-dir ~(lib-dir "out-prod")
                                  :optimizations :advanced
                                  :pretty-print false}
                       :jar true}
@@ -64,7 +69,10 @@
                       :compiler {:optimizations :whitespace
                                  :output-to "target/main-test.js"
                                  :pretty-print true
-                                 :closure-output-charset "US-ASCII"}}}
+                                 :closure-output-charset "US-ASCII"
+                                 :externs ~(map
+                                            #(js-dir %)
+                                            ["externs/photos-externs.js"])}}}
               :test-commands {"unit-test"
                               ["phantomjs"
                                "phantom/unit-test.js"
