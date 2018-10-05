@@ -90,7 +90,7 @@
                                 js/PhotoSwipeUI_Default
                                 (clj->js photos)
                                 options)
-        _ (js/console.log ">>>old-gallery:" (clj->js gallery))
+        _ (js/console.log ">>>up-gallery:" (clj->js gallery))
         _ (js/console.log ">>>share-url:" (clj->js (-> gallery
                                                        .-options
                                                        .-getImageURLForShare)))]
@@ -101,7 +101,7 @@
     ;       (fn []
     ;         (js/console.log ">>Update Image url!!")
     ;         (or (aget gallery "currItem" "original-src") "")))
-    (js/console.log ">>>new-gallery:" (clj->js gallery))
+    (js/console.log ">>>down-gallery:" (clj->js gallery))
     (js/console.log ">>>share-url:" (clj->js (-> gallery
                                                  .-options
                                                  .-getImageURLForShare)))
