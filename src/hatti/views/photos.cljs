@@ -49,9 +49,9 @@
 
 (defn ^:export update-download-link-url
   [gallery]
-  (set! (-> gallery
-            .-options
-            .-getImageURLForShare)
+  (set! (.. gallery
+            -options
+            -getImageURLForShare)
         (fn []
           (js/console.log ">>Update Image url!!")
           (or (aget gallery "currItem" "original-src") ""))))
@@ -90,9 +90,15 @@
                                 options)
         _ (js/console.log ">>>old-gallery:" (clj->js gallery))
         _ (js/console.log ">>>share-url:" (clj->js (-> gallery
-                                                         .-options
+                                                       .-options
                                                        .-getImageURLForShare)))]
     (update-download-link-url gallery)
+    ; (set! (-> gallery
+    ;           .-options
+    ;           .-getImageURLForShare)
+    ;       (fn []
+    ;         (js/console.log ">>Update Image url!!")
+    ;         (or (aget gallery "currItem" "original-src") "")))
     (js/console.log ">>>new-gallery:" (clj->js gallery))
     (js/console.log ">>>share-url:" (clj->js (-> gallery
                                                  .-options
@@ -254,7 +260,7 @@
                  {:title "Close (Esc)"}]
                 [:button.pswp__button.pswp__button--share
                  {:title "Share"
-                  :on-click (fn[event]
+                  :on-click (fn [event]
                               (om/set-state! owner :original-img-url? true)
                               ; (js/console.log ">>>Photos:" (clj->js photos))
                               (js/console.log ">>>I was clicked!!"))}]
