@@ -33,18 +33,20 @@
 (defn- make-url
   "If not a fully qualified URL, remove the API namespace prefix from a URI
    string and convert to a fully qualified URL."
-  [url]
+  [url & [encode-url?]]
   (let [string-vec (split url #"\?")
         index 1
         encoded-question-mark "%3F"
-        encoded-url
-        (join encoded-question-mark
-              (assoc string-vec
-                     index
-                     (js/encodeURIComponent (nth string-vec index))))]
-    (if (= (subs encoded-url 0 4) "http")
-      encoded-url
-      (remote/make-url (replace encoded-url #"/api/v1/" "")))))
+        image-url
+        (if encode-url?
+          (join encoded-question-mark
+                (assoc string-vec
+                       index
+                       (js/encodeURIComponent (nth string-vec index))))
+          url)]
+    (if (= (subs image-url 0 4) "http")
+      image-url
+      (remote/make-url (replace image-url #"/api/v1/" "")))))
 
 (defn- build-caption
   [item]
@@ -150,11 +152,11 @@
                  rank (get datum constants/_rank)]]
        (map-indexed
         (fn [j attachment]
-          (let [download-url (make-url attachment)
+          (let [download-url (make-url attachment true)
                 thumbnail (resize-image download-url
                                         thumb-width-px)]
             {:src (resize-image download-url width-px)
-             :original-src download-url
+             :original-src (make-url attachment)
              :msrc thumbnail
              :thumb thumbnail
              :title (format "%s/%s | ID: %s" (+ 1 cumulative-sum j) total id)
