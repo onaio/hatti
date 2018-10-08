@@ -3,7 +3,7 @@
   [path]
   (str "resources/public/js/lib/" path))
 
-(defproject onaio/hatti "0.4.7-223-SNAPSHOT"
+(defproject onaio/hatti "0.4.7-225-SNAPSHOT"
   :description "A cljs dataview from your friends at Ona.io"
   :license "Apache 2, see LICENSE"
   :url "https://github.com/onaio/hatti"
@@ -25,7 +25,7 @@
                  ;; JS
                  [cljsjs/moment "2.10.6-4"]
                  [onaio/leaflet-cljs "0.7.3-SNAPSHOT"]
-                 [onaio/milia "0.3.21"]
+                 [onaio/milia "0.3.42"]
                  [cljsjs/jquery "2.2.4-0"]
                  [cljsjs/oboe "2.1.2-1"]
                  [cljsjs/photoswipe "4.1.1-0"]
