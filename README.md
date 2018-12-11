@@ -1,5 +1,9 @@
 [![Build Status](https://travis-ci.org/onaio/hatti.svg?branch=master)](https://travis-ci.org/onaio/hatti)
 
+## Warning: We do not plan to maintain this library
+
+> As of December 2018 we do not plan to maintain this library and it does not reflect the latest version of the code we use on our production systems. Please contact us info@ona.io if you have any questions about this.
+
 # hatti
 
 A cljs dataview from [Ona](http://beta.ona.io).
